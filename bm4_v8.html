@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BM4 — Peta Analisa Kompetitor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#F2F1EE;--surface:#FFFFFF;--border:rgba(0,0,0,0.08);
+      --text:#1C1C1A;--muted:#5F5E5A;--faint:#9B9A96;
+      --accent:#2563EB;--accent-light:#EFF6FF;
+      --anchor:#D97706;--anchor-light:#FFFBEB;
+      --subsidi:#65A30D;--mix:#B45309;
+      --rs:#DC2626;--kampus:#059669;--mall:#7C3AED;
+      --tol:#475569;--pemda:#1D4ED8;--industri:#92400E;--publik:#0891B2;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    .topnav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:999;}
+    .brand{font-size:15px;font-weight:700;letter-spacing:-0.3px;}
+    .brand span{color:var(--accent);}
+    .nav-stats{display:flex;gap:16px;}
+    .nstat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+    .nstat strong{color:var(--text);font-weight:700;font-size:14px;}
+    .nav-actions{display:flex;gap:6px;align-items:center;}
+    .nav-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all 0.15s;}
+    .nav-btn:hover{background:var(--bg);}
+    .nav-btn.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+    .autosave-badge{display:none;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#15803D;background:#DCFCE7;padding:3px 8px;border-radius:20px;}
+    .layout{display:grid;grid-template-columns:300px 1fr 360px;height:calc(100vh - 56px);}
+    .sidebar-left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+    .sb-section{padding:12px 14px;border-bottom:1px solid var(--border);}
+    .sb-label{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;}
+    select{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);background:#FAFAF8;cursor:pointer;}
+    select:focus{outline:none;border-color:var(--accent);}
+    .chip-row{display:flex;gap:5px;flex-wrap:wrap;}
+    .chip{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:inherit;}
+    .chip.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+    .poi-toggles{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .poi-chip{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:7px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:inherit;}
+    .poi-chip .dot{width:8px;height:8px;border-radius:3px;flex-shrink:0;}
+    .poi-chip[data-kat="rs"].active{color:var(--rs);background:#FEF2F2;border-color:var(--rs);}
+    .poi-chip[data-kat="kampus"].active{color:var(--kampus);background:#ECFDF5;border-color:var(--kampus);}
+    .poi-chip[data-kat="mall"].active{color:var(--mall);background:#F5F3FF;border-color:var(--mall);}
+    .poi-chip[data-kat="tol"].active{color:var(--tol);background:#F8FAFC;border-color:var(--tol);}
+    .poi-chip[data-kat="pemda"].active{color:var(--pemda);background:#EFF6FF;border-color:var(--pemda);}
+    .poi-chip[data-kat="industri"].active{color:var(--industri);background:#FEF3C7;border-color:var(--industri);}
+    .poi-chip[data-kat="publik"].active{color:var(--publik);background:#ECFEFF;border-color:var(--publik);}
+    .radius-row{display:flex;align-items:center;gap:8px;}
+    .radius-row label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;}
+    input[type="range"]{flex:1;cursor:pointer;accent-color:var(--accent);}
+    .radius-val{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;min-width:36px;text-align:right;}
+    .rank-cat-wrap{padding:10px 14px;border-bottom:1px solid var(--border);}
+    .ranking-list{flex:1;overflow-y:auto;}
+    .ranking-list::-webkit-scrollbar{width:4px;}
+    .ranking-list::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+    .rank-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+    .rank-item:hover{background:var(--bg);}
+    .rank-item.selected{background:var(--accent-light);}
+    .rank-num{font-size:11px;font-weight:700;color:var(--faint);font-family:'DM Mono',monospace;min-width:18px;}
+    .rank-body{flex:1;min-width:0;}
+    .rank-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+    .rank-bar-wrap{height:4px;background:#E8E8E4;border-radius:2px;}
+    .rank-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+    .rank-val{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;}
+    #map{width:100%;height:100%;background:#E4E0D8;}
+    .map-wrap{position:relative;}
+    .map-fabs{position:absolute;top:12px;right:12px;z-index:800;display:flex;flex-direction:column;gap:6px;}
+    .fab{background:white;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);box-shadow:0 2px 6px rgba(0,0,0,0.1);transition:all 0.15s;}
+    .fab.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+    /* CHART PANEL */
+    .chart-panel{display:none;position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.97);border-top:1px solid var(--border);padding:14px 16px;z-index:700;backdrop-filter:blur(8px);}
+    .chart-panel.open{display:block;}
+    .chart-title{font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text);}
+    .chart-bars{display:flex;gap:6px;align-items:flex-end;height:90px;overflow-x:auto;padding-bottom:2px;}
+    .bar-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:44px;}
+    .bar-bg{width:28px;height:80px;background:var(--bg);border-radius:4px;position:relative;display:flex;align-items:flex-end;overflow:hidden;}
+    .bar-fill{width:100%;border-radius:4px;transition:height 0.5s;}
+    .bar-pct{position:absolute;top:2px;width:100%;text-align:center;font-size:9px;font-weight:700;color:var(--muted);font-family:'DM Mono',monospace;}
+    .bar-lbl{font-size:9px;color:var(--faint);text-align:center;margin-top:4px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:44px;}
+    .sidebar-right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+    #detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--faint);font-size:13px;text-align:center;padding:40px;line-height:1.8;}
+    .empty-icon{font-size:40px;margin-bottom:12px;}
+    #detail-content{display:none;flex-direction:column;flex:1;overflow:hidden;}
+    .tab-bar{display:flex;border-bottom:1px solid var(--border);background:#FAFAF8;flex-shrink:0;}
+    .tab{flex:1;padding:10px 2px;font-size:10px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;text-align:center;transition:all 0.15s;}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-body{flex:1;overflow-y:auto;padding:16px;}
+    .tab-body::-webkit-scrollbar{width:4px;}
+    .tab-body::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+    .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:6px;}
+    .anchor-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:var(--anchor-light);color:var(--anchor);border:1px solid var(--anchor);margin-left:5px;}
+    .d-name{font-size:16px;font-weight:700;line-height:1.3;margin-bottom:2px;}
+    .d-area{font-size:11px;color:var(--muted);margin-bottom:12px;}
+    .score-card{background:linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%);border-radius:10px;padding:14px 16px;margin-bottom:12px;color:white;display:flex;align-items:center;gap:14px;}
+    .score-big{font-size:38px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+    .score-label{font-size:10px;opacity:0.8;margin-bottom:3px;}
+    .score-grade{font-size:15px;font-weight:700;}
+    .score-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,0.25);border-radius:3px;margin-top:6px;}
+    .score-bar-fill{height:100%;border-radius:3px;background:white;}
+    /* SCORE BREAKDOWN */
+    .score-breakdown{background:var(--bg);border-radius:10px;padding:12px 14px;margin-bottom:12px;}
+    .sb-factor{margin-bottom:10px;}
+    .sb-factor:last-child{margin-bottom:0;}
+    .sb-factor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+    .sb-factor-name{font-size:11px;font-weight:600;color:var(--muted);}
+    .sb-factor-score{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;}
+    .sb-factor-bar{height:5px;background:#E8E8E4;border-radius:3px;overflow:hidden;}
+    .sb-factor-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+    .sb-sub{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:3px;padding:0 2px;flex-wrap:wrap;gap:2px;}
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+    .stat-box{background:var(--bg);border-radius:8px;padding:9px 11px;}
+    .stat-box .sl{font-size:10px;color:var(--muted);margin-bottom:2px;}
+    .stat-box .sv{font-size:13px;font-weight:700;}
+    .prog-wrap{margin-bottom:12px;}
+    .prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;}
+    .prog-bar{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;}
+    .prog-fill{height:100%;border-radius:4px;}
+    .section-title{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin:13px 0 7px;}
+    .poi-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04);}
+    .poi-row:last-child{border-bottom:none;}
+    .poi-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
+    .poi-icon{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;font-weight:700;}
+    .poi-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;font-size:12px;}
+    .poi-cat{font-size:10px;color:var(--faint);}
+    .poi-dist{flex-shrink:0;margin-left:8px;text-align:right;}
+    .poi-dist .km{font-weight:700;font-size:12px;font-family:'DM Mono',monospace;}
+    .poi-dist .mn{font-size:10px;color:var(--muted);}
+    .cmp-header{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+    .cmp-box{border-radius:8px;padding:10px 12px;font-size:11px;}
+    .cmp-box .cl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;opacity:0.7;}
+    .cmp-box .cn{font-weight:700;font-size:12px;line-height:1.3;}
+    .cmp-box .ca{opacity:0.7;margin-top:2px;}
+    .cmp-row{display:grid;grid-template-columns:80px 1fr 1fr;gap:5px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:11px;}
+    .cmp-row:last-child{border-bottom:none;}
+    .cmp-lc{color:var(--faint);font-size:10px;}
+    .cmp-val{padding:4px 5px;border-radius:6px;font-weight:700;text-align:center;font-size:11px;font-family:'DM Mono',monospace;}
+    .cmp-win{background:#DCFCE7;color:#15803D;}
+    .cmp-lose{background:#FEE2E2;color:#B91C1C;}
+    .cmp-tie{background:var(--bg);color:var(--muted);}
+    .nearby-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);}
+    .nearby-row:last-child{border-bottom:none;}
+    .nearby-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .nearby-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;}
+    .nearby-sub{font-size:10px;color:var(--faint);}
+    .nearby-dist{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;text-align:right;}
+    .nearby-min{font-size:10px;color:var(--faint);}
+    .coords{margin-top:12px;font-size:10px;color:#ccc;font-family:'DM Mono',monospace;}
+    .custom-marker{border-radius:50%;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.35);}
+    .anchor-marker{border-radius:50%;border:3px solid #D97706;box-shadow:0 0 0 3px rgba(217,119,6,0.3),0 2px 8px rgba(0,0,0,0.35);}
+    .poi-marker-el{border-radius:6px;border:1.5px solid rgba(255,255,255,0.8);box-shadow:0 1px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;}
+    /* OVERLAYS */
+    .overlay-panel{display:none;position:fixed;top:56px;left:0;right:0;bottom:0;z-index:900;overflow-y:auto;}
+    .overlay-panel.open{display:block;}
+    #editor-overlay{background:var(--bg);}
+    #settings-overlay{position:fixed!important;top:0!important;left:0;right:0;bottom:0;z-index:1500;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;overflow-y:auto;}
+    #settings-overlay.open{display:flex;}
+    .settings-modal{background:var(--surface);border-radius:14px;margin:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;flex-shrink:0;}
+    .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .modal-title{font-size:14px;font-weight:700;}
+    .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+    .modal-body{padding:20px;}
+    .setting-group{margin-bottom:20px;}
+    .setting-group-title{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;}
+    .toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px;}
+    .toggle-label{font-size:12px;font-weight:500;}
+    .tog{position:relative;width:36px;height:20px;flex-shrink:0;}
+    .tog input{opacity:0;width:0;height:0;position:absolute;}
+    .tog-sl{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#CBD5E1;border-radius:20px;transition:0.2s;}
+    .tog-sl:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+    .tog input:checked+.tog-sl{background:var(--accent);}
+    .tog input:checked+.tog-sl:before{transform:translateX(16px);}
+    .theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .theme-card{border:2px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.15s;}
+    .theme-card:hover{border-color:#93C5FD;}
+    .theme-card.active{border-color:var(--accent);}
+    .theme-preview{height:56px;display:flex;align-items:center;justify-content:center;font-size:24px;}
+    .theme-name{font-size:10px;font-weight:600;text-align:center;padding:5px 4px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border);}
+    .theme-card.active .theme-name{color:var(--accent);background:var(--accent-light);}
+    /* EDITOR */
+    .editor-inner{max-width:1300px;margin:0 auto;padding:20px 24px;}
+    .editor-tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;width:fit-content;margin-bottom:18px;}
+    .etab{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:inherit;transition:all 0.15s;}
+    .etab.active{background:var(--accent);color:white;}
+    .ecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+    .ecard-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .ecard-title{font-size:13px;font-weight:600;}
+    .ecard-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+    .etbl-wrap{overflow-x:auto;}
+    .etbl{width:100%;border-collapse:collapse;font-size:12px;}
+    .etbl thead tr{background:#FAFAF8;}
+    .etbl th{padding:8px 10px;text-align:left;font-weight:600;color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+    .etbl td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .etbl tr:last-child td{border-bottom:none;}
+    .etbl tr:hover td{background:#FAFAF8;}
+    .etbl input[type="text"],.etbl input[type="number"],.etbl select{border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:11px;font-family:"DM Sans",sans-serif;color:var(--text);background:white;width:100%;}
+    .etbl input[type="number"]{font-family:"DM Mono",monospace;}
+    .etbl input:focus,.etbl select:focus{outline:none;border-color:var(--accent);}
+    .add-row-e{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#FAFAF8;border-top:1px solid var(--border);align-items:flex-end;}
+    .add-row-e .ef{display:flex;flex-direction:column;gap:3px;}
+    .add-row-e .ef label{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.4px;}
+    .add-row-e input,.add-row-e select{border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;font-family:"DM Sans",sans-serif;color:var(--text);background:white;min-width:90px;}
+    .add-row-e input[type="number"]{font-family:"DM Mono",monospace;}
+    .btn-primary-sm{background:var(--accent);color:white;border:1px solid var(--accent);padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .btn-danger-sm{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .btn-secondary-sm{background:var(--bg);color:var(--muted);border:1px solid var(--border);padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1C1C1A;color:white;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;transition:transform 0.3s;pointer-events:none;}
+    .toast.show{transform:translateX(-50%) translateY(0);}
+    /* ADMIN FORMULA PANEL */
+    .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;}
+    .admin-overlay.open{display:flex;}
+    .admin-modal{background:white;border-radius:14px;width:660px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+    .admin-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+    .admin-header h2{font-size:15px;font-weight:700;}
+    .admin-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px;}
+    .admin-close:hover{background:var(--bg);}
+    .admin-body{padding:16px 20px;}
+    .admin-section{margin-bottom:20px;}
+    .admin-section-title{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+    .admin-row{display:grid;grid-template-columns:1fr auto 80px;align-items:center;gap:10px;margin-bottom:8px;}
+    .admin-row label{font-size:12px;color:var(--text);}
+    .admin-row input[type="range"]{accent-color:var(--accent);}
+    .admin-row input[type="number"]{width:70px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;text-align:center;}
+    .admin-factor-weight{background:var(--accent-light);border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+    .admin-factor-weight label{font-size:12px;font-weight:600;color:var(--accent);}
+    .admin-factor-weight input{width:60px;padding:4px 8px;border:1px solid var(--accent);border-radius:6px;font-size:13px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;color:var(--accent);background:white;}
+    .admin-btn-row{display:flex;gap:8px;margin-top:16px;}
+    .admin-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+    .admin-btn-primary{background:var(--accent);color:white;}
+    .admin-btn-primary:hover{background:#1D4ED8;}
+    .admin-btn-secondary{background:var(--bg);color:var(--muted);}
+    .admin-btn-reset{background:#FEF2F2;color:#DC2626;}
+    .weight-total{font-size:11px;color:var(--faint);text-align:right;margin-top:4px;}
+    .weight-total.ok{color:#15803D;}
+    .weight-total.bad{color:#DC2626;}
+    .formula-trigger{position:fixed;bottom:20px;right:20px;z-index:900;background:white;border:1px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.2s;}
+    .formula-trigger:hover{transform:scale(1.1);box-shadow:0 4px 16px rgba(0,0,0,0.2);}
+
+    /* LOGIN SCREEN */
+    #login-screen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#1C2B4A;display:flex;align-items:center;justify-content:center;}
+    #login-screen.hidden{display:none;}
+    .login-card{background:#FFFFFF;border-radius:16px;padding:40px;width:100%;max-width:380px;text-align:center;}
+    .login-logo{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px;color:#1C1C1A;}
+    .login-logo span{color:#2563EB;}
+    .login-sub{font-size:12px;color:#9B9A96;margin-bottom:28px;}
+    .login-label{font-size:11px;font-weight:600;color:#5F5E5A;text-align:left;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+    .login-input{width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:8px;padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:#1C1C1A;outline:none;transition:border-color 0.15s;margin-bottom:12px;}
+    .login-input:focus{border-color:#2563EB;}
+    .login-btn{width:100%;background:#2563EB;color:white;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.15s;margin-top:4px;}
+    .login-btn:hover{background:#1D4ED8;}
+    .login-error{font-size:12px;color:#DC2626;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:8px 12px;margin-bottom:12px;display:none;}
+    .login-error.show{display:block;}
+    .login-footer{font-size:10px;color:#C4C3BF;margin-top:20px;}
+  </style>
+</head>
+<body>
+
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">BM4 <span>·</span> Analisa Properti</div>
+    <div class="login-sub">Aplikasi internal — akses terbatas</div>
+    <div class="login-label">Password</div>
+    <div class="login-error" id="login-error">Password salah. Coba lagi.</div>
+    <input type="password" class="login-input" id="login-input" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Masuk →</button>
+    <div class="login-footer">BM4 Property Intelligence · Internal Use Only</div>
+  </div>
+</div>
+
+<div class="topnav">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="brand">BM4 — <span>Analisa Kompetitor</span></div>
+    <div class="nav-stats">
+      <div class="nstat"><strong id="stat-total">17</strong> Proyek</div>
+      <div class="nstat"><strong id="stat-unit">—</strong> Unit</div>
+      <div class="nstat"><strong id="stat-real">—</strong> Realisasi</div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <span id="sync-status" style="font-size:10px;font-weight:600;color:#9B9A96;margin-right:4px;"></span><div class="autosave-badge" id="autosave-badge">✓ Tersimpan</div>
+    <button class="nav-btn" id="btn-chart" onclick="toggleChart()">📊 Chart</button>
+    <button class="nav-btn" id="btn-editor" onclick="toggleEditor()">✏️ Edit Data</button>
+    <button class="nav-btn" onclick="openSettings()">⚙️ Tampilan</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar-left" id="sidebar-left-wrap">
+    <div class="sb-section">
+      <div class="sb-label">Pilih Perumahan</div>
+      <select id="perumahan-select"><option value="">— Semua Perumahan —</option></select>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Filter Tipe</div>
+      <div class="chip-row">
+        <button class="chip active" data-filter="all">Semua</button>
+        <button class="chip" data-filter="subsidi">Subsidi</button>
+        <button class="chip" data-filter="mix">Mix-use</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Toggle POI di Peta</div>
+      <div class="poi-toggles">
+        <button class="poi-chip active" data-kat="rs"><span class="dot" style="background:var(--rs)"></span>RS/Klinik</button>
+        <button class="poi-chip active" data-kat="kampus"><span class="dot" style="background:var(--kampus)"></span>Kampus</button>
+        <button class="poi-chip active" data-kat="mall"><span class="dot" style="background:var(--mall)"></span>Belanja</button>
+        <button class="poi-chip active" data-kat="tol"><span class="dot" style="background:var(--tol)"></span>Transportasi</button>
+        <button class="poi-chip active" data-kat="pemda"><span class="dot" style="background:var(--pemda)"></span>Pemerintah</button>
+        <button class="poi-chip active" data-kat="industri"><span class="dot" style="background:var(--industri)"></span>Industri</button>
+        <button class="poi-chip active" data-kat="publik"><span class="dot" style="background:var(--publik)"></span>Ruang Publik</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Radius Analisis</div>
+      <div class="radius-row">
+        <label><input type="checkbox" id="toggle-radius"> Tampilkan</label>
+        <input type="range" id="radius-slider" min="1" max="10" value="3">
+        <span class="radius-val" id="radius-val">3 km</span>
+      </div>
+    </div>
+    <div class="rank-cat-wrap">
+      <div class="sb-label">Ranking Berdasarkan</div>
+      <select id="rank-cat-select">
+        <option value="overall">🏆 Skor Keseluruhan</option>
+        <option value="rs">🏥 RS/Klinik</option>
+        <option value="kampus">🎓 Kampus</option>
+        <option value="mall">🏬 Belanja</option>
+        <option value="tol">🛣️ Transportasi</option>
+        <option value="pemda">🏛️ Pemerintah</option>
+        <option value="industri">💼 Industri</option>
+        <option value="publik">🌳 Ruang Publik</option>
+      </select>
+    </div>
+    <div class="ranking-list" id="ranking-list"></div>
+  </div>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-fabs">
+      <button class="fab" id="heatmap-fab">🌡️ Heatmap Skor</button>
+    </div>
+    <div class="chart-panel" id="chart-panel">
+      <div class="chart-title">📊 Progress Realisasi per Perumahan</div>
+      <div class="chart-bars" id="chart-bars"></div>
+    </div>
+  </div>
+
+  <div class="sidebar-right" id="sidebar-right-wrap">
+    <div id="detail-empty">
+      <div class="empty-icon">🗺️</div>
+      Pilih perumahan dari dropdown<br>atau klik marker di peta<br>untuk melihat analisis lengkap
+    </div>
+    <div id="detail-content">
+      <div class="tab-bar">
+        <div class="tab active" data-tab="info">📋 Info</div>
+        <div class="tab" data-tab="compare">⚖️ Vs Anchor</div>
+        <div class="tab" data-tab="radar">📊 Radar</div>
+        <div class="tab" data-tab="nearby">🏘️ Sekitar</div>
+      </div>
+      <div class="tab-body">
+        <div class="tab-pane active" id="tab-info"></div>
+        <div class="tab-pane" id="tab-compare"></div>
+        <div class="tab-pane" id="tab-radar"></div>
+        <div class="tab-pane" id="tab-nearby"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR OVERLAY -->
+<div class="overlay-panel" id="editor-overlay">
+  <div class="editor-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:700;">✏️ Editor Data</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary-sm" onclick="resetData()">↩ Reset</button>
+        <button class="btn-primary-sm" onclick="terapkanKePeta()">✓ Terapkan ke Peta</button>
+      </div>
+    </div>
+    <div class="editor-tabs">
+      <button class="etab active" onclick="switchEtab('perumahan')">🏘️ Perumahan <span id="ecnt-p"></span></button>
+      <button class="etab" onclick="switchEtab('poi')">📍 POI <span id="ecnt-poi"></span></button>
+    </div>
+    <div id="etab-perumahan">
+      <div class="ecard">
+        <div class="ecard-head">
+          <div><div class="ecard-title">Daftar Perumahan</div><div class="ecard-sub">Edit langsung di tabel. Perubahan otomatis tersimpan.</div></div>
+        </div>
+        <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th>Nama</th><th>Area</th><th>Tipe</th><th>Lat</th><th>Lng</th><th>Developer</th><th>Unit</th><th>Realisasi</th><th>Tahun</th><th></th></tr></thead><tbody id="etbody-p"></tbody></table></div>
+        <div class="add-row-e">
+          <div class="ef"><label>Nama</label><input type="text" id="enp-nama" placeholder="Nama Perumahan" style="min-width:160px;"></div>
+          <div class="ef"><label>Area</label><input type="text" id="enp-area" placeholder="Kecamatan" style="min-width:100px;"></div>
+          <div class="ef"><label>Tipe</label><select id="enp-tipe" style="min-width:90px;"><option value="subsidi">Subsidi</option><option value="mix">Mix-use</option></select></div>
+          <div class="ef"><label>Lat</label><input type="number" id="enp-lat" placeholder="-6.55" step="0.0000001" style="min-width:90px;"></div>
+          <div class="ef"><label>Lng</label><input type="number" id="enp-lng" placeholder="107.81" step="0.0000001" style="min-width:90px;"></div>
+          <div class="ef"><label>Developer</label><input type="text" id="enp-dev" placeholder="PT ..." style="min-width:130px;"></div>
+          <div class="ef"><label>Unit</label><input type="number" id="enp-unit" placeholder="80" style="min-width:60px;"></div>
+          <div class="ef"><label>Realisasi</label><input type="number" id="enp-real" placeholder="0" style="min-width:70px;"></div>
+          <div class="ef"><label>Tahun</label><input type="number" id="enp-tahun" placeholder="2024" style="min-width:65px;"></div>
+          <div class="ef"><label>&nbsp;</label><button class="btn-primary-sm" onclick="addPerumahan()">+ Tambah</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="etab-poi" style="display:none;">
+      <div class="ecard">
+        <div class="ecard-head">
+          <div><div class="ecard-title">Daftar POI</div><div class="ecard-sub">Point of Interest — fasilitas yang digunakan dalam analisa jarak.</div></div>
+        </div>
+        <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th>Nama</th><th>Kategori</th><th>Lat</th><th>Lng</th><th></th></tr></thead><tbody id="etbody-poi"></tbody></table></div>
+        <div class="add-row-e">
+          <div class="ef"><label>Nama</label><input type="text" id="epoi-nama" placeholder="Nama POI" style="min-width:180px;"></div>
+          <div class="ef"><label>Kategori</label><select id="epoi-kat" style="min-width:120px;"><option value="rs">RS/Klinik</option><option value="kampus">Kampus</option><option value="mall">Mall/Belanja</option><option value="tol">Transportasi</option><option value="pemda">Pemerintah</option><option value="industri">Industri</option><option value="publik">Ruang Publik</option></select></div>
+          <div class="ef"><label>Lat</label><input type="number" id="epoi-lat" placeholder="-6.55" step="0.0000001" style="min-width:90px;"></div>
+          <div class="ef"><label>Lng</label><input type="number" id="epoi-lng" placeholder="107.81" step="0.0000001" style="min-width:90px;"></div>
+          <div class="ef"><label>&nbsp;</label><button class="btn-primary-sm" onclick="addPoi()">+ Tambah</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-modal">
+    <div class="modal-head"><div class="modal-title">⚙️ Pengaturan Tampilan</div><button class="modal-close" onclick="closeSettings()">✕</button></div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <div class="setting-group-title">Tampilkan Komponen</div>
+        <div class="toggle-grid">
+          <div class="toggle-row"><span class="toggle-label">Panel Kiri</span><label class="tog"><input type="checkbox" checked onchange="toggleComp('sidebar-left-wrap',this.checked)"><span class="tog-sl"></span></label></div>
+          <div class="toggle-row"><span class="toggle-label">Panel Kanan</span><label class="tog"><input type="checkbox" checked onchange="toggleComp('sidebar-right-wrap',this.checked)"><span class="tog-sl"></span></label></div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-group-title">Tema Peta</div>
+        <div class="theme-grid">
+          <div class="theme-card active" id="theme-street" onclick="setTheme('street')"><div class="theme-preview">🗺️</div><div class="theme-name">Street</div></div>
+          <div class="theme-card" id="theme-light" onclick="setTheme('light')"><div class="theme-preview">☀️</div><div class="theme-name">Light</div></div>
+          <div class="theme-card" id="theme-dark" onclick="setTheme('dark')"><div class="theme-preview">🌙</div><div class="theme-name">Dark</div></div>
+          <div class="theme-card" id="theme-satellite" onclick="setTheme('satellite')"><div class="theme-preview">🛰️</div><div class="theme-name">Satellite</div></div>
+          <div class="theme-card" id="theme-topo" onclick="setTheme('topo')"><div class="theme-preview">⛰️</div><div class="theme-name">Topo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULA EDITOR (dari v4) -->
+<div class="formula-trigger" id="formula-trigger" title="Edit Formula Scoring">⚙️</div>
+
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-modal">
+    <div class="admin-header">
+      <h2>⚙️ Formula Editor — Scoring Lokasi</h2>
+      <button class="admin-close" id="admin-close">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section">
+        <div class="admin-section-title">Bobot 3 Faktor Utama (total harus = 100%)</div>
+        <div class="admin-factor-weight">
+          <label>🚗 Aksesibilitas</label>
+          <div style="display:flex;align-items:center;gap:8px;"><input type="number" id="w-aksesibilitas" min="0" max="100" value="50"> %</div>
+        </div>
+        <div class="admin-factor-weight" style="background:#ECFDF5;">
+          <label style="color:#059669;">🏥 Fasilitas & Infrastruktur</label>
+          <div style="display:flex;align-items:center;gap:8px;"><input type="number" id="w-fasilitas" min="0" max="100" value="30" style="border-color:#059669;color:#059669;"> %</div>
+        </div>
+        <div class="admin-factor-weight" style="background:#FFFBEB;">
+          <label style="color:#D97706;">🏗️ Kondisi Fisik Jalan</label>
+          <div style="display:flex;align-items:center;gap:8px;"><input type="number" id="w-fisik" min="0" max="100" value="20" style="border-color:#D97706;color:#D97706;"> %</div>
+        </div>
+        <div class="weight-total ok" id="weight-total-display">Total: 100% ✓</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Aksesibilitas (total = 100%)</div>
+        <div class="admin-row"><label>🛣️ Jarak ke Tol (Exit Tol)</label><input type="range" min="0" max="100" value="40" id="sw-tol" oninput="syncNumber('sw-tol','sn-tol')"><input type="number" id="sn-tol" value="40" min="0" max="100" oninput="syncRange('sn-tol','sw-tol')"> %</div>
+        <div class="admin-row"><label>🏙️ Jarak ke Pusat Kota (CBD)</label><input type="range" min="0" max="100" value="40" id="sw-cbd" oninput="syncNumber('sw-cbd','sn-cbd')"><input type="number" id="sn-cbd" value="40" min="0" max="100" oninput="syncRange('sn-cbd','sw-cbd')"> %</div>
+        <div class="admin-row"><label>🚦 Transportasi Umum</label><input type="range" min="0" max="100" value="20" id="sw-transport" oninput="syncNumber('sw-transport','sn-transport')"><input type="number" id="sn-transport" value="20" min="0" max="100" oninput="syncRange('sn-transport','sw-transport')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Fasilitas & Infrastruktur (total = 100%)</div>
+        <div class="admin-row"><label>🏥 RS / Klinik</label><input type="range" min="0" max="100" value="30" id="sw-rs" oninput="syncNumber('sw-rs','sn-rs')"><input type="number" id="sn-rs" value="30" min="0" max="100" oninput="syncRange('sn-rs','sw-rs')"> %</div>
+        <div class="admin-row"><label>🎓 Kampus / Sekolah</label><input type="range" min="0" max="100" value="20" id="sw-kampus" oninput="syncNumber('sw-kampus','sn-kampus')"><input type="number" id="sn-kampus" value="20" min="0" max="100" oninput="syncRange('sn-kampus','sw-kampus')"> %</div>
+        <div class="admin-row"><label>🏬 Pusat Belanja / Mall</label><input type="range" min="0" max="100" value="20" id="sw-mall" oninput="syncNumber('sw-mall','sn-mall')"><input type="number" id="sn-mall" value="20" min="0" max="100" oninput="syncRange('sn-mall','sw-mall')"> %</div>
+        <div class="admin-row"><label>🏛️ Pemerintahan</label><input type="range" min="0" max="100" value="10" id="sw-pemda" oninput="syncNumber('sw-pemda','sn-pemda')"><input type="number" id="sn-pemda" value="10" min="0" max="100" oninput="syncRange('sn-pemda','sw-pemda')"> %</div>
+        <div class="admin-row"><label>💼 Kawasan Industri</label><input type="range" min="0" max="100" value="10" id="sw-industri" oninput="syncNumber('sw-industri','sn-industri')"><input type="number" id="sn-industri" value="10" min="0" max="100" oninput="syncRange('sn-industri','sw-industri')"> %</div>
+        <div class="admin-row"><label>🌳 Ruang Publik</label><input type="range" min="0" max="100" value="10" id="sw-publik" oninput="syncNumber('sw-publik','sn-publik')"><input type="number" id="sn-publik" value="10" min="0" max="100" oninput="syncRange('sn-publik','sw-publik')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Kurva Scoring Jarak (km → poin)</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Formula: Score = max(0, 100 − (jarak × decay)). Semakin besar decay, semakin cepat score turun.</p>
+        <div class="admin-row"><label>🚗 Decay Aksesibilitas (tol/CBD)</label><input type="range" min="1" max="20" value="8" step="0.5" id="sw-decay-aks" oninput="syncNumber('sw-decay-aks','sn-decay-aks')"><input type="number" id="sn-decay-aks" value="8" min="1" max="20" step="0.5" oninput="syncRange('sn-decay-aks','sw-decay-aks')"></div>
+        <div class="admin-row"><label>🏥 Decay Fasilitas (rs/kampus/mall)</label><input type="range" min="1" max="20" value="6" step="0.5" id="sw-decay-fas" oninput="syncNumber('sw-decay-fas','sn-decay-fas')"><input type="number" id="sn-decay-fas" value="6" min="1" max="20" step="0.5" oninput="syncRange('sn-decay-fas','sw-decay-fas')"></div>
+      </div>
+      <div class="admin-btn-row">
+        <button class="admin-btn admin-btn-primary" id="admin-apply">✓ Terapkan & Hitung Ulang</button>
+        <button class="admin-btn admin-btn-reset" id="admin-reset">↺ Reset Default</button>
+        <button class="admin-btn admin-btn-secondary" id="admin-cancel">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const ANCHOR_ID=1;
+const perumahan=[
+  {id:1, nama:"GRIYA WIJAYA CIBOGO",     lat:-6.5578890,lng:107.8131269,tipe:"mix",    realisasi:0,  unit:1000,tahun:2023,developer:"PT WIJAYA INTAN NURYAKSA",       area:"Cibogo"},
+  {id:2, nama:"GRIYA PUTRA RESIDENCE",   lat:-6.5800351,lng:107.7797321,tipe:"subsidi",realisasi:100,unit:120, tahun:2024,developer:"PT BUMI CAHAYA PUTRA",           area:"Subang Kota"},
+  {id:3, nama:"GRAHA VILLAGE PURWADADI", lat:-6.4715672,lng:107.664008, tipe:"mix",    realisasi:200,unit:80,  tahun:2024,developer:"PT CIPTA WARNA PROPERTINDO",     area:"Purwadadi"},
+  {id:4, nama:"KALIS RESIDENCE 2",       lat:-6.5190817,lng:107.7829784,tipe:"subsidi",realisasi:300,unit:80,  tahun:2024,developer:"PT BUKIT JAYA PROPERTI",         area:"Pagaden"},
+  {id:5, nama:"PRIMA TALAGA SUNDA",      lat:-6.5627312,lng:107.7384974,tipe:"mix",    realisasi:70, unit:80,  tahun:2024,developer:"PT KOPRIMA SANDYSEJAHTERA",      area:"Subang Kota"},
+  {id:6, nama:"BUMI GEMILANG ASRI 2",    lat:-6.5235201,lng:107.6789249,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT MUGI MUKTI MUGHNI",           area:"Kalijati"},
+  {id:7, nama:"GRAND SUBANG RESIDENCE",  lat:-6.5412470,lng:107.7941358,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT CENTRAL VIRGINIA DEVELOPMENT",area:"Cibogo"},
+  {id:8, nama:"HARVA GRAND CITY",        lat:-6.5301219,lng:107.7758048,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT HARVA JAYA MANDIRI",          area:"Subang Kota"},
+  {id:9, nama:"STAVIA RESIDENCE",        lat:-6.5791547,lng:107.7514259,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT WAHANA ADIDAYA BANGUN",       area:"Subang Kota"},
+  {id:10,nama:"BUANA SUBANG RAYA 2",     lat:-6.5231573,lng:107.773106, tipe:"mix",    realisasi:70, unit:80,  tahun:2024,developer:"PT CIKAL BUANA PERSADA",         area:"Subang Kota"},
+  {id:11,nama:"THE GREEN PAGADEN",       lat:-6.4504546,lng:107.7882484,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT PERMATA TRI MANDIRI",         area:"Pagaden"},
+  {id:12,nama:"GRIYA INSUN MEDAL",       lat:-6.5324273,lng:107.7641417,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT ARTHA LAND PROPERTINDO",      area:"Subang Kota"},
+  {id:13,nama:"NUANSA SALAM JAYA",       lat:-6.4257767,lng:107.5756779,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT FAQIH PROPERTY MANDIRI",      area:"Pabuaran"},
+  {id:14,nama:"KALIS RESIDENCE TAHAP 2", lat:-6.5190817,lng:107.7829784,tipe:"subsidi",realisasi:70, unit:80,  tahun:2024,developer:"PT MITRA BORNEO PROPERTI",       area:"Pagaden"},
+  {id:15,nama:"KAMPOENG HIJAU",          lat:-6.5203685,lng:107.678239, tipe:"subsidi",realisasi:70, unit:80,  tahun:2023,developer:"PT ROMAN MULTI PROPERTIES",      area:"Kalijati"},
+  {id:16,nama:"MAHKOTA GRAHA",           lat:-6.5714464,lng:107.7748076,tipe:"subsidi",realisasi:70, unit:80,  tahun:2020,developer:"PT LIDER BAHTERA TOOLSINDO",     area:"Subang Kota"},
+  {id:17,nama:"SUBANG GREEN CITY",       lat:-6.5539431,lng:107.8029213,tipe:"mix",    realisasi:70, unit:80,  tahun:2017,developer:"PT GRAHAPRIMA SUKSESUTAMA",      area:"Cibogo"},
+];
+const poi=[
+  {nama:"RSUD Subang",                       lat:-6.557257,lng:107.747284,kat:"rs",      label:"RS",emoji:"🏥"},
+  {nama:"RS Mitra Plumbon",                  lat:-6.543243,lng:107.779872,kat:"rs",      label:"RS",emoji:"🏥"},
+  {nama:"RS HAMORI Pagaden",                 lat:-6.527665,lng:107.791289,kat:"rs",      label:"RS",emoji:"🏥"},
+  {nama:"RS PTPN VIII Subang",               lat:-6.568158,lng:107.762698,kat:"rs",      label:"RS",emoji:"🏥"},
+  {nama:"Klinik Hasna Medika",               lat:-6.559860,lng:107.777137,kat:"rs",      label:"RS",emoji:"🏥"},
+  {nama:"Universitas Subang",                lat:-6.577598,lng:107.782929,kat:"kampus",  label:"U", emoji:"🎓"},
+  {nama:"Politeknik Negeri Subang (Cibogo)", lat:-6.553000,lng:107.810000,kat:"kampus",  label:"U", emoji:"🎓"},
+  {nama:"Politeknik Negeri Subang (Ciereng)",lat:-6.570000,lng:107.768000,kat:"kampus",  label:"U", emoji:"🎓"},
+  {nama:"Yogya Grand Subang",                lat:-6.563381,lng:107.766748,kat:"mall",    label:"M", emoji:"🏬"},
+  {nama:"Pasar Pujasera Subang",             lat:-6.569098,lng:107.759447,kat:"mall",    label:"M", emoji:"🏬"},
+  {nama:"Exit Tol Subang",                   lat:-6.531840,lng:107.783652,kat:"tol",     label:"T", emoji:"🛣️"},
+  {nama:"Exit Tol Kalijati",                 lat:-6.509211,lng:107.678693,kat:"tol",     label:"T", emoji:"🛣️"},
+  {nama:"Stasiun Pagadenbaru",               lat:-6.487000,lng:107.792000,kat:"tol",     label:"S", emoji:"🚆"},
+  {nama:"Kantor Bupati Subang",              lat:-6.571548,lng:107.762397,kat:"pemda",   label:"G", emoji:"🏛️"},
+  {nama:"Komplek Perkantoran Kab. Subang",   lat:-6.572743,lng:107.762607,kat:"pemda",   label:"G", emoji:"🏛️"},
+  {nama:"Taifa Industrial Estate",           lat:-6.516994,lng:107.801795,kat:"industri",label:"I", emoji:"💼"},
+  {nama:"Subang Smartpolitan",               lat:-6.480000,lng:107.620000,kat:"industri",label:"I", emoji:"💼"},
+  {nama:"Kawasan Industri Cibogo",           lat:-6.538337,lng:107.834849,kat:"industri",label:"I", emoji:"💼"},
+  {nama:"Alun-Alun Kabupaten Subang",        lat:-6.569800,lng:107.759800,kat:"publik",  label:"P", emoji:"🌳"},
+  {nama:"Lapang Bintang Kota Subang",        lat:-6.562000,lng:107.763000,kat:"publik",  label:"P", emoji:"🌳"},
+  {nama:"Stadion Persikas",                  lat:-6.558000,lng:107.755000,kat:"publik",  label:"P", emoji:"⚽"},
+];
+const KAT_LABEL={rs:"RS/Klinik",kampus:"Kampus",mall:"Mall/Belanja",tol:"Transportasi",pemda:"Pemerintah",industri:"Industri",publik:"Ruang Publik"};
+const KAT_COLOR={rs:"#DC2626",kampus:"#059669",mall:"#7C3AED",tol:"#475569",pemda:"#1D4ED8",industri:"#92400E",publik:"#0891B2"};
+const TIPE_COLOR={subsidi:"#65A30D",mix:"#B45309"};
+const TIPE_DARK={subsidi:"#3B6D11",mix:"#854F0B"};
+const TIPE_BG={subsidi:"#ECFCCB",mix:"#FEF3C7"};
+const TIPE_LABEL={subsidi:"Subsidi",mix:"Mix-use"};
+
+// ═══════════════════════════════════════════
+// SCORING ENGINE v4 — 3 FACTOR FORMULA
+// ═══════════════════════════════════════════
+let FORMULA={
+  wAksesibilitas:50,wFasilitas:30,wFisik:20,
+  wTol:40,wCBD:40,wTransport:20,
+  wRS:30,wKampus:20,wMall:20,wPemda:10,wIndustri:10,wPublik:10,
+  decayAks:8,decayFas:6
+};
+function saveFormula(){try{localStorage.setItem('bm4_formula',JSON.stringify(FORMULA));}catch(e){}}
+function loadFormula(){try{const s=localStorage.getItem('bm4_formula');if(s)FORMULA={...FORMULA,...JSON.parse(s)};}catch(e){}}
+loadFormula();
+
+function haversine(la1,ln1,la2,ln2){
+  const R=6371,dL=(la2-la1)*Math.PI/180,dN=(ln2-ln1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function travelMin(km){return Math.round(km/40*60);}
+function fmt(n){return n.toLocaleString('id');}
+function pct(r,u){return u>0?Math.min(100,Math.round(r/u*100)):0;}
+function distToScore(km,decay){return Math.max(0,Math.round(100-(km*decay)));}
+function nearestByKat(p){
+  const res={};
+  poi.forEach(x=>{const d=haversine(p.lat,p.lng,x.lat,x.lng);if(!res[x.kat]||d<res[x.kat].dist)res[x.kat]={...x,dist:d};});
+  return res;
+}
+function calcScoreFull(p){
+  const nb=nearestByKat(p);
+  // Faktor 1: Aksesibilitas
+  const tolPOI=poi.filter(x=>x.kat==='tol'&&x.nama.includes('Exit'));
+  const cbdPOI=poi.filter(x=>x.kat==='pemda');
+  const trPOI=poi.filter(x=>x.kat==='tol'&&!x.nama.includes('Exit'));
+  const distTol=tolPOI.length?Math.min(...tolPOI.map(x=>haversine(p.lat,p.lng,x.lat,x.lng))):15;
+  const distCBD=cbdPOI.length?Math.min(...cbdPOI.map(x=>haversine(p.lat,p.lng,x.lat,x.lng))):15;
+  const distTr=trPOI.length?Math.min(...trPOI.map(x=>haversine(p.lat,p.lng,x.lat,x.lng))):15;
+  const scoreTol=distToScore(distTol,FORMULA.decayAks);
+  const scoreCBD=distToScore(distCBD,FORMULA.decayAks);
+  const scoreTr=distToScore(distTr,FORMULA.decayFas);
+  const scoreAks=Math.round((scoreTol*FORMULA.wTol/100)+(scoreCBD*FORMULA.wCBD/100)+(scoreTr*FORMULA.wTransport/100));
+  // Faktor 2: Fasilitas
+  const dRS=nb.rs?nb.rs.dist:20,dKampus=nb.kampus?nb.kampus.dist:20,dMall=nb.mall?nb.mall.dist:20;
+  const dPemda=nb.pemda?nb.pemda.dist:20,dIndustri=nb.industri?nb.industri.dist:20,dPublik=nb.publik?nb.publik.dist:20;
+  const scoreFas=Math.round(
+    (distToScore(dRS,FORMULA.decayFas)*FORMULA.wRS/100)+
+    (distToScore(dKampus,FORMULA.decayFas)*FORMULA.wKampus/100)+
+    (distToScore(dMall,FORMULA.decayFas)*FORMULA.wMall/100)+
+    (distToScore(dPemda,FORMULA.decayFas)*FORMULA.wPemda/100)+
+    (distToScore(dIndustri,FORMULA.decayFas)*FORMULA.wIndustri/100)+
+    (distToScore(dPublik,FORMULA.decayFas)*FORMULA.wPublik/100)
+  );
+  // Faktor 3: Kondisi Fisik (proxy)
+  const allDists=[dRS,dKampus,dMall,dIndustri,dPublik].filter(d=>d<20);
+  const avgDist=allDists.length?allDists.reduce((a,b)=>a+b,0)/allDists.length:15;
+  const scoreFisik=Math.min(100,Math.round(distToScore(avgDist,3)*0.85+15));
+  // Overall
+  const overall=Math.round((scoreAks*FORMULA.wAksesibilitas/100)+(scoreFas*FORMULA.wFasilitas/100)+(scoreFisik*FORMULA.wFisik/100));
+  return{overall,aksesibilitas:scoreAks,fasilitas:scoreFas,fisik:scoreFisik,
+    detail:{tol:{dist:distTol.toFixed(1),score:scoreTol},cbd:{dist:distCBD.toFixed(1),score:scoreCBD},
+      transport:{dist:distTr.toFixed(1),score:scoreTr},
+      rs:{dist:dRS.toFixed(1),score:distToScore(dRS,FORMULA.decayFas)},
+      kampus:{dist:dKampus.toFixed(1),score:distToScore(dKampus,FORMULA.decayFas)},
+      mall:{dist:dMall.toFixed(1),score:distToScore(dMall,FORMULA.decayFas)}}};
+}
+function calcScore(p){return calcScoreFull(p).overall;}
+function scoreGrade(s){
+  if(s>=85)return{g:"Prime Location",c:"#15803D"};
+  if(s>=75)return{g:"Sangat Strategis",c:"#2563EB"};
+  if(s>=65)return{g:"Strategis",c:"#D97706"};
+  if(s>=55)return{g:"Cukup Strategis",c:"#EA580C"};
+  return{g:"Kurang Strategis",c:"#DC2626"};
+}
+function recalcAll(){
+  perumahan.forEach(p=>{const r=calcScoreFull(p);p.score=r.overall;p._scoreDetail=r;});
+}
+recalcAll();
+
+// ============================================================
+// GOOGLE SHEETS INTEGRATION
+// ============================================================
+async function loadFromSheets() {
+  if (!USE_SHEETS) return false;
+  showSyncStatus('loading');
+  try {
+    const [rP, rPoi] = await Promise.all([
+      fetch(GAS_URL + '?action=getPerumahan').then(r => r.json()),
+      fetch(GAS_URL + '?action=getPoi').then(r => r.json())
+    ]);
+    if (rP.success && rP.data.length > 0) {
+      perumahan.length = 0;
+      rP.data.forEach(r => perumahan.push({
+        id: parseInt(r.id), nama: r.nama, area: r.area, tipe: r.tipe,
+        lat: parseFloat(r.lat), lng: parseFloat(r.lng),
+        developer: r.developer, unit: parseInt(r.unit)||0,
+        realisasi: parseInt(r.realisasi)||0, tahun: parseInt(r.tahun)||2024
+      }));
+    }
+    if (rPoi.success && rPoi.data.length > 0) {
+      poi.length = 0;
+      rPoi.data.forEach(r => poi.push({
+        nama: r.nama, lat: parseFloat(r.lat), lng: parseFloat(r.lng),
+        kat: r.kat, label: r.label||'P', emoji: r.emoji||'📍'
+      }));
+    }
+    showSyncStatus('ok');
+    return true;
+  } catch (e) {
+    showSyncStatus('error');
+    console.error('Sheets load error:', e);
+    return false;
+  }
+}
+
+async function saveToSheets() {
+  if (!USE_SHEETS) { saveToStorage(); return; }
+  showSyncStatus('saving');
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'savePerumahan', rows: perumahan })
+    });
+    await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'savePoi', rows: poi })
+    });
+    saveToStorage();
+    showSyncStatus('ok');
+    showToast('✅ Data tersimpan ke Google Sheets!');
+  } catch (e) {
+    saveToStorage();
+    showToast('⚠️ Gagal sync ke Sheets, tersimpan lokal');
+    showSyncStatus('error');
+  }
+}
+
+function showSyncStatus(status) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    loading: { text: '↻ Memuat dari Sheets...', color: '#2563EB' },
+    saving:  { text: '↻ Menyimpan ke Sheets...', color: '#D97706' },
+    ok:      { text: '● Tersinkron', color: '#15803D' },
+    error:   { text: '⚠ Mode Offline', color: '#DC2626' },
+    offline: { text: '● Mode Lokal', color: '#9B9A96' }
+  };
+  const s = map[status] || map.offline;
+  el.textContent = s.text;
+  el.style.color = s.color;
+}
+
+// MAP
+const map=L.map('map').setView([-6.530,107.740],11);
+const THEMES={
+  street:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© OpenStreetMap',maxZoom:19},
+  light:{url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',attr:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19},
+  dark:{url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',attr:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19},
+  satellite:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',attr:'© Esri',maxZoom:19},
+  topo:{url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr:'© OpenTopoMap',maxZoom:17}
+};
+let currentTheme='street';
+let tileLayer=L.tileLayer(THEMES.street.url,{attribution:THEMES.street.attr,maxZoom:19}).addTo(map);
+let currentFilter='all',radiusVisible=false,radiusKm=3,selectedId=null;
+let markers={},radiusCircles={},poiMarkers={},heatmapLayer=null,heatmapVisible=false;
+let activePoi={rs:true,kampus:true,mall:true,tol:true,pemda:true,industri:true,publik:true};
+
+perumahan.forEach(p=>{
+  const isAnch=p.id===ANCHOR_ID,color=TIPE_COLOR[p.tipe]||'#666',sz=isAnch?20:16;
+  const icon=L.divIcon({html:`<div style="position:relative;width:${sz}px;height:${sz}px;"><div class="${isAnch?'anchor-marker':'custom-marker'}" style="width:${sz}px;height:${sz}px;background:${color};"></div>${isAnch?'<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;">⭐</div>':''}</div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],className:''});
+  const marker=L.marker([p.lat,p.lng],{icon}).addTo(map);
+  marker.bindTooltip(`<b>${p.nama}</b><br>${p.area} · Skor: <b>${p.score}</b>`,{direction:'top',offset:[0,-10]});
+  marker.on('click',()=>selectPerumahan(p.id));
+  const circle=L.circle([p.lat,p.lng],{radius:radiusKm*1000,color,fillColor:color,fillOpacity:0.06,weight:1.5,dashArray:'4'});
+  markers[p.id]={marker,data:p};radiusCircles[p.id]=circle;
+});
+poi.forEach((x,i)=>{
+  const color=KAT_COLOR[x.kat]||'#666';
+  const icon=L.divIcon({html:`<div class="poi-marker-el" style="width:22px;height:22px;background:${color};">${x.label[0]}</div>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+  const m=L.marker([x.lat,x.lng],{icon,zIndexOffset:-100});
+  m.bindTooltip(`${x.emoji} ${x.nama}`,{direction:'top',offset:[0,-8]});
+  poiMarkers[i]={marker:m,data:x};
+  if(activePoi[x.kat])m.addTo(map);
+});
+
+// HEATMAP
+function buildHeatmap(){
+  if(heatmapLayer){map.removeLayer(heatmapLayer);heatmapLayer=null;}
+  if(!heatmapVisible)return;
+  const layers=[];
+  perumahan.forEach(p=>{
+    const s=p.score;let r,g,b;
+    if(s>=65){r=22;g=163;b=74;}else if(s>=50){r=217;g=119;b=6;}else{r=220;g=38;b=38;}
+    layers.push(L.circle([p.lat,p.lng],{radius:1400,color:`rgb(${r},${g},${b})`,fillColor:`rgb(${r},${g},${b})`,fillOpacity:0.2,weight:0}));
+  });
+  heatmapLayer=L.layerGroup(layers).addTo(map);
+}
+document.getElementById('heatmap-fab').addEventListener('click',()=>{
+  heatmapVisible=!heatmapVisible;
+  document.getElementById('heatmap-fab').classList.toggle('active',heatmapVisible);
+  buildHeatmap();
+});
+
+// RANKING
+function buildRanking(cat='overall'){
+  const sorted=[...perumahan].sort((a,b)=>{
+    if(cat==='overall')return b.score-a.score;
+    const na=nearestByKat(a),nb2=nearestByKat(b);
+    return (na[cat]?na[cat].dist:999)-(nb2[cat]?nb2[cat].dist:999);
+  });
+  const list=document.getElementById('ranking-list');
+  list.innerHTML=sorted.map((p,i)=>{
+    const isAnch=p.id===ANCHOR_ID;
+    let val,barPct;
+    if(cat==='overall'){val=`${p.score} pts`;barPct=p.score;}
+    else{const nb=nearestByKat(p),d=nb[cat]?nb[cat].dist.toFixed(1):'-';val=`${d} km`;barPct=nb[cat]?Math.max(0,100-(nb[cat].dist*8)):0;}
+    const color=isAnch?'var(--anchor)':'var(--accent)';
+    return`<div class="rank-item${selectedId===p.id?' selected':''}" data-id="${p.id}">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-body"><div class="rank-name">${isAnch?'⭐ ':''}${p.nama}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${barPct}%;background:${color}"></div></div></div>
+      <div class="rank-val" style="color:${color}">${val}</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.rank-item').forEach(el=>{el.addEventListener('click',()=>selectPerumahan(parseInt(el.dataset.id)));});
+}
+document.getElementById('rank-cat-select').addEventListener('change',function(){buildRanking(this.value);});
+buildRanking();
+
+// SELECT PERUMAHAN
+const anchor=perumahan.find(p=>p.id===ANCHOR_ID);
+function selectPerumahan(id){
+  selectedId=id;
+  const p=perumahan.find(x=>x.id===id);if(!p)return;
+  document.getElementById('perumahan-select').value=id;
+  document.getElementById('detail-empty').style.display='none';
+  const dc=document.getElementById('detail-content');
+  dc.style.display='flex';dc.style.flexDirection='column';dc.style.flex='1';dc.style.overflow='hidden';
+  const isAnch=p.id===ANCHOR_ID;
+  const nb=nearestByKat(p);
+  const pct_p=pct(p.realisasi,p.unit);
+  const pct_a=pct(anchor.realisasi,anchor.unit);
+  const sg=scoreGrade(p.score);
+  const cats=Object.keys(KAT_LABEL);
+  const sd=p._scoreDetail||calcScoreFull(p);
+
+  // TAB INFO
+  document.getElementById('tab-info').innerHTML=`
+    <div class="pill" style="background:${TIPE_BG[p.tipe]};color:${TIPE_DARK[p.tipe]}">${TIPE_LABEL[p.tipe]||p.tipe}</div>
+    ${isAnch?'<span class="anchor-badge">⭐ Anchor</span>':''}
+    <div class="d-name">${p.nama}</div>
+    <div class="d-area">📍 ${p.area} · Launching ${p.tahun}</div>
+    <div class="score-card">
+      <div><div class="score-label">Skor Lokasi</div><div class="score-big">${p.score}</div>
+      <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${p.score}%"></div></div></div>
+      <div style="flex:1"><div style="font-size:10px;opacity:0.8;margin-bottom:3px;">Grade</div>
+      <div class="score-grade">${sg.g}</div><div style="font-size:10px;opacity:0.65;margin-top:4px;">dari 100 poin</div></div>
+    </div>
+    <div class="score-breakdown">
+      <div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Breakdown Skor 3 Faktor</div>
+      <div class="sb-factor">
+        <div class="sb-factor-header"><span class="sb-factor-name">🚗 Aksesibilitas (${FORMULA.wAksesibilitas}%)</span><span class="sb-factor-score" style="color:#2563EB">${sd.aksesibilitas}</span></div>
+        <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${sd.aksesibilitas}%;background:#2563EB"></div></div>
+        <div class="sb-sub"><span>Exit Tol: ${sd.detail.tol.dist}km (${sd.detail.tol.score}pts)</span><span>CBD: ${sd.detail.cbd.dist}km (${sd.detail.cbd.score}pts)</span><span>Transport: ${sd.detail.transport.dist}km</span></div>
+      </div>
+      <div class="sb-factor">
+        <div class="sb-factor-header"><span class="sb-factor-name">🏥 Fasilitas & Infrastruktur (${FORMULA.wFasilitas}%)</span><span class="sb-factor-score" style="color:#059669">${sd.fasilitas}</span></div>
+        <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${sd.fasilitas}%;background:#059669"></div></div>
+        <div class="sb-sub"><span>RS: ${sd.detail.rs.dist}km (${sd.detail.rs.score}pts)</span><span>Kampus: ${sd.detail.kampus.dist}km</span><span>Mall: ${sd.detail.mall.dist}km</span></div>
+      </div>
+      <div class="sb-factor">
+        <div class="sb-factor-header"><span class="sb-factor-name">🏗️ Kondisi Fisik (${FORMULA.wFisik}%)</span><span class="sb-factor-score" style="color:#D97706">${sd.fisik}</span></div>
+        <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${sd.fisik}%;background:#D97706"></div></div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="sl">Total Unit</div><div class="sv">${fmt(p.unit)}</div></div>
+      <div class="stat-box"><div class="sl">Realisasi</div><div class="sv">${fmt(p.realisasi)}</div></div>
+      <div class="stat-box"><div class="sl">Launching</div><div class="sv">${p.tahun}</div></div>
+      <div class="stat-box"><div class="sl">Progress</div><div class="sv">${pct_p}%</div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-label"><span>Progress Realisasi</span><span style="font-weight:700">${pct_p}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct_p}%;background:${TIPE_COLOR[p.tipe]||'#666'}"></div></div>
+    </div>
+    <div class="section-title">Fasilitas Terdekat per Kategori</div>
+    ${cats.map(k=>!nb[k]?'':
+      `<div class="poi-row"><div class="poi-left"><div class="poi-icon" style="background:${KAT_COLOR[k]}">${nb[k].label[0]}</div>
+      <div><div class="poi-name">${nb[k].nama}</div><div class="poi-cat">${KAT_LABEL[k]}</div></div></div>
+      <div class="poi-dist"><div class="km">${nb[k].dist.toFixed(1)} km</div><div class="mn">${travelMin(nb[k].dist)} mnt</div></div></div>`).join('')}
+    <div class="stat-box" style="margin-top:12px;font-size:11px;line-height:1.5;"><div class="sl">Developer</div>${p.developer}</div>
+    <div class="coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+  `;
+
+  // TAB COMPARE
+  const nb_a=nearestByKat(anchor);
+  const sd_a=anchor._scoreDetail||calcScoreFull(anchor);
+  const cmpRows=cats.map(k=>{
+    const a=nb[k],b=nb_a[k];if(!a||!b)return'';
+    const da=a.dist.toFixed(1),db=b.dist.toFixed(1);
+    const aWin=parseFloat(da)<=parseFloat(db),tie=da===db;
+    return`<div class="cmp-row"><div class="cmp-lc">${a.emoji||'📍'} ${KAT_LABEL[k]}</div>
+      <div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-win':'cmp-lose'}">${da} km</div>
+      <div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-lose':'cmp-win'}">${db} km</div></div>`;
+  }).join('');
+  const uW=p.unit>=anchor.unit,uT=p.unit===anchor.unit;
+  const rW=p.realisasi>=anchor.realisasi,rT=p.realisasi===anchor.realisasi;
+  const pW=pct_p>=pct_a,pT=pct_p===pct_a;
+  const tW=p.tahun>=anchor.tahun,tT=p.tahun===anchor.tahun;
+  const sW=p.score>=anchor.score,sT=p.score===anchor.score;
+  const akW=sd.aksesibilitas>=sd_a.aksesibilitas,akT=sd.aksesibilitas===sd_a.aksesibilitas;
+  const fasW=sd.fasilitas>=sd_a.fasilitas,fasT=sd.fasilitas===sd_a.fasilitas;
+  document.getElementById('tab-compare').innerHTML=isAnch
+    ?`<div style="text-align:center;padding:40px 16px;color:var(--faint);font-size:13px;line-height:1.8">Ini adalah perumahan anchor.<br>Pilih perumahan lain untuk perbandingan.</div>`
+    :`<div class="cmp-header">
+        <div class="cmp-box" style="background:${TIPE_BG[p.tipe]};color:${TIPE_DARK[p.tipe]}"><div class="cl">Dipilih</div><div class="cn">${p.nama}</div><div class="ca">${p.area}</div></div>
+        <div class="cmp-box" style="background:var(--anchor-light);color:var(--anchor)"><div class="cl">⭐ Anchor</div><div class="cn">${anchor.nama}</div><div class="ca">${anchor.area}</div></div>
+      </div>
+      <div class="section-title">Skor Faktor</div>
+      <div class="cmp-row" style="background:var(--bg);border-radius:6px;padding:5px 8px;"><div class="cmp-lc" style="font-weight:600">Faktor</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--muted)">Dipilih</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--anchor)">⭐ Anchor</div></div>
+      <div class="cmp-row"><div class="cmp-lc">🏆 Skor Total</div><div class="cmp-val ${sT?'cmp-tie':sW?'cmp-win':'cmp-lose'}">${p.score}</div><div class="cmp-val ${sT?'cmp-tie':sW?'cmp-lose':'cmp-win'}">${anchor.score}</div></div>
+      <div class="cmp-row"><div class="cmp-lc">🚗 Aksesibilitas</div><div class="cmp-val ${akT?'cmp-tie':akW?'cmp-win':'cmp-lose'}">${sd.aksesibilitas}</div><div class="cmp-val ${akT?'cmp-tie':akW?'cmp-lose':'cmp-win'}">${sd_a.aksesibilitas}</div></div>
+      <div class="cmp-row"><div class="cmp-lc">🏥 Fasilitas</div><div class="cmp-val ${fasT?'cmp-tie':fasW?'cmp-win':'cmp-lose'}">${sd.fasilitas}</div><div class="cmp-val ${fasT?'cmp-tie':fasW?'cmp-lose':'cmp-win'}">${sd_a.fasilitas}</div></div>
+      <div class="section-title">Jarak ke Fasilitas</div>
+      <div class="cmp-row" style="background:var(--bg);border-radius:6px;padding:5px 8px;"><div class="cmp-lc" style="font-weight:600">Kategori</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--muted)">Dipilih</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--anchor)">⭐ Anchor</div></div>
+      ${cmpRows}
+      <div class="section-title">Data Proyek</div>
+      <div class="cmp-row"><div class="cmp-lc">Total Unit</div><div class="cmp-val ${uT?'cmp-tie':uW?'cmp-win':'cmp-lose'}">${fmt(p.unit)}</div><div class="cmp-val ${uT?'cmp-tie':uW?'cmp-lose':'cmp-win'}">${fmt(anchor.unit)}</div></div>
+      <div class="cmp-row"><div class="cmp-lc">Realisasi</div><div class="cmp-val ${rT?'cmp-tie':rW?'cmp-win':'cmp-lose'}">${fmt(p.realisasi)}</div><div class="cmp-val ${rT?'cmp-tie':rW?'cmp-lose':'cmp-win'}">${fmt(anchor.realisasi)}</div></div>
+      <div class="cmp-row"><div class="cmp-lc">Progress</div><div class="cmp-val ${pT?'cmp-tie':pW?'cmp-win':'cmp-lose'}">${pct_p}%</div><div class="cmp-val ${pT?'cmp-tie':pW?'cmp-lose':'cmp-win'}">${pct_a}%</div></div>
+      <div class="cmp-row"><div class="cmp-lc">Launching</div><div class="cmp-val ${tT?'cmp-tie':tW?'cmp-win':'cmp-lose'}">${p.tahun}</div><div class="cmp-val ${tT?'cmp-tie':tW?'cmp-lose':'cmp-win'}">${anchor.tahun}</div></div>
+    `;
+
+  // TAB RADAR
+  document.getElementById('tab-radar').innerHTML=`
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px;">Profil kekuatan lokasi per kategori fasilitas</div>
+    <canvas id="radar-canvas" width="280" height="260" style="width:100%;max-width:280px;display:block;margin:0 auto 10px;"></canvas>
+    ${!isAnch?`<div style="display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--muted)">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dipilih</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#D97706;display:inline-block;border-radius:2px;"></span>Anchor</span>
+    </div>`:''}
+  `;
+  setTimeout(()=>drawRadar(nb,isAnch?null:nb_a,cats),50);
+
+  // TAB NEARBY
+  const near=perumahan.filter(x=>x.id!==p.id).map(x=>({...x,dist:haversine(p.lat,p.lng,x.lat,x.lng)})).sort((a,b)=>a.dist-b.dist).slice(0,6);
+  document.getElementById('tab-nearby').innerHTML=`
+    <div class="section-title">6 Perumahan Terdekat</div>
+    ${near.map(x=>`<div class="nearby-row">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+        <span class="nearby-dot" style="background:${TIPE_COLOR[x.tipe]}"></span>
+        <div><div class="nearby-name">${x.id===ANCHOR_ID?'⭐ ':''}${x.nama}</div>
+        <div class="nearby-sub">${x.area} · ${TIPE_LABEL[x.tipe]||x.tipe} · Skor: ${x.score}</div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0"><div class="nearby-dist">${x.dist.toFixed(1)} km</div><div class="nearby-min">${travelMin(x.dist)} mnt</div></div>
+    </div>`).join('')}
+  `;
+
+  map.flyTo([p.lat,p.lng],13,{duration:0.7});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="info"]').classList.add('active');
+  document.getElementById('tab-info').classList.add('active');
+  buildRanking(document.getElementById('rank-cat-select').value);
+}
+
+// RADAR
+function drawRadar(nb,nb_a,cats){
+  const canvas=document.getElementById('radar-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=280,H=260,cx=140,cy=135,R=90,n=cats.length;
+  ctx.clearRect(0,0,W,H);
+  const angles=cats.map((_,i)=>(-Math.PI/2)+(2*Math.PI*i/n));
+  for(let r=0.25;r<=1;r+=0.25){
+    ctx.beginPath();angles.forEach((a,i)=>{const x=cx+R*r*Math.cos(a),y=cy+R*r*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();ctx.strokeStyle=`rgba(0,0,0,${r===1?0.12:0.05})`;ctx.lineWidth=r===1?1.5:1;ctx.stroke();
+  }
+  angles.forEach(a=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineWidth=1;ctx.stroke();});
+  ctx.font='bold 9px DM Sans,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#5F5E5A';
+  angles.forEach((a,i)=>{const lx=cx+(R+15)*Math.cos(a),ly=cy+(R+15)*Math.sin(a);ctx.fillText(cats[i].toUpperCase().slice(0,4),lx,ly);});
+  function sc(nbD,k){if(!nbD||!nbD[k])return 0;return Math.max(0,Math.min(1,(100-(nbD[k].dist*FORMULA.decayFas))/100));}
+  function shape(nbD,color,alpha){
+    ctx.beginPath();angles.forEach((a,i)=>{const s=sc(nbD,cats[i]),x=cx+R*s*Math.cos(a),y=cy+R*s*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();ctx.fillStyle=color.replace('rgb','rgba').replace(')',`,${alpha})`);ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+    angles.forEach((a,i)=>{const s=sc(nbD,cats[i]),x=cx+R*s*Math.cos(a),y=cy+R*s*Math.sin(a);ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();});
+  }
+  if(nb_a)shape(nb_a,'rgb(217,119,6)',0.12);
+  shape(nb,'rgb(37,99,235)',0.18);
+}
+
+// POI TOGGLE
+document.querySelectorAll('.poi-chip').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const kat=this.dataset.kat;activePoi[kat]=!activePoi[kat];
+    this.classList.toggle('active',activePoi[kat]);
+    Object.values(poiMarkers).forEach(({marker,data})=>{if(data.kat===kat){activePoi[kat]?marker.addTo(map):map.removeLayer(marker);}});
+  });
+});
+
+// FILTER
+function applyFilter(){
+  let count=0;
+  Object.values(markers).forEach(({marker,data})=>{
+    const show=currentFilter==='all'||data.tipe===currentFilter;
+    show?marker.addTo(map):map.removeLayer(marker);if(show)count++;
+  });
+  Object.entries(radiusCircles).forEach(([id,c])=>{
+    const data=markers[id].data;
+    const show=radiusVisible&&(currentFilter==='all'||data.tipe===currentFilter);
+    show?c.addTo(map):map.removeLayer(c);
+  });
+  document.getElementById('stat-total').textContent=count;
+}
+document.querySelectorAll('.chip[data-filter]').forEach(btn=>{
+  btn.addEventListener('click',function(){document.querySelectorAll('.chip[data-filter]').forEach(b=>b.classList.remove('active'));this.classList.add('active');currentFilter=this.dataset.filter;applyFilter();});
+});
+document.getElementById('toggle-radius').addEventListener('change',function(){radiusVisible=this.checked;applyFilter();});
+document.getElementById('radius-slider').addEventListener('input',function(){
+  radiusKm=parseInt(this.value);document.getElementById('radius-val').textContent=radiusKm+' km';
+  Object.values(radiusCircles).forEach(c=>c.setRadius(radiusKm*1000));
+});
+
+// DROPDOWN
+const sel=document.getElementById('perumahan-select');
+perumahan.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=`${p.id===ANCHOR_ID?'⭐ ':''}${p.nama} (${p.area})`;sel.appendChild(o);});
+sel.addEventListener('change',function(){if(this.value)selectPerumahan(parseInt(this.value));else{selectedId=null;buildRanking(document.getElementById('rank-cat-select').value);}});
+
+// TABS
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+    this.classList.add('active');document.getElementById('tab-'+this.dataset.tab).classList.add('active');
+    if(this.dataset.tab==='radar'&&selectedId){
+      const p=perumahan.find(x=>x.id===selectedId);
+      const nb=nearestByKat(p),cats=Object.keys(KAT_LABEL),isAnch=p.id===ANCHOR_ID;
+      setTimeout(()=>drawRadar(nb,isAnch?null:nearestByKat(anchor),cats),50);
+    }
+  });
+});
+
+document.getElementById('stat-unit').textContent=fmt(perumahan.reduce((s,p)=>s+p.unit,0));
+document.getElementById('stat-real').textContent=fmt(perumahan.reduce((s,p)=>s+p.realisasi,0));
+
+// LOCALSTORAGE
+const DEFAULT_DATA=JSON.stringify({perumahan:[...perumahan],poi:[...poi]});
+function saveToStorage(){
+  try{
+    localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));
+    const b=document.getElementById('autosave-badge');b.style.display='flex';
+    clearTimeout(window._saveTimer);window._saveTimer=setTimeout(()=>b.style.display='none',2500);
+  }catch(e){}
+}
+function loadFromStorage(){
+  try{
+    const d=localStorage.getItem('bm4_data');if(!d)return false;
+    const parsed=JSON.parse(d);
+    if(parsed.perumahan&&parsed.perumahan.length>0){perumahan.length=0;parsed.perumahan.forEach(p=>perumahan.push(p));}
+    if(parsed.poi&&parsed.poi.length>0){poi.length=0;parsed.poi.forEach(x=>poi.push(x));}
+    return true;
+  }catch(e){return false;}
+}
+if(loadFromStorage()){recalcAll();terapkanKePeta(true);}
+
+// THEME
+function setTheme(name){
+  if(!THEMES[name])return;
+  map.removeLayer(tileLayer);
+  const t=THEMES[name];
+  tileLayer=L.tileLayer(t.url,{attribution:t.attr,maxZoom:t.maxZoom||19,subdomains:t.subdomains||'abc'}).addTo(map);
+  currentTheme=name;
+  document.querySelectorAll('.theme-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('theme-'+name).classList.add('active');
+  localStorage.setItem('bm4_theme',name);
+}
+const savedTheme=localStorage.getItem('bm4_theme');
+if(savedTheme&&THEMES[savedTheme]&&savedTheme!=='street')setTheme(savedTheme);
+
+// SETTINGS
+function openSettings(){document.getElementById('settings-overlay').classList.add('open');}
+function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
+function closeSettingsOutside(e){if(e.target.id==='settings-overlay')closeSettings();}
+function toggleComp(id,show){const el=document.getElementById(id);if(!el)return;el.style.display=show?'':'none';if(id==='sidebar-left-wrap'||id==='sidebar-right-wrap')map.invalidateSize();}
+
+// CHART
+function buildChart(){
+  const bars=document.getElementById('chart-bars');if(!bars)return;
+  const sorted=[...perumahan].sort((a,b)=>(b.realisasi/b.unit)-(a.realisasi/a.unit));
+  bars.innerHTML=sorted.map(p=>{
+    const pc=p.unit>0?Math.min(100,Math.round(p.realisasi/p.unit*100)):0;
+    const color=TIPE_COLOR[p.tipe]||'#65A30D';
+    return`<div class="bar-col"><div class="bar-bg"><div class="bar-pct">${pc}%</div><div class="bar-fill" style="height:${pc}%;background:${color};"></div></div>
+    <div class="bar-lbl" title="${p.nama}">${p.nama.split(' ').slice(0,2).join(' ')}</div></div>`;
+  }).join('');
+}
+function toggleChart(){
+  const panel=document.getElementById('chart-panel');const btn=document.getElementById('btn-chart');
+  const open=!panel.classList.contains('open');panel.classList.toggle('open',open);btn.classList.toggle('active',open);
+  if(open)buildChart();
+}
+
+// TOAST
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+
+// EDITOR
+const KAT_EMOJI_E={rs:'🏥',kampus:'🎓',mall:'🏬',tol:'🛣️',pemda:'🏛️',industri:'💼',publik:'🌳'};
+const KAT_LBL_E={rs:'RS',kampus:'U',mall:'M',tol:'T',pemda:'G',industri:'I',publik:'P'};
+function toggleEditor(){
+  const ov=document.getElementById('editor-overlay');const btn=document.getElementById('btn-editor');
+  const open=!ov.classList.contains('open');ov.classList.toggle('open',open);btn.classList.toggle('active',open);
+  btn.textContent=open?'✖ Tutup Editor':'✏️ Edit Data';
+  if(open){renderEPerumahan();renderEPoi();}
+}
+function switchEtab(tab){
+  document.getElementById('etab-perumahan').style.display=tab==='perumahan'?'':'none';
+  document.getElementById('etab-poi').style.display=tab==='poi'?'':'none';
+  document.querySelectorAll('.etab').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='perumahan')||(i===1&&tab==='poi')));
+}
+function renderEPerumahan(){
+  document.getElementById('ecnt-p').textContent='('+perumahan.length+')';
+  document.getElementById('etbody-p').innerHTML=perumahan.map((p,i)=>`
+    <tr><td style="color:var(--faint);font-family:'DM Mono',monospace;font-size:11px;">${i+1}${i===0?'⭐':''}</td>
+      <td><input type="text" value="${p.nama}" onchange="perumahan[${i}].nama=this.value;autoSaveDelay()" style="min-width:145px;"></td>
+      <td><input type="text" value="${p.area}" onchange="perumahan[${i}].area=this.value;autoSaveDelay()" style="min-width:88px;"></td>
+      <td><select onchange="perumahan[${i}].tipe=this.value;autoSaveDelay()"><option value="subsidi" ${p.tipe==='subsidi'?'selected':''}>Subsidi</option><option value="mix" ${p.tipe==='mix'?'selected':''}>Mix-use</option></select></td>
+      <td><input type="number" value="${p.lat}" onchange="perumahan[${i}].lat=parseFloat(this.value);autoSaveDelay()" step="0.0000001" style="min-width:100px;font-size:11px;font-family:'DM Mono',monospace;"></td>
+      <td><input type="number" value="${p.lng}" onchange="perumahan[${i}].lng=parseFloat(this.value);autoSaveDelay()" step="0.0000001" style="min-width:100px;font-size:11px;font-family:'DM Mono',monospace;"></td>
+      <td><input type="text" value="${p.developer}" onchange="perumahan[${i}].developer=this.value;autoSaveDelay()" style="min-width:135px;"></td>
+      <td><input type="number" value="${p.unit}" onchange="perumahan[${i}].unit=parseInt(this.value)||0;autoSaveDelay()" style="min-width:55px;"></td>
+      <td><input type="number" value="${p.realisasi}" onchange="perumahan[${i}].realisasi=parseInt(this.value)||0;autoSaveDelay()" style="min-width:65px;"></td>
+      <td><input type="number" value="${p.tahun}" onchange="perumahan[${i}].tahun=parseInt(this.value)||2024;autoSaveDelay()" style="min-width:60px;"></td>
+      <td><button class="btn-danger-sm" onclick="deleteEP(${i})">Hapus</button></td>
+    </tr>`).join('');
+}
+function renderEPoi(){
+  document.getElementById('ecnt-poi').textContent='('+poi.length+')';
+  document.getElementById('etbody-poi').innerHTML=poi.map((x,i)=>`
+    <tr><td style="color:var(--faint);font-family:'DM Mono',monospace;font-size:11px;">${i+1}</td>
+      <td><input type="text" value="${x.nama}" onchange="poi[${i}].nama=this.value;autoSaveDelay()" style="min-width:190px;"></td>
+      <td><select onchange="poi[${i}].kat=this.value;poi[${i}].label=KAT_LBL_E[this.value];poi[${i}].emoji=KAT_EMOJI_E[this.value];autoSaveDelay();">${Object.entries(KAT_LABEL).map(([k,v])=>`<option value="${k}" ${x.kat===k?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td><input type="number" value="${x.lat}" onchange="poi[${i}].lat=parseFloat(this.value);autoSaveDelay()" step="0.0000001" style="min-width:100px;font-size:11px;font-family:'DM Mono',monospace;"></td>
+      <td><input type="number" value="${x.lng}" onchange="poi[${i}].lng=parseFloat(this.value);autoSaveDelay()" step="0.0000001" style="min-width:100px;font-size:11px;font-family:'DM Mono',monospace;"></td>
+      <td><button class="btn-danger-sm" onclick="deleteEPoi(${i})">Hapus</button></td>
+    </tr>`).join('');
+}
+let _autoSaveTimer=null;
+function autoSaveDelay(){clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(saveToStorage,800);}
+function deleteEP(i){if(!confirm('Hapus "'+perumahan[i].nama+'"?'))return;perumahan.splice(i,1);perumahan.forEach((p,idx)=>p.id=idx+1);renderEPerumahan();saveToStorage();showToast('🗑️ Dihapus');}
+function deleteEPoi(i){if(!confirm('Hapus "'+poi[i].nama+'"?'))return;poi.splice(i,1);renderEPoi();saveToStorage();showToast('🗑️ Dihapus');}
+function addPerumahan(){
+  const nama=document.getElementById('enp-nama').value.trim();
+  const area=document.getElementById('enp-area').value.trim();
+  const tipe=document.getElementById('enp-tipe').value;
+  const lat=parseFloat(document.getElementById('enp-lat').value);
+  const lng=parseFloat(document.getElementById('enp-lng').value);
+  const dev=document.getElementById('enp-dev').value.trim()||'-';
+  const unit=parseInt(document.getElementById('enp-unit').value)||80;
+  const real=parseInt(document.getElementById('enp-real').value)||0;
+  const thn=parseInt(document.getElementById('enp-tahun').value)||2024;
+  if(!nama||!area||isNaN(lat)||isNaN(lng)){showToast('⚠️ Nama, Area, Lat, Lng wajib diisi!');return;}
+  const newId=perumahan.length>0?Math.max(...perumahan.map(p=>p.id))+1:1;
+  perumahan.push({id:newId,nama:nama.toUpperCase(),lat,lng,tipe,realisasi:real,unit,tahun:thn,developer:dev,area});
+  ['enp-nama','enp-area','enp-lat','enp-lng','enp-dev','enp-unit','enp-real','enp-tahun'].forEach(id=>document.getElementById(id).value='');
+  renderEPerumahan();saveToStorage();showToast('✅ Perumahan ditambahkan!');
+}
+function addPoi(){
+  const nama=document.getElementById('epoi-nama').value.trim();
+  const kat=document.getElementById('epoi-kat').value;
+  const lat=parseFloat(document.getElementById('epoi-lat').value);
+  const lng=parseFloat(document.getElementById('epoi-lng').value);
+  if(!nama||isNaN(lat)||isNaN(lng)){showToast('⚠️ Nama, Lat, Lng wajib diisi!');return;}
+  poi.push({nama,lat,lng,kat,label:KAT_LBL_E[kat],emoji:KAT_EMOJI_E[kat]});
+  ['epoi-nama','epoi-lat','epoi-lng'].forEach(id=>document.getElementById(id).value='');
+  renderEPoi();saveToStorage();showToast('✅ POI ditambahkan!');
+}
+function resetData(){
+  if(!confirm('Reset semua data ke kondisi awal?'))return;
+  const def=JSON.parse(DEFAULT_DATA);
+  perumahan.length=0;def.perumahan.forEach(p=>perumahan.push(p));
+  poi.length=0;def.poi.forEach(x=>poi.push(x));
+  localStorage.removeItem('bm4_data');
+  renderEPerumahan();renderEPoi();terapkanKePeta(true);showToast('↩ Data direset ke awal');
+}
+function terapkanKePeta(silent=false){
+  Object.values(markers).forEach(({marker})=>map.removeLayer(marker));
+  Object.values(radiusCircles).forEach(c=>map.removeLayer(c));
+  Object.values(poiMarkers).forEach(({marker})=>map.removeLayer(marker));
+  markers={};radiusCircles={};poiMarkers={};
+  if(heatmapLayer){map.removeLayer(heatmapLayer);heatmapLayer=null;heatmapVisible=false;document.getElementById('heatmap-fab').classList.remove('active');}
+  recalcAll();
+  perumahan.forEach(p=>{
+    const isAnch=p.id===ANCHOR_ID,color=TIPE_COLOR[p.tipe]||'#666',sz=isAnch?20:16;
+    const icon=L.divIcon({html:`<div style="position:relative;width:${sz}px;height:${sz}px;"><div class="${isAnch?'anchor-marker':'custom-marker'}" style="width:${sz}px;height:${sz}px;background:${color};"></div>${isAnch?'<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;">⭐</div>':''}</div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],className:''});
+    const marker=L.marker([p.lat,p.lng],{icon}).addTo(map);
+    marker.bindTooltip(`<b>${p.nama}</b><br>${p.area} · Skor: <b>${p.score}</b>`,{direction:'top',offset:[0,-10]});
+    marker.on('click',()=>selectPerumahan(p.id));
+    const circle=L.circle([p.lat,p.lng],{radius:radiusKm*1000,color,fillColor:color,fillOpacity:0.06,weight:1.5,dashArray:'4'});
+    markers[p.id]={marker,data:p};radiusCircles[p.id]=circle;
+  });
+  poi.forEach((x,i)=>{
+    const color=KAT_COLOR[x.kat]||'#666';
+    const icon=L.divIcon({html:`<div class="poi-marker-el" style="width:22px;height:22px;background:${color};">${(x.label||'P')[0]}</div>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+    const m=L.marker([x.lat,x.lng],{icon,zIndexOffset:-100});
+    m.bindTooltip(`${x.emoji||'📍'} ${x.nama}`,{direction:'top',offset:[0,-8]});
+    poiMarkers[i]={marker:m,data:x};if(activePoi[x.kat])m.addTo(map);
+  });
+  const s=document.getElementById('perumahan-select');
+  s.innerHTML='<option value="">— Semua Perumahan —</option>';
+  perumahan.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=(p.id===ANCHOR_ID?'⭐ ':'')+p.nama+' ('+p.area+')';s.appendChild(o);});
+  document.getElementById('stat-unit').textContent=fmt(perumahan.reduce((s,p)=>s+p.unit,0));
+  document.getElementById('stat-real').textContent=fmt(perumahan.reduce((s,p)=>s+p.realisasi,0));
+  applyFilter();buildRanking(document.getElementById('rank-cat-select').value);
+  selectedId=null;
+  document.getElementById('detail-empty').style.display='';
+  document.getElementById('detail-content').style.display='none';
+  if(document.getElementById('chart-panel').classList.contains('open'))buildChart();
+  if(!silent)saveToSheets();else saveToStorage();
+  if(!silent){showToast('✅ Peta diperbarui!');toggleEditor();}
+}
+
+// ═══════════════════════════════════════════
+// ADMIN FORMULA PANEL
+// ═══════════════════════════════════════════
+function syncNumber(rId,nId){document.getElementById(nId).value=document.getElementById(rId).value;}
+function syncRange(nId,rId){document.getElementById(rId).value=document.getElementById(nId).value;}
+function updateWeightTotal(){
+  const total=parseInt(document.getElementById('w-aksesibilitas').value||0)+parseInt(document.getElementById('w-fasilitas').value||0)+parseInt(document.getElementById('w-fisik').value||0);
+  const el=document.getElementById('weight-total-display');
+  el.textContent=`Total: ${total}% ${total===100?'✓':'⚠ harus = 100%'}`;
+  el.className='weight-total '+(total===100?'ok':'bad');
+}
+['w-aksesibilitas','w-fasilitas','w-fisik'].forEach(id=>{document.getElementById(id).addEventListener('input',updateWeightTotal);});
+function loadAdminValues(){
+  document.getElementById('w-aksesibilitas').value=FORMULA.wAksesibilitas;
+  document.getElementById('w-fasilitas').value=FORMULA.wFasilitas;
+  document.getElementById('w-fisik').value=FORMULA.wFisik;
+  ['tol','cbd','transport'].forEach(k=>{document.getElementById('sw-'+k).value=FORMULA['w'+k.charAt(0).toUpperCase()+k.slice(1)];document.getElementById('sn-'+k).value=FORMULA['w'+k.charAt(0).toUpperCase()+k.slice(1)];});
+  document.getElementById('sw-tol').value=FORMULA.wTol;document.getElementById('sn-tol').value=FORMULA.wTol;
+  document.getElementById('sw-cbd').value=FORMULA.wCBD;document.getElementById('sn-cbd').value=FORMULA.wCBD;
+  document.getElementById('sw-transport').value=FORMULA.wTransport;document.getElementById('sn-transport').value=FORMULA.wTransport;
+  document.getElementById('sw-rs').value=FORMULA.wRS;document.getElementById('sn-rs').value=FORMULA.wRS;
+  document.getElementById('sw-kampus').value=FORMULA.wKampus;document.getElementById('sn-kampus').value=FORMULA.wKampus;
+  document.getElementById('sw-mall').value=FORMULA.wMall;document.getElementById('sn-mall').value=FORMULA.wMall;
+  document.getElementById('sw-pemda').value=FORMULA.wPemda;document.getElementById('sn-pemda').value=FORMULA.wPemda;
+  document.getElementById('sw-industri').value=FORMULA.wIndustri;document.getElementById('sn-industri').value=FORMULA.wIndustri;
+  document.getElementById('sw-publik').value=FORMULA.wPublik;document.getElementById('sn-publik').value=FORMULA.wPublik;
+  document.getElementById('sw-decay-aks').value=FORMULA.decayAks;document.getElementById('sn-decay-aks').value=FORMULA.decayAks;
+  document.getElementById('sw-decay-fas').value=FORMULA.decayFas;document.getElementById('sn-decay-fas').value=FORMULA.decayFas;
+  updateWeightTotal();
+}
+document.getElementById('formula-trigger').addEventListener('click',()=>{loadAdminValues();document.getElementById('admin-overlay').classList.add('open');});
+document.getElementById('admin-close').addEventListener('click',()=>document.getElementById('admin-overlay').classList.remove('open'));
+document.getElementById('admin-cancel').addEventListener('click',()=>document.getElementById('admin-overlay').classList.remove('open'));
+document.getElementById('admin-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('admin-overlay'))document.getElementById('admin-overlay').classList.remove('open');});
+document.getElementById('admin-reset').addEventListener('click',()=>{
+  if(!confirm('Reset ke nilai default?'))return;
+  FORMULA={wAksesibilitas:50,wFasilitas:30,wFisik:20,wTol:40,wCBD:40,wTransport:20,wRS:30,wKampus:20,wMall:20,wPemda:10,wIndustri:10,wPublik:10,decayAks:8,decayFas:6};
+  loadAdminValues();
+});
+document.getElementById('admin-apply').addEventListener('click',()=>{
+  const wA=parseInt(document.getElementById('w-aksesibilitas').value);
+  const wF=parseInt(document.getElementById('w-fasilitas').value);
+  const wFi=parseInt(document.getElementById('w-fisik').value);
+  if(wA+wF+wFi!==100){alert('Total bobot faktor utama harus = 100%\nSekarang: '+(wA+wF+wFi)+'%');return;}
+  FORMULA.wAksesibilitas=wA;FORMULA.wFasilitas=wF;FORMULA.wFisik=wFi;
+  FORMULA.wTol=parseInt(document.getElementById('sn-tol').value);
+  FORMULA.wCBD=parseInt(document.getElementById('sn-cbd').value);
+  FORMULA.wTransport=parseInt(document.getElementById('sn-transport').value);
+  FORMULA.wRS=parseInt(document.getElementById('sn-rs').value);
+  FORMULA.wKampus=parseInt(document.getElementById('sn-kampus').value);
+  FORMULA.wMall=parseInt(document.getElementById('sn-mall').value);
+  FORMULA.wPemda=parseInt(document.getElementById('sn-pemda').value);
+  FORMULA.wIndustri=parseInt(document.getElementById('sn-industri').value);
+  FORMULA.wPublik=parseInt(document.getElementById('sn-publik').value);
+  FORMULA.decayAks=parseFloat(document.getElementById('sn-decay-aks').value);
+  FORMULA.decayFas=parseFloat(document.getElementById('sn-decay-fas').value);
+  saveFormula();recalcAll();
+  perumahan.forEach(p=>{if(markers[p.id])markers[p.id].marker.setTooltipContent(`<b>${p.nama}</b><br>${p.area} · Skor: <b>${p.score}</b>`);});
+  buildRanking(document.getElementById('rank-cat-select').value);
+  if(selectedId)selectPerumahan(selectedId);
+  document.getElementById('admin-overlay').classList.remove('open');
+  buildHeatmap();showToast('✅ Formula diperbarui & skor dihitung ulang!');
+  const t=document.getElementById('formula-trigger');t.textContent='✓';t.style.background='#ECFDF5';
+  setTimeout(()=>{t.textContent='⚙️';t.style.background='white';},1500);
+});
+
+
+// ============================================================
+// PASSWORD PROTECTION
+// Ganti BM4_PASSWORD di bawah dengan password pilihan kamu
+// ============================================================
+const BM4_PASSWORD = 'bm4property2024';
+const SESSION_KEY = 'bm4_auth';
+
+function doLogin() {
+  const input = document.getElementById('login-input').value;
+  const err = document.getElementById('login-error');
+  if (input === BM4_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    document.getElementById('login-screen').classList.add('hidden');
+    err.classList.remove('show');
+  } else {
+    err.classList.add('show');
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+  }
+}
+
+// Cek session — kalau sudah login sebelumnya di tab ini, langsung masuk
+(function checkAuth() {
+  if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
+    document.getElementById('login-screen').classList.add('hidden');
+  } else {
+    setTimeout(() => document.getElementById('login-input').focus(), 100);
+  }
+})();
+
+// ============================================================
+// STARTUP — Load dari Sheets kalau tersedia, fallback ke lokal
+// ============================================================
+(async function init() {
+  const savedTheme = localStorage.getItem('bm4_theme');
+  if (savedTheme && THEMES[savedTheme] && savedTheme !== 'street') setTheme(savedTheme);
+
+  if (USE_SHEETS) {
+    showSyncStatus('loading');
+    const loaded = await loadFromSheets();
+    if (loaded) {
+      recalcAll();
+      terapkanKePeta(true);
+    } else {
+      loadFromStorage();
+      recalcAll();
+      terapkanKePeta(true);
+      showSyncStatus('error');
+    }
+  } else {
+    showSyncStatus('offline');
+    if (loadFromStorage()) {
+      recalcAll();
+      terapkanKePeta(true);
+    }
+  }
+})();
+</script>
+</body>
+</html>
