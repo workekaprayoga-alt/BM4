@@ -2,7 +2,13 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BM4">
+<meta name="theme-color" content="#1C2B4A">
+<link rel="manifest" href='data:application/json,{"name":"BM4 Property Intelligence","short_name":"BM4","start_url":".","display":"standalone","background_color":"%231C2B4A","theme_color":"%231C2B4A","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 192 192\"%3E%3Crect width=\"192\" height=\"192\" rx=\"36\" fill=\"%231C2B4A\"/%3E%3Ctext x=\"96\" y=\"120\" font-family=\"sans-serif\" font-size=\"72\" font-weight=\"700\" fill=\"%2360A5FA\" text-anchor=\"middle\"%3EBM4%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'>
 <title>BM4 — Property Intelligence</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -286,6 +292,232 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1C1C1A;color:white;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;transition:transform 0.3s;pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);}
 
+/* ── ACCOUNT SYSTEM (Tim BM4 + Pengaturan Akun) ── */
+.tb-profile{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border-radius:20px;cursor:pointer;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);transition:all 0.15s;}
+.tb-profile:hover{background:rgba(255,255,255,0.18);}
+.tb-profile-avatar{width:28px;height:28px;border-radius:50%;background:#60A5FA;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden;flex-shrink:0;}
+.tb-profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.tb-profile-info{line-height:1.15;text-align:left;}
+.tb-profile-name{font-size:11px;font-weight:600;color:white;}
+.tb-profile-role{font-size:9px;color:#94A3B8;}
+
+/* Tim BM4 pane */
+.tim-wrap{flex:1;overflow-y:auto;padding:20px 24px;}
+.tim-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.tim-head-left h2{font-size:18px;font-weight:700;margin-bottom:2px;}
+.tim-head-left p{font-size:12px;color:var(--muted);}
+.tim-btn-add{background:var(--accent);color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;}
+.tim-btn-add:hover{background:#1D4ED8;}
+.tim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px;}
+.tim-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.15s;position:relative;}
+.tim-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.08);}
+.tim-card-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.tim-avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;overflow:hidden;}
+.tim-avatar img{width:100%;height:100%;object-fit:cover;}
+.tim-info-name{font-size:14px;font-weight:700;margin-bottom:2px;}
+.tim-info-jabatan{font-size:11px;color:var(--muted);}
+.tim-role-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-top:4px;}
+.tim-role-bm{background:#FEF3C7;color:#92400E;}
+.tim-role-sales{background:#DBEAFE;color:#1E40AF;}
+.tim-role-strategi{background:#F3E8FF;color:#6B21A8;}
+.tim-role-konstruksi{background:#FED7AA;color:#9A3412;}
+.tim-details{background:#FAFAF8;border-radius:8px;padding:9px 11px;margin-bottom:10px;}
+.tim-detail-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;}
+.tim-detail-lbl{color:var(--muted);}
+.tim-detail-val{font-weight:600;color:var(--text);font-family:'DM Mono',monospace;}
+.tim-pw-toggle{background:none;border:none;cursor:pointer;color:var(--accent);font-size:10px;margin-left:4px;font-family:inherit;}
+.tim-access-list{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.tim-access-chip{background:var(--accent-light);color:var(--accent);font-size:9px;font-weight:600;padding:2px 6px;border-radius:10px;}
+.tim-actions{display:flex;gap:6px;}
+.tim-btn-edit{flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.tim-btn-edit:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.tim-btn-del{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;border-radius:7px;padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.tim-btn-del:hover{background:#FECACA;}
+
+/* Log panel */
+.tim-log{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:16px;}
+.tim-log-title{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.tim-log-list{max-height:220px;overflow-y:auto;}
+.tim-log-item{padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;display:flex;justify-content:space-between;gap:10px;}
+.tim-log-item:last-child{border-bottom:none;}
+.tim-log-text{flex:1;color:var(--text);}
+.tim-log-time{color:var(--faint);font-size:10px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.tim-log-empty{text-align:center;color:var(--faint);font-size:11px;padding:14px 0;}
+
+/* Modal Form (Add/Edit Account) */
+.acc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;padding:16px;}
+.acc-modal-overlay.open{display:flex;}
+.acc-modal{background:white;border-radius:14px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.acc-modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.acc-modal-head h3{font-size:15px;font-weight:700;}
+.acc-modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;}
+.acc-modal-body{padding:16px 20px;}
+.acc-form-group{margin-bottom:12px;}
+.acc-form-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;display:block;}
+.acc-form-input{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:border-color 0.15s;}
+.acc-form-input:focus{border-color:var(--accent);}
+.acc-form-select{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);background:white;outline:none;}
+.acc-checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+.acc-checkbox{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--border);border-radius:7px;font-size:11px;cursor:pointer;user-select:none;}
+.acc-checkbox input{accent-color:var(--accent);cursor:pointer;}
+.acc-checkbox:has(input:checked){background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.acc-modal-actions{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--border);}
+.acc-btn-cancel{flex:1;background:var(--bg);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.acc-btn-save{flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.acc-btn-save:hover{background:#1D4ED8;}
+
+/* Pengaturan Akun Screen */
+#s-settings{background:var(--bg);align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;}
+.settings-card{background:white;border-radius:14px;padding:24px;width:100%;max-width:480px;box-shadow:0 4px 20px rgba(0,0,0,0.06);}
+.settings-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.settings-head h2{font-size:16px;font-weight:700;}
+.settings-back{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);}
+.settings-avatar-box{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;}
+.settings-avatar{width:90px;height:90px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;margin-bottom:10px;overflow:hidden;}
+.settings-avatar img{width:100%;height:100%;object-fit:cover;}
+.settings-upload-btn{background:var(--accent-light);color:var(--accent);border:1px dashed var(--accent);border-radius:7px;padding:7px 13px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.settings-upload-btn:hover{background:var(--accent);color:white;}
+.settings-name{font-size:15px;font-weight:700;text-align:center;margin-top:8px;}
+.settings-meta{font-size:11px;color:var(--muted);text-align:center;}
+.settings-section{margin-top:18px;padding-top:18px;border-top:1px solid var(--border);}
+.settings-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+
+/* Mobile FAB for menu (appears on mobile only) */
+.mobile-menu-btn{display:none;}
+
+/* ── GALERI TIM (NEW v10) ── */
+.galeri-wrap{flex:1;overflow-y:auto;padding:24px;background:linear-gradient(135deg,#F8FAFC 0%,#EFF6FF 100%);}
+.galeri-head{text-align:center;margin-bottom:28px;}
+.galeri-head h2{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--navy);}
+.galeri-head p{font-size:13px;color:var(--muted);}
+.galeri-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;max-width:1200px;margin:0 auto;}
+.galeri-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.3s;position:relative;}
+.galeri-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,0.12);}
+.galeri-card-banner{height:80px;position:relative;}
+.galeri-card-banner.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
+.galeri-card-banner.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
+.galeri-card-banner.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
+.galeri-card-banner.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
+.galeri-card-banner.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
+.galeri-card-banner.finance{background:linear-gradient(135deg,#10B981,#047857);}
+.galeri-card-avatar{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);width:88px;height:88px;border-radius:50%;border:4px solid white;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
+.galeri-card-avatar img{width:100%;height:100%;object-fit:cover;}
+.galeri-card-body{padding:52px 20px 20px;text-align:center;}
+.galeri-card-name{font-size:16px;font-weight:700;margin-bottom:3px;color:var(--text);}
+.galeri-card-jabatan{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.galeri-card-role{display:inline-flex;padding:3px 11px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:14px;}
+.galeri-card-bio{font-size:12px;color:var(--text);line-height:1.55;font-style:italic;background:#FAFAF8;border-radius:10px;padding:11px 13px;border-left:3px solid var(--accent);position:relative;min-height:58px;text-align:left;}
+.galeri-card-bio::before{content:'"';position:absolute;top:-4px;left:8px;font-size:28px;color:var(--accent);font-family:Georgia,serif;opacity:0.3;}
+.galeri-card-bio.empty{color:var(--faint);font-style:normal;text-align:center;background:none;border-left:none;padding:8px;}
+
+/* Bio textarea in forms */
+.acc-form-textarea{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;resize:vertical;min-height:60px;}
+.acc-form-textarea:focus{border-color:var(--accent);}
+.bio-counter{font-size:10px;color:var(--faint);text-align:right;margin-top:3px;}
+
+/* BM edit foto button di card tim */
+.tim-avatar-wrap{position:relative;}
+.tim-avatar-edit-btn{position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:white;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;font-family:inherit;padding:0;}
+.tim-avatar-edit-btn:hover{background:#1D4ED8;}
+
+/* Monitoring panel expanded */
+.monitor-filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.monitor-filter-select{border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:11px;font-family:inherit;background:white;color:var(--text);cursor:pointer;}
+.monitor-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
+.monitor-stat{background:#FAFAF8;border-radius:10px;padding:10px 12px;border:1px solid var(--border);}
+.monitor-stat-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);}
+.monitor-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;}
+.monitor-action-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-right:4px;}
+.badge-login{background:#DCFCE7;color:#15803D;}
+.badge-logout{background:#FEE2E2;color:#B91C1C;}
+.badge-edit{background:#DBEAFE;color:#1E40AF;}
+.badge-tambah{background:#F3E8FF;color:#6B21A8;}
+.badge-hapus{background:#FED7AA;color:#9A3412;}
+.badge-password{background:#FEF3C7;color:#92400E;}
+.badge-foto{background:#CFFAFE;color:#0E7490;}
+.badge-bio{background:#E0E7FF;color:#3730A3;}
+.monitor-empty-state{text-align:center;padding:30px 20px;color:var(--faint);font-size:12px;}
+
+/* ── RESPONSIVE MOBILE (≤768px) ── */
+@media (max-width: 768px){
+  body{overflow:auto;}
+  
+  /* Login */
+  .login-card{padding:28px 22px;max-width:92%;}
+  
+  /* Pilih Proyek */
+  #s-proyek{padding:20px 14px;overflow-y:auto;align-items:flex-start;padding-top:40px;}
+  .proyek-cards{flex-direction:column;gap:12px;width:100%;max-width:380px;}
+  .proyek-card{width:100%;padding:20px;}
+  
+  /* Topbar */
+  .topbar{padding:0 10px;height:48px;}
+  .tb-brand{font-size:11px;}
+  .tb-proyek{font-size:10px;padding:2px 8px;}
+  .tb-btn,.tb-btn-edit{padding:4px 8px;font-size:10px;}
+  .tb-profile-info{display:none;}
+  .tb-sync{display:none;}
+  
+  /* Divisi nav → horizontal scroll sticky */
+  .divisi-nav{height:42px;padding:0 10px;position:sticky;top:0;z-index:49;}
+  .divisi-tab{font-size:10px;padding:5px 10px;}
+  
+  /* Dashboard */
+  .dash-wrap{padding:14px;}
+  .dash-proyek-head{padding:14px;flex-direction:column;gap:10px;align-items:flex-start;}
+  .dash-proyek-title{font-size:15px;}
+  .dash-stats{width:100%;justify-content:space-between;}
+  .dash-stat{text-align:left;}
+  .dash-grid{grid-template-columns:1fr;gap:10px;}
+  
+  /* Analisa Lokasi — sidebar jadi drawer */
+  .analisa-wrap{flex-direction:column;}
+  .sb{position:fixed;top:0;left:-100%;width:82%;max-width:320px;height:100vh;z-index:998;background:white;transition:left 0.3s;box-shadow:2px 0 20px rgba(0,0,0,0.15);overflow-y:auto;padding-top:70px;}
+  .sb.open{left:0;}
+  .map-wrap{width:100%;height:calc(100vh - 94px);}
+  
+  /* Detail panel kanan → bottom sheet */
+  .detail-panel{position:fixed;bottom:-100%;left:0;right:0;width:100%;height:70vh;border-radius:18px 18px 0 0;transition:bottom 0.3s;z-index:997;box-shadow:0 -4px 20px rgba(0,0,0,0.15);}
+  .detail-panel.open{bottom:0;}
+  
+  /* Mobile menu FAB */
+  .mobile-menu-btn{display:flex;position:fixed;top:58px;left:10px;z-index:950;width:38px;height:38px;border-radius:50%;background:white;border:1px solid var(--border);align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+  
+  /* Sidebar overlay backdrop */
+  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:997;}
+  .sb-backdrop.open{display:block;}
+  
+  /* Strategi */
+  .strat-wrap{grid-template-columns:1fr;}
+  .tp-sidebar{max-height:40vh;}
+  
+  /* Tim BM4 */
+  .tim-wrap{padding:14px;}
+  .tim-grid{grid-template-columns:1fr;}
+  .tim-head{flex-direction:column;align-items:flex-start;}
+  
+  /* Galeri Tim mobile */
+  .galeri-wrap{padding:16px;}
+  .galeri-grid{grid-template-columns:1fr;gap:14px;}
+  .galeri-head h2{font-size:18px;}
+  
+  /* Modal - full screen on mobile */
+  .acc-modal{max-height:94vh;border-radius:14px;}
+  
+  /* Formula editor modal */
+  .admin-modal{width:94%;max-height:90vh;}
+  
+  /* Editor data */
+  .editor-overlay{top:90px;}
+  .editor-inner{padding:12px;}
+  
+  /* Formula trigger - pindah agar tidak nutup nav */
+  .formula-trigger{bottom:16px;right:16px;width:40px;height:40px;font-size:16px;}
+  
+  /* Settings */
+  .settings-card{padding:18px 16px;}
+}
+
 /* ── STRATEGI / TARGET PASAR ── */
 .strat-wrap{flex:1;display:grid;grid-template-columns:300px 1fr;overflow:hidden;}
 .tp-sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;height:100%;}
@@ -370,8 +602,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="login-card">
     <div class="login-logo">BM4 <span>·</span> Property Intelligence</div>
     <div class="login-sub">Sistem Internal — Akses Terbatas</div>
+    <div class="login-label">Username</div>
+    <input type="text" class="login-input" id="login-username" placeholder="Masukkan username..." autocomplete="off">
     <div class="login-label">Password</div>
-    <div class="login-error" id="login-error">Password salah. Coba lagi.</div>
+    <div class="login-error" id="login-error">Username atau password salah. Coba lagi.</div>
     <input type="password" class="login-input" id="login-input" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Masuk →</button>
     <div class="login-footer">BM4 Property Intelligence · Internal Use Only</div>
@@ -417,6 +651,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="tb-right">
       <span class="tb-sync" id="tb-sync">● Lokal</span>
       <button class="tb-btn-edit" id="btn-editor" onclick="toggleEditor()">✏️ Edit Data</button>
+      <div class="tb-profile" id="tb-profile" onclick="openSettings()">
+        <div class="tb-profile-avatar" id="tb-profile-avatar">?</div>
+        <div class="tb-profile-info">
+          <div class="tb-profile-name" id="tb-profile-name">—</div>
+          <div class="tb-profile-role" id="tb-profile-role">—</div>
+        </div>
+      </div>
       <button class="tb-btn" onclick="doLogout()">Keluar</button>
     </div>
   </div>
@@ -430,6 +671,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="divisi-tab" data-div="konstruksi" onclick="switchDiv('konstruksi',this)">🏗️ Konstruksi</button>
     <button class="divisi-tab" data-div="legal" onclick="switchDiv('legal',this)">⚖️ Legal & Landbank</button>
     <button class="divisi-tab" data-div="finance" onclick="switchDiv('finance',this)">💰 Finance</button>
+    <button class="divisi-tab" data-div="galeri" onclick="switchDiv('galeri',this)">✨ Galeri Tim</button>
+    <button class="divisi-tab" data-div="tim" onclick="switchDiv('tim',this)" id="tab-tim" style="display:none;">👥 Tim BM4</button>
   </div>
 
   <!-- Content -->
@@ -756,8 +999,168 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
+    <!-- TIM BM4 (hanya untuk Branch Manager) -->
+    <div class="divisi-pane" id="pane-tim">
+      <div class="tim-wrap">
+        <div class="tim-head">
+          <div class="tim-head-left">
+            <h2>👥 Tim BM Area 4</h2>
+            <p>Kelola akun anggota tim · Atur username, password, foto, bio, dan hak akses</p>
+          </div>
+          <button class="tim-btn-add" onclick="openAccModal('add')">+ Tambah Akun</button>
+        </div>
+        <div class="tim-grid" id="tim-grid"></div>
+        <div class="tim-log">
+          <div class="tim-log-title">📋 Monitoring Aktivitas Tim</div>
+          <div class="monitor-stats" id="monitor-stats"></div>
+          <div class="monitor-filters">
+            <select class="monitor-filter-select" id="monitor-filter-user" onchange="renderLogList()">
+              <option value="">👤 Semua User</option>
+            </select>
+            <select class="monitor-filter-select" id="monitor-filter-action" onchange="renderLogList()">
+              <option value="">⚡ Semua Aktivitas</option>
+              <option value="login">Login</option>
+              <option value="logout">Logout</option>
+              <option value="edit akun">Edit Akun</option>
+              <option value="tambah akun">Tambah Akun</option>
+              <option value="hapus akun">Hapus Akun</option>
+              <option value="ganti password">Ganti Password</option>
+              <option value="ganti foto">Ganti Foto</option>
+              <option value="ganti bio">Ganti Bio</option>
+            </select>
+            <select class="monitor-filter-select" id="monitor-filter-range" onchange="renderLogList()">
+              <option value="all">📅 Semua Waktu</option>
+              <option value="today">Hari Ini</option>
+              <option value="7d">7 Hari Terakhir</option>
+              <option value="30d">30 Hari Terakhir</option>
+            </select>
+            <button class="monitor-filter-select" onclick="exportLogCSV()" style="cursor:pointer;background:var(--accent-light);color:var(--accent);border-color:var(--accent);font-weight:600;">⬇ Export CSV</button>
+          </div>
+          <div class="tim-log-list" id="tim-log-list">
+            <div class="tim-log-empty">Belum ada aktivitas tercatat.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GALERI TIM (untuk semua user) -->
+    <div class="divisi-pane" id="pane-galeri">
+      <div class="galeri-wrap">
+        <div class="galeri-head">
+          <h2>✨ Tim BM Area 4</h2>
+          <p>Kenali anggota tim beserta semangat dan motivasi mereka</p>
+        </div>
+        <div class="galeri-grid" id="galeri-grid"></div>
+      </div>
+    </div>
+
   </div><!-- end content-area -->
 </div><!-- end s-app -->
+
+<!-- MOBILE MENU BUTTON (untuk buka sidebar di Analisa Lokasi) -->
+<button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;">☰</button>
+<div class="sb-backdrop" id="sb-backdrop" onclick="toggleMobileSidebar()"></div>
+
+<!-- SCREEN: PENGATURAN AKUN -->
+<div id="s-settings" class="screen">
+  <div class="settings-card">
+    <div class="settings-head">
+      <h2>⚙️ Pengaturan Akun</h2>
+      <button class="settings-back" onclick="closeSettings()">← Kembali</button>
+    </div>
+    <div class="settings-avatar-box">
+      <div class="settings-avatar" id="settings-avatar">?</div>
+      <button class="settings-upload-btn" onclick="document.getElementById('settings-avatar-input').click()">📷 Ganti Foto</button>
+      <input type="file" id="settings-avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(event)">
+      <div class="settings-name" id="settings-name">—</div>
+      <div class="settings-meta" id="settings-meta">—</div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Bio / Kata Motivasi</div>
+      <div class="acc-form-group">
+        <textarea class="acc-form-textarea" id="set-bio" placeholder="Tulis kata semangat atau motivasi kamu di sini..." maxlength="150" oninput="updateBioCounter('set-bio','set-bio-counter')"></textarea>
+        <div class="bio-counter" id="set-bio-counter">0 / 150</div>
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="saveBioChange()">💾 Simpan Bio</button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Ubah Password</div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password Lama</label>
+        <input type="password" class="acc-form-input" id="set-pw-old" placeholder="Masukkan password lama">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password Baru</label>
+        <input type="password" class="acc-form-input" id="set-pw-new" placeholder="Min. 4 karakter">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Konfirmasi Password Baru</label>
+        <input type="password" class="acc-form-input" id="set-pw-new2" placeholder="Ulangi password baru">
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="savePasswordChange()">💾 Simpan Password Baru</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH/EDIT AKUN -->
+<div class="acc-modal-overlay" id="acc-modal">
+  <div class="acc-modal">
+    <div class="acc-modal-head">
+      <h3 id="acc-modal-title">Tambah Akun Baru</h3>
+      <button class="acc-modal-close" onclick="closeAccModal()">✕</button>
+    </div>
+    <div class="acc-modal-body">
+      <div class="acc-form-group">
+        <label class="acc-form-label">Username</label>
+        <input type="text" class="acc-form-input" id="acc-username" placeholder="misal: sales1" autocomplete="off">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password</label>
+        <input type="text" class="acc-form-input" id="acc-password" placeholder="Minimal 4 karakter" autocomplete="off">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Nama Lengkap</label>
+        <input type="text" class="acc-form-input" id="acc-nama" placeholder="Nama lengkap">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Jabatan</label>
+        <input type="text" class="acc-form-input" id="acc-jabatan" placeholder="misal: Sales Executive">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Bio / Kata Motivasi <span style="color:var(--faint);font-weight:400;text-transform:none;">(opsional)</span></label>
+        <textarea class="acc-form-textarea" id="acc-bio" placeholder="misal: Semangat pantang menyerah untuk capai target!" maxlength="150" oninput="updateBioCounter('acc-bio','acc-bio-counter')"></textarea>
+        <div class="bio-counter" id="acc-bio-counter">0 / 150</div>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Role / Divisi Utama</label>
+        <select class="acc-form-select" id="acc-role" onchange="onRoleChange()">
+          <option value="bm">Branch Manager</option>
+          <option value="sales">Sales</option>
+          <option value="strategi">Strategi</option>
+          <option value="konstruksi">Konstruksi</option>
+          <option value="legal">Legal</option>
+          <option value="finance">Finance</option>
+        </select>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Hak Akses Menu</label>
+        <div class="acc-checkbox-grid" id="acc-access-grid">
+          <label class="acc-checkbox"><input type="checkbox" value="dashboard" checked disabled> 🏠 Dashboard</label>
+          <label class="acc-checkbox"><input type="checkbox" value="analisa"> 📍 Analisa Lokasi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="strategi"> 🎯 Strategi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="sales"> 📊 Sales</label>
+          <label class="acc-checkbox"><input type="checkbox" value="konstruksi"> 🏗️ Konstruksi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="legal"> ⚖️ Legal</label>
+          <label class="acc-checkbox"><input type="checkbox" value="finance"> 💰 Finance</label>
+        </div>
+      </div>
+    </div>
+    <div class="acc-modal-actions">
+      <button class="acc-btn-cancel" onclick="closeAccModal()">Batal</button>
+      <button class="acc-btn-save" onclick="saveAccount()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL TARGET PASAR -->
 <div class="modal-overlay" id="tp-modal">
@@ -1531,6 +1934,7 @@ function switchDiv(div,el){
   document.getElementById('pane-'+div).classList.add('active');
   if(div==='analisa'){setTimeout(()=>{initAnalisaMap();},100);}
   if(div==='strategi'){setTimeout(()=>{initStratMap();loadTpFromSheets().then(ok=>{if(ok){renderTPList(tpFilter);renderTPMarkers();updateTpDashCount();}});},100);}
+  if(typeof switchDivHook === 'function') switchDivHook(div, el);
 }
 function selectProyek(id){
   currentProyek=id;
@@ -1554,7 +1958,7 @@ function backToProyek(){
   showScreen('s-proyek');
 }
 function doLogout(){sessionStorage.removeItem(SESSION_KEY);showScreen('s-login');setTimeout(()=>document.getElementById('login-input').focus(),100);}
-function doLogin(){
+function doLoginOld(){
   const input=document.getElementById('login-input').value;
   const err=document.getElementById('login-error');
   if(input===BM4_PASSWORD){
@@ -1585,12 +1989,741 @@ async function loadFromSheets(){
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ============================================================
+// ACCOUNT MANAGEMENT SYSTEM (NEW)
+// ============================================================
+const ACCOUNTS_KEY = 'bm4_accounts';
+const ACCLOG_KEY = 'bm4_acclog';
+const CURRENT_USER_KEY = 'bm4_current_user';
+
+// Default accounts (akan dipakai pertama kali, lalu disimpan di localStorage/Sheets)
+const DEFAULT_ACCOUNTS = [
+  {username:'bm4',         password:'bm4property2024', nama:'Branch Manager Area 4', jabatan:'Branch Manager', role:'bm',         foto:'', bio:'Memimpin dengan hati, bergerak dengan strategi.', akses:['dashboard','analisa','strategi','sales','konstruksi','legal','finance','tim']},
+  {username:'sales1',      password:'sales123',        nama:'Sales 1',                jabatan:'Sales Executive', role:'sales',    foto:'', bio:'', akses:['dashboard','sales']},
+  {username:'sales2',      password:'sales123',        nama:'Sales 2',                jabatan:'Sales Executive', role:'sales',    foto:'', bio:'', akses:['dashboard','sales']},
+  {username:'sales3',      password:'sales123',        nama:'Sales 3',                jabatan:'Sales Executive', role:'sales',    foto:'', bio:'', akses:['dashboard','sales']},
+  {username:'strategi1',   password:'strat123',        nama:'Strategi 1',             jabatan:'Strategi & Promo',role:'strategi', foto:'', bio:'', akses:['dashboard','strategi']},
+  {username:'strategi2',   password:'strat123',        nama:'Strategi 2',             jabatan:'Strategi & Promo',role:'strategi', foto:'', bio:'', akses:['dashboard','strategi']},
+  {username:'konstruksi1', password:'kons123',         nama:'Konstruksi 1',           jabatan:'Tim Konstruksi',  role:'konstruksi', foto:'', bio:'', akses:['dashboard','konstruksi']},
+  {username:'konstruksi2', password:'kons123',         nama:'Konstruksi 2',           jabatan:'Tim Konstruksi',  role:'konstruksi', foto:'', bio:'', akses:['dashboard','konstruksi']},
+  {username:'konstruksi3', password:'kons123',         nama:'Konstruksi 3',           jabatan:'Tim Konstruksi',  role:'konstruksi', foto:'', bio:'', akses:['dashboard','konstruksi']}
+];
+
+let accounts = [];         // array of accounts
+let accountLogs = [];      // array of log entries
+let currentUser = null;    // user saat ini login
+let editingAccUsername = null; // untuk mode edit
+
+// Load accounts dari localStorage (fallback) atau default
+function loadAccounts(){
+  try{
+    const saved = localStorage.getItem(ACCOUNTS_KEY);
+    if(saved){
+      accounts = JSON.parse(saved);
+    } else {
+      accounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+      saveAccountsLocal();
+    }
+  }catch(e){
+    accounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+  }
+  try{
+    const savedLog = localStorage.getItem(ACCLOG_KEY);
+    accountLogs = savedLog ? JSON.parse(savedLog) : [];
+  }catch(e){ accountLogs = []; }
+}
+
+function saveAccountsLocal(){
+  try{ localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)); }catch(e){}
+}
+function saveLogsLocal(){
+  try{ localStorage.setItem(ACCLOG_KEY, JSON.stringify(accountLogs)); }catch(e){}
+}
+
+// Sync ke Google Sheets (opsional, kalau GAS sudah mendukung)
+async function syncAccountsToSheets(){
+  if(!USE_SHEETS) return;
+  try{
+    await fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'saveAccounts', data: accounts})
+    });
+  }catch(e){ console.warn('Sync accounts failed', e); }
+}
+
+async function loadAccountsFromSheets(){
+  if(!USE_SHEETS) return false;
+  try{
+    const r = await fetch(GAS_URL+'?action=getAccounts').then(r=>r.json());
+    if(r && r.success && Array.isArray(r.data) && r.data.length > 0){
+      accounts = r.data.map(a => ({
+        username: a.username,
+        password: a.password,
+        nama: a.nama || '',
+        jabatan: a.jabatan || '',
+        role: a.role || 'sales',
+        foto: a.foto || '',
+        bio: a.bio || '',
+        akses: typeof a.akses === 'string' ? a.akses.split(',').map(x=>x.trim()).filter(Boolean) : (a.akses || [])
+      }));
+      saveAccountsLocal();
+      return true;
+    }
+  }catch(e){ console.warn('Load accounts from sheets failed', e); }
+  return false;
+}
+
+async function logActivity(username, action, detail){
+  const entry = {
+    timestamp: new Date().toISOString(),
+    username, action, detail
+  };
+  accountLogs.unshift(entry);
+  if(accountLogs.length > 100) accountLogs = accountLogs.slice(0, 100);
+  saveLogsLocal();
+  // Sync log ke Sheets (opsional)
+  if(USE_SHEETS){
+    try{
+      await fetch(GAS_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({action:'logActivity', data: entry})
+      });
+    }catch(e){}
+  }
+}
+
+function findAccount(username){
+  return accounts.find(a => a.username.toLowerCase() === (username||'').toLowerCase());
+}
+
+// ============================================================
+// LOGIN FLOW (MULTI-USER) — REPLACEMENT
+// ============================================================
+// Note: doLogin asli kita override, tapi BM4_PASSWORD lama tetap dipertahankan sebagai fallback master
+function doLoginNew(){
+  const username = (document.getElementById('login-username').value || '').trim();
+  const password = document.getElementById('login-input').value;
+  const err = document.getElementById('login-error');
+
+  // Fallback: master password lama (BM4_PASSWORD) — username kosong & password = master → login sebagai BM
+  if(!username && password === BM4_PASSWORD){
+    currentUser = accounts.find(a => a.role === 'bm') || accounts[0];
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    sessionStorage.setItem(CURRENT_USER_KEY, currentUser.username);
+    err.classList.remove('show');
+    applyUserAccess();
+    logActivity(currentUser.username, 'login', 'Login via master password');
+    showScreen('s-proyek');
+    return;
+  }
+
+  const acc = findAccount(username);
+  if(acc && acc.password === password){
+    currentUser = acc;
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    sessionStorage.setItem(CURRENT_USER_KEY, acc.username);
+    err.classList.remove('show');
+    applyUserAccess();
+    logActivity(acc.username, 'login', 'Login berhasil');
+    showScreen('s-proyek');
+  } else {
+    err.classList.add('show');
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+  }
+}
+
+// Terapkan hak akses: sembunyikan tab yang tidak boleh diakses, update profile di topbar
+function applyUserAccess(){
+  if(!currentUser) return;
+
+  // Update profile button
+  const avEl = document.getElementById('tb-profile-avatar');
+  const nmEl = document.getElementById('tb-profile-name');
+  const rlEl = document.getElementById('tb-profile-role');
+  if(avEl){
+    if(currentUser.foto){
+      avEl.innerHTML = `<img src="${currentUser.foto}" alt="">`;
+    } else {
+      avEl.textContent = (currentUser.nama||currentUser.username||'?').charAt(0).toUpperCase();
+    }
+  }
+  if(nmEl) nmEl.textContent = currentUser.nama || currentUser.username;
+  if(rlEl) rlEl.textContent = currentUser.jabatan || roleLabel(currentUser.role);
+
+  // Tampilkan/sembunyikan tab sesuai akses
+  const akses = currentUser.akses || [];
+  document.querySelectorAll('.divisi-tab[data-div]').forEach(tab => {
+    const div = tab.getAttribute('data-div');
+    if(div === 'dashboard'){ tab.style.display = ''; return; } // dashboard selalu ada
+    if(div === 'galeri'){ tab.style.display = ''; return; } // galeri selalu ada untuk semua user
+    if(div === 'tim'){
+      // Tab Tim BM4 hanya untuk BM
+      tab.style.display = (currentUser.role === 'bm') ? '' : 'none';
+      return;
+    }
+    tab.style.display = akses.includes(div) ? '' : 'none';
+  });
+}
+
+function roleLabel(role){
+  return {bm:'Branch Manager',sales:'Sales',strategi:'Strategi',konstruksi:'Konstruksi',legal:'Legal',finance:'Finance'}[role] || role;
+}
+
+function roleBadgeClass(role){
+  return {bm:'tim-role-bm',sales:'tim-role-sales',strategi:'tim-role-strategi',konstruksi:'tim-role-konstruksi',legal:'tim-role-sales',finance:'tim-role-sales'}[role] || 'tim-role-sales';
+}
+
+// ============================================================
+// TIM BM4 RENDERING
+// ============================================================
+function renderTim(){
+  const grid = document.getElementById('tim-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  accounts.forEach((a, idx) => {
+    const card = document.createElement('div');
+    card.className = 'tim-card';
+    const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+    const avatarHtml = a.foto ? `<img src="${a.foto}" alt="">` : initial;
+    const aksesHtml = (a.akses || []).map(k => `<span class="tim-access-chip">${k}</span>`).join('');
+    const bioPreview = a.bio ? `<div style="font-size:11px;color:var(--muted);font-style:italic;padding:6px 9px;background:#FAFAF8;border-radius:6px;border-left:2px solid var(--accent);margin-bottom:8px;">"${escapeHtml(a.bio)}"</div>` : '';
+    card.innerHTML = `
+      <div class="tim-card-head">
+        <div class="tim-avatar-wrap">
+          <div class="tim-avatar">${avatarHtml}</div>
+          <button class="tim-avatar-edit-btn" onclick="bmEditPhoto('${escapeHtml(a.username).replace(/'/g,"\\'")}')" title="Ganti foto">📷</button>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="tim-info-name">${escapeHtml(a.nama || a.username)}</div>
+          <div class="tim-info-jabatan">${escapeHtml(a.jabatan || '-')}</div>
+          <span class="tim-role-badge ${roleBadgeClass(a.role)}">${roleLabel(a.role)}</span>
+        </div>
+      </div>
+      ${bioPreview}
+      <div class="tim-details">
+        <div class="tim-detail-row"><span class="tim-detail-lbl">Username:</span><span class="tim-detail-val">${escapeHtml(a.username)}</span></div>
+        <div class="tim-detail-row">
+          <span class="tim-detail-lbl">Password:</span>
+          <span class="tim-detail-val">
+            <span id="pw-${idx}">••••••••</span>
+            <button class="tim-pw-toggle" onclick="togglePw(${idx},'${escapeHtml(a.password).replace(/'/g,"\\'")}')">👁 lihat</button>
+          </span>
+        </div>
+        <div style="margin-top:6px;"><div class="tim-detail-lbl" style="font-size:10px;">Akses:</div><div class="tim-access-list">${aksesHtml||'<span style="font-size:10px;color:var(--faint);">—</span>'}</div></div>
+      </div>
+      <div class="tim-actions">
+        <button class="tim-btn-edit" onclick="openAccModal('edit','${escapeHtml(a.username).replace(/'/g,"\\'")}')">✏️ Edit</button>
+        ${a.role==='bm' && accounts.filter(x=>x.role==='bm').length<=1 ? '' : `<button class="tim-btn-del" onclick="deleteAccount('${escapeHtml(a.username).replace(/'/g,"\\'")}')">🗑</button>`}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  renderMonitorStats();
+  populateLogFilterUsers();
+  renderLogList();
+}
+
+// BM edit photo langsung (upload foto ke user lain)
+function bmEditPhoto(username){
+  if(currentUser?.role !== 'bm'){ showToast('⚠ Hanya BM'); return; }
+  // Buat input file sementara
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (event) => {
+    const file = event.target.files[0];
+    if(!file) return;
+    if(file.size > 500000){ showToast('⚠ Ukuran foto maksimal 500KB'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      const idx = accounts.findIndex(a => a.username === username);
+      if(idx >= 0){
+        accounts[idx].foto = dataUrl;
+        // Kalau yg diubah adalah currentUser, update juga
+        if(currentUser?.username === username){
+          currentUser.foto = dataUrl;
+          document.getElementById('tb-profile-avatar').innerHTML = `<img src="${dataUrl}" alt="">`;
+        }
+        saveAccountsLocal();
+        syncAccountsToSheets();
+        logActivity(currentUser.username, 'ganti foto', `BM mengubah foto akun: ${username}`);
+        renderTim();
+        showToast(`✓ Foto ${username} diperbarui`);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function togglePw(idx, pw){
+  const el = document.getElementById('pw-'+idx);
+  if(!el) return;
+  if(el.textContent === '••••••••'){
+    el.textContent = pw;
+  } else {
+    el.textContent = '••••••••';
+  }
+}
+
+function renderLogList(){
+  const list = document.getElementById('tim-log-list');
+  if(!list) return;
+  const filterUser = document.getElementById('monitor-filter-user')?.value || '';
+  const filterAction = document.getElementById('monitor-filter-action')?.value || '';
+  const filterRange = document.getElementById('monitor-filter-range')?.value || 'all';
+
+  let filtered = [...accountLogs];
+  if(filterUser) filtered = filtered.filter(l => l.username === filterUser);
+  if(filterAction) filtered = filtered.filter(l => (l.action||'').toLowerCase() === filterAction.toLowerCase());
+  if(filterRange !== 'all'){
+    const now = new Date();
+    let cutoff;
+    if(filterRange === 'today'){
+      cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if(filterRange === '7d'){
+      cutoff = new Date(now.getTime() - 7*24*60*60*1000);
+    } else if(filterRange === '30d'){
+      cutoff = new Date(now.getTime() - 30*24*60*60*1000);
+    }
+    filtered = filtered.filter(l => new Date(l.timestamp) >= cutoff);
+  }
+
+  if(filtered.length === 0){
+    list.innerHTML = '<div class="monitor-empty-state">Tidak ada aktivitas sesuai filter.</div>';
+    return;
+  }
+  list.innerHTML = filtered.slice(0, 100).map(l => {
+    const t = new Date(l.timestamp);
+    const timeStr = t.toLocaleDateString('id',{day:'2-digit',month:'short',year:'2-digit'})+' '+t.toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'});
+    const action = (l.action||'').toLowerCase();
+    let badgeClass = 'badge-edit';
+    if(action === 'login') badgeClass = 'badge-login';
+    else if(action === 'logout') badgeClass = 'badge-logout';
+    else if(action === 'tambah akun') badgeClass = 'badge-tambah';
+    else if(action === 'hapus akun') badgeClass = 'badge-hapus';
+    else if(action === 'ganti password') badgeClass = 'badge-password';
+    else if(action === 'ganti foto') badgeClass = 'badge-foto';
+    else if(action === 'ganti bio') badgeClass = 'badge-bio';
+    return `<div class="tim-log-item"><div class="tim-log-text"><span class="monitor-action-badge ${badgeClass}">${escapeHtml(l.action)}</span><b>${escapeHtml(l.username)}</b>${l.detail?' — '+escapeHtml(l.detail):''}</div><div class="tim-log-time">${timeStr}</div></div>`;
+  }).join('');
+}
+
+function renderMonitorStats(){
+  const container = document.getElementById('monitor-stats');
+  if(!container) return;
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const weekAgo = new Date(today.getTime() - 7*24*60*60*1000);
+
+  const totalLogs = accountLogs.length;
+  const todayLogs = accountLogs.filter(l => new Date(l.timestamp) >= todayStart).length;
+  const loginsToday = accountLogs.filter(l => new Date(l.timestamp) >= todayStart && (l.action||'').toLowerCase() === 'login').length;
+  const activeUsers = new Set(accountLogs.filter(l => new Date(l.timestamp) >= weekAgo).map(l => l.username)).size;
+
+  container.innerHTML = `
+    <div class="monitor-stat"><div class="monitor-stat-val">${totalLogs}</div><div class="monitor-stat-lbl">Total Aktivitas</div></div>
+    <div class="monitor-stat"><div class="monitor-stat-val">${todayLogs}</div><div class="monitor-stat-lbl">Aktivitas Hari Ini</div></div>
+    <div class="monitor-stat"><div class="monitor-stat-val">${loginsToday}</div><div class="monitor-stat-lbl">Login Hari Ini</div></div>
+    <div class="monitor-stat"><div class="monitor-stat-val">${activeUsers}</div><div class="monitor-stat-lbl">User Aktif 7 Hari</div></div>
+  `;
+}
+
+function populateLogFilterUsers(){
+  const sel = document.getElementById('monitor-filter-user');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">👤 Semua User</option>' +
+    accounts.map(a => `<option value="${escapeHtml(a.username)}">${escapeHtml(a.nama || a.username)}</option>`).join('');
+  sel.value = prev;
+}
+
+function exportLogCSV(){
+  if(accountLogs.length === 0){ showToast('⚠ Belum ada log untuk diekspor'); return; }
+  const header = 'Timestamp,Username,Action,Detail\n';
+  const rows = accountLogs.map(l => {
+    const detail = (l.detail||'').replace(/"/g,'""');
+    return `"${l.timestamp}","${l.username}","${l.action}","${detail}"`;
+  }).join('\n');
+  const csv = header + rows;
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bm4_aktivitas_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Log berhasil diexport');
+}
+
+// ============================================================
+// GALERI TIM RENDERING (NEW v10)
+// ============================================================
+function renderGaleri(){
+  const grid = document.getElementById('galeri-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  accounts.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'galeri-card';
+    const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+    const avatarHtml = a.foto ? `<img src="${a.foto}" alt="">` : initial;
+    const role = a.role || 'sales';
+    const bioHtml = a.bio
+      ? `<div class="galeri-card-bio">${escapeHtml(a.bio)}</div>`
+      : `<div class="galeri-card-bio empty">— Belum ada kata motivasi —</div>`;
+    card.innerHTML = `
+      <div class="galeri-card-banner ${role}"></div>
+      <div class="galeri-card-avatar">${avatarHtml}</div>
+      <div class="galeri-card-body">
+        <div class="galeri-card-name">${escapeHtml(a.nama || a.username)}</div>
+        <div class="galeri-card-jabatan">${escapeHtml(a.jabatan || '-')}</div>
+        <span class="galeri-card-role ${roleBadgeClass(role)}">${roleLabel(role)}</span>
+        ${bioHtml}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// BIO HELPERS
+// ============================================================
+function updateBioCounter(inputId, counterId){
+  const input = document.getElementById(inputId);
+  const counter = document.getElementById(counterId);
+  if(!input || !counter) return;
+  const len = input.value.length;
+  counter.textContent = `${len} / 150`;
+  counter.style.color = len > 140 ? '#DC2626' : 'var(--faint)';
+}
+
+function saveBioChange(){
+  if(!currentUser) return;
+  const newBio = document.getElementById('set-bio').value.trim();
+  if(newBio.length > 150){ showToast('⚠ Bio maksimal 150 karakter'); return; }
+  const idx = accounts.findIndex(a => a.username === currentUser.username);
+  if(idx >= 0){
+    accounts[idx].bio = newBio;
+    currentUser.bio = newBio;
+    saveAccountsLocal();
+    syncAccountsToSheets();
+    logActivity(currentUser.username, 'ganti bio', 'User mengubah bio/motivasi');
+    showToast('✓ Bio berhasil disimpan');
+  }
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// MODAL TAMBAH/EDIT AKUN
+// ============================================================
+function openAccModal(mode, username){
+  editingAccUsername = null;
+  document.getElementById('acc-modal-title').textContent = mode === 'edit' ? 'Edit Akun' : 'Tambah Akun Baru';
+  // Reset form
+  document.getElementById('acc-username').value = '';
+  document.getElementById('acc-password').value = '';
+  document.getElementById('acc-nama').value = '';
+  document.getElementById('acc-jabatan').value = '';
+  document.getElementById('acc-bio').value = '';
+  document.getElementById('acc-role').value = 'sales';
+  updateBioCounter('acc-bio','acc-bio-counter');
+  document.querySelectorAll('#acc-access-grid input').forEach(cb => {
+    cb.checked = cb.value === 'dashboard';
+  });
+
+  if(mode === 'edit' && username){
+    const a = findAccount(username);
+    if(a){
+      editingAccUsername = a.username;
+      document.getElementById('acc-username').value = a.username;
+      document.getElementById('acc-password').value = a.password;
+      document.getElementById('acc-nama').value = a.nama || '';
+      document.getElementById('acc-jabatan').value = a.jabatan || '';
+      document.getElementById('acc-bio').value = a.bio || '';
+      document.getElementById('acc-role').value = a.role || 'sales';
+      updateBioCounter('acc-bio','acc-bio-counter');
+      document.querySelectorAll('#acc-access-grid input').forEach(cb => {
+        cb.checked = (a.akses || []).includes(cb.value) || cb.value === 'dashboard';
+      });
+    }
+  } else {
+    onRoleChange(); // set checkbox default sesuai role
+  }
+  document.getElementById('acc-modal').classList.add('open');
+}
+
+function closeAccModal(){
+  document.getElementById('acc-modal').classList.remove('open');
+  editingAccUsername = null;
+}
+
+function onRoleChange(){
+  const role = document.getElementById('acc-role').value;
+  const preset = {
+    bm:['dashboard','analisa','strategi','sales','konstruksi','legal','finance'],
+    sales:['dashboard','sales'],
+    strategi:['dashboard','strategi'],
+    konstruksi:['dashboard','konstruksi'],
+    legal:['dashboard','legal'],
+    finance:['dashboard','finance']
+  }[role] || ['dashboard'];
+  document.querySelectorAll('#acc-access-grid input').forEach(cb => {
+    cb.checked = preset.includes(cb.value);
+  });
+}
+
+function saveAccount(){
+  const username = document.getElementById('acc-username').value.trim().toLowerCase();
+  const password = document.getElementById('acc-password').value;
+  const nama = document.getElementById('acc-nama').value.trim();
+  const jabatan = document.getElementById('acc-jabatan').value.trim();
+  const bio = document.getElementById('acc-bio').value.trim();
+  const role = document.getElementById('acc-role').value;
+  const akses = Array.from(document.querySelectorAll('#acc-access-grid input:checked')).map(cb => cb.value);
+
+  if(!username){ showToast('⚠ Username wajib diisi'); return; }
+  if(!password || password.length < 4){ showToast('⚠ Password minimal 4 karakter'); return; }
+  if(!nama){ showToast('⚠ Nama wajib diisi'); return; }
+  if(bio.length > 150){ showToast('⚠ Bio maksimal 150 karakter'); return; }
+
+  // Cek duplikat username (kecuali saat edit username yang sama)
+  if(editingAccUsername !== username){
+    if(accounts.some(a => a.username.toLowerCase() === username)){
+      showToast('⚠ Username sudah dipakai'); return;
+    }
+  }
+
+  if(editingAccUsername){
+    // Edit
+    const idx = accounts.findIndex(a => a.username === editingAccUsername);
+    if(idx >= 0){
+      const old = accounts[idx];
+      accounts[idx] = {...old, username, password, nama, jabatan, bio, role, akses};
+      logActivity(currentUser?.username || 'system', 'edit akun', `Mengubah akun: ${username}`);
+      showToast('✓ Akun diperbarui');
+    }
+  } else {
+    // Tambah
+    accounts.push({username, password, nama, jabatan, bio, role, akses, foto:''});
+    logActivity(currentUser?.username || 'system', 'tambah akun', `Akun baru: ${username}`);
+    showToast('✓ Akun ditambahkan');
+  }
+
+  saveAccountsLocal();
+  syncAccountsToSheets();
+  closeAccModal();
+  renderTim();
+}
+
+function deleteAccount(username){
+  if(!confirm('Hapus akun "'+username+'"?')) return;
+  const idx = accounts.findIndex(a => a.username === username);
+  if(idx < 0) return;
+  if(accounts[idx].username === currentUser?.username){
+    showToast('⚠ Tidak bisa menghapus akun sendiri'); return;
+  }
+  accounts.splice(idx, 1);
+  logActivity(currentUser?.username || 'system', 'hapus akun', `Akun dihapus: ${username}`);
+  saveAccountsLocal();
+  syncAccountsToSheets();
+  renderTim();
+  showToast('🗑 Akun dihapus');
+}
+
+// ============================================================
+// PENGATURAN AKUN (untuk user sendiri)
+// ============================================================
+function openSettings(){
+  if(!currentUser) return;
+  const avEl = document.getElementById('settings-avatar');
+  if(currentUser.foto){
+    avEl.innerHTML = `<img src="${currentUser.foto}" alt="">`;
+  } else {
+    avEl.textContent = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+  }
+  document.getElementById('settings-name').textContent = currentUser.nama || currentUser.username;
+  document.getElementById('settings-meta').textContent = (currentUser.jabatan||'') + ' · @' + currentUser.username;
+  document.getElementById('set-bio').value = currentUser.bio || '';
+  updateBioCounter('set-bio','set-bio-counter');
+  document.getElementById('set-pw-old').value = '';
+  document.getElementById('set-pw-new').value = '';
+  document.getElementById('set-pw-new2').value = '';
+  showScreen('s-settings');
+}
+
+function closeSettings(){
+  showScreen('s-app');
+}
+
+function uploadAvatar(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 500000){ // batas ~500KB
+    showToast('⚠ Ukuran foto maksimal 500KB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    // Simpan ke current user
+    const idx = accounts.findIndex(a => a.username === currentUser.username);
+    if(idx >= 0){
+      accounts[idx].foto = dataUrl;
+      currentUser.foto = dataUrl;
+      saveAccountsLocal();
+      syncAccountsToSheets();
+      logActivity(currentUser.username, 'ganti foto', 'User mengubah foto profil');
+      // Update tampilan
+      document.getElementById('settings-avatar').innerHTML = `<img src="${dataUrl}" alt="">`;
+      document.getElementById('tb-profile-avatar').innerHTML = `<img src="${dataUrl}" alt="">`;
+      showToast('✓ Foto profil diperbarui');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePasswordChange(){
+  const oldPw = document.getElementById('set-pw-old').value;
+  const newPw = document.getElementById('set-pw-new').value;
+  const newPw2 = document.getElementById('set-pw-new2').value;
+
+  if(oldPw !== currentUser.password){ showToast('⚠ Password lama salah'); return; }
+  if(!newPw || newPw.length < 4){ showToast('⚠ Password baru minimal 4 karakter'); return; }
+  if(newPw !== newPw2){ showToast('⚠ Konfirmasi password tidak cocok'); return; }
+
+  const idx = accounts.findIndex(a => a.username === currentUser.username);
+  if(idx >= 0){
+    accounts[idx].password = newPw;
+    currentUser.password = newPw;
+    saveAccountsLocal();
+    syncAccountsToSheets();
+    logActivity(currentUser.username, 'ganti password', 'User mengubah password sendiri');
+    showToast('✓ Password berhasil diubah');
+    document.getElementById('set-pw-old').value = '';
+    document.getElementById('set-pw-new').value = '';
+    document.getElementById('set-pw-new2').value = '';
+  }
+}
+
+// ============================================================
+// MOBILE SIDEBAR TOGGLE (untuk Analisa Lokasi)
+// ============================================================
+function toggleMobileSidebar(){
+  const sb = document.querySelector('#pane-analisa .sb');
+  const backdrop = document.getElementById('sb-backdrop');
+  if(!sb) return;
+  sb.classList.toggle('open');
+  backdrop.classList.toggle('open');
+}
+
+function updateMobileMenuBtn(){
+  const btn = document.getElementById('mobile-menu-btn');
+  if(!btn) return;
+  const isMobile = window.innerWidth <= 768;
+  const analisaActive = document.getElementById('pane-analisa')?.classList.contains('active');
+  const appScreenActive = document.getElementById('s-app')?.classList.contains('active');
+  btn.style.display = (isMobile && analisaActive && appScreenActive) ? 'flex' : 'none';
+}
+
+// Hook yang dipanggil dari dalam switchDiv asli — tidak mengubah behavior asli, hanya menambah
+function switchDivHook(div, el){
+  // Cek akses — blokir jika tidak boleh (kecuali dashboard, tim, galeri yg umum)
+  if(currentUser && div !== 'dashboard' && div !== 'tim' && div !== 'galeri'){
+    const akses = currentUser.akses || [];
+    if(!akses.includes(div)){
+      showToast('⚠ Anda tidak memiliki akses ke menu ini');
+      // Kembali ke dashboard
+      setTimeout(()=>{
+        const dashTab = document.querySelector('[data-div=dashboard]');
+        if(dashTab) switchDiv('dashboard', dashTab);
+      }, 50);
+      return;
+    }
+  }
+  if(div === 'tim'){
+    if(currentUser?.role !== 'bm'){
+      showToast('⚠ Hanya Branch Manager yang bisa akses');
+      setTimeout(()=>{
+        const dashTab = document.querySelector('[data-div=dashboard]');
+        if(dashTab) switchDiv('dashboard', dashTab);
+      }, 50);
+      return;
+    }
+    renderTim();
+  }
+  if(div === 'galeri'){
+    renderGaleri();
+  }
+  // Tutup sidebar mobile kalau terbuka
+  const sb = document.querySelector('#pane-analisa .sb');
+  const backdrop = document.getElementById('sb-backdrop');
+  if(sb?.classList.contains('open')){ sb.classList.remove('open'); backdrop?.classList.remove('open'); }
+  updateMobileMenuBtn();
+}
+
+window.addEventListener('resize', updateMobileMenuBtn);
+
+// Override doLogin — pakai window agar aman
+window.doLogin = function(){ doLoginNew(); };
+
+// Override doLogout untuk bersihkan currentUser
+const _origDoLogout = window.doLogout || doLogout;
+window.doLogout = function(){
+  if(currentUser){
+    logActivity(currentUser.username, 'logout', 'User keluar');
+  }
+  sessionStorage.removeItem(CURRENT_USER_KEY);
+  currentUser = null;
+  _origDoLogout();
+};
+
+// ============================================================
 // STARTUP
 // ============================================================
 (function init(){
-  if(sessionStorage.getItem(SESSION_KEY)==='ok'){showScreen('s-proyek');}
-  else{setTimeout(()=>document.getElementById('login-input').focus(),100);}
-  if(USE_SHEETS)loadFromSheets();
+  // Load accounts dulu
+  loadAccounts();
+  // Coba load dari Sheets (async, tidak blocking)
+  if(USE_SHEETS){
+    loadAccountsFromSheets().then(loaded => {
+      // Kalau user sudah login, re-apply access supaya tab muncul sesuai data terbaru
+      const savedUser = sessionStorage.getItem(CURRENT_USER_KEY);
+      if(savedUser){
+        currentUser = findAccount(savedUser);
+        if(currentUser) applyUserAccess();
+      }
+    });
+  }
+
+  // Cek session login
+  if(sessionStorage.getItem(SESSION_KEY)==='ok'){
+    const savedUser = sessionStorage.getItem(CURRENT_USER_KEY);
+    if(savedUser){
+      currentUser = findAccount(savedUser);
+    }
+    if(!currentUser){
+      // Default ke BM jika tidak ada current user (backward compat dari sesi lama)
+      currentUser = accounts.find(a => a.role === 'bm') || accounts[0];
+      if(currentUser) sessionStorage.setItem(CURRENT_USER_KEY, currentUser.username);
+    }
+    if(currentUser) applyUserAccess();
+    showScreen('s-proyek');
+  } else {
+    setTimeout(()=>{
+      const u = document.getElementById('login-username');
+      if(u) u.focus();
+    },100);
+  }
+  if(USE_SHEETS) loadFromSheets();
+  updateMobileMenuBtn();
 })();
 </script>
 </body>
