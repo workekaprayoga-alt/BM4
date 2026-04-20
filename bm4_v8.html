@@ -184,6 +184,108 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .d-area{font-size:11px;color:var(--muted);margin-bottom:10px;}
 .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:5px;}
 
+/* ── CMP / NEARBY / RADAR ── */
+.cmp-header{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+.cmp-box{border-radius:8px;padding:9px 11px;font-size:11px;}
+.cmp-box .cl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;opacity:0.7;}
+.cmp-box .cn{font-weight:700;font-size:12px;line-height:1.3;}
+.cmp-box .ca{opacity:0.7;margin-top:2px;font-size:10px;}
+.cmp-row{display:grid;grid-template-columns:80px 1fr 1fr;gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:11px;}
+.cmp-row:last-child{border-bottom:none;}
+.cmp-lc{color:var(--faint);font-size:10px;}
+.cmp-val{padding:3px 5px;border-radius:5px;font-weight:700;text-align:center;font-size:11px;font-family:'DM Mono',monospace;}
+.cmp-win{background:#DCFCE7;color:#15803D;}
+.cmp-lose{background:#FEE2E2;color:#B91C1C;}
+.cmp-tie{background:var(--bg);color:var(--muted);}
+.nearby-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04);}
+.nearby-row:last-child{border-bottom:none;}
+.nearby-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.nearby-name{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
+.nearby-sub{font-size:10px;color:var(--faint);}
+.nearby-dist{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;text-align:right;}
+.nearby-min{font-size:10px;color:var(--faint);}
+.sb-sub{display:flex;justify-content:space-between;font-size:9px;color:var(--faint);margin-top:2px;flex-wrap:wrap;gap:2px;}
+.anchor-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:var(--anchor-light);color:var(--anchor);border:1px solid var(--anchor);margin-left:4px;}
+.prog-wrap{margin-bottom:10px;}
+.prog-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.prog-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;}
+.coords-small{margin-top:10px;font-size:9px;color:#ccc;font-family:'DM Mono',monospace;}
+
+/* ── FORMULA EDITOR (⚙️ floating) ── */
+.formula-trigger{position:fixed;bottom:20px;right:20px;z-index:900;background:white;border:1px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.2s;}
+.formula-trigger:hover{transform:scale(1.1);}
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;}
+.admin-overlay.open{display:flex;}
+.admin-modal{background:white;border-radius:14px;width:660px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.admin-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+.admin-header h2{font-size:14px;font-weight:700;}
+.admin-close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+.admin-body{padding:14px 20px;}
+.admin-section{margin-bottom:18px;}
+.admin-section-title{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.admin-row{display:grid;grid-template-columns:1fr auto 80px;align-items:center;gap:8px;margin-bottom:7px;}
+.admin-row label{font-size:12px;color:var(--text);}
+.admin-row input[type="range"]{accent-color:var(--accent);}
+.admin-row input[type="number"]{width:70px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;text-align:center;}
+.admin-fw{background:var(--accent-light);border-radius:8px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.admin-fw label{font-size:12px;font-weight:600;color:var(--accent);}
+.admin-fw input{width:58px;padding:4px 7px;border:1px solid var(--accent);border-radius:6px;font-size:13px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;color:var(--accent);background:white;}
+.admin-btn-row{display:flex;gap:7px;margin-top:14px;}
+.admin-btn{flex:1;padding:9px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.admin-btn-primary{background:var(--accent);color:white;}
+.admin-btn-reset{background:#FEF2F2;color:#DC2626;}
+.admin-btn-secondary{background:var(--bg);color:var(--muted);}
+.weight-total{font-size:11px;text-align:right;margin-top:3px;color:var(--faint);}
+.weight-total.ok{color:#15803D;}
+.weight-total.bad{color:#DC2626;}
+
+/* ── EDITOR DATA ── */
+.editor-overlay{display:none;position:fixed;top:96px;left:0;right:0;bottom:0;background:var(--bg);z-index:800;overflow-y:auto;}
+.editor-overlay.open{display:block;}
+.editor-inner{max-width:1300px;margin:0 auto;padding:18px 22px;}
+.editor-tabs{display:flex;gap:2px;background:white;border:1px solid var(--border);border-radius:9px;padding:3px;width:fit-content;margin-bottom:14px;}
+.etab{padding:6px 16px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:inherit;transition:all 0.15s;}
+.etab.active{background:var(--accent);color:white;}
+.ecard{background:white;border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:14px;}
+.ecard-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ecard-title{font-size:13px;font-weight:600;}
+.ecard-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.etbl-wrap{overflow-x:auto;}
+.etbl{width:100%;border-collapse:collapse;font-size:11px;}
+.etbl thead tr{background:#FAFAF8;}
+.etbl th{padding:7px 9px;text-align:left;font-weight:600;color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.etbl td{padding:5px 7px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.etbl tr:last-child td{border-bottom:none;}
+.etbl tr:hover td{background:#FAFAF8;}
+.etbl input[type="text"],.etbl input[type="number"],.etbl select{border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:11px;font-family:inherit;color:var(--text);background:white;width:100%;}
+.etbl input:focus,.etbl select:focus{outline:none;border-color:var(--accent);}
+.add-row-e{display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;background:#FAFAF8;border-top:1px solid var(--border);align-items:flex-end;}
+.add-row-e .ef{display:flex;flex-direction:column;gap:3px;}
+.add-row-e .ef label{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.4px;}
+.add-row-e input,.add-row-e select{border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;font-family:inherit;color:var(--text);background:white;min-width:80px;}
+.btn-sm-primary{background:var(--accent);color:white;border:1px solid var(--accent);padding:6px 13px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-sm-danger{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-sm-secondary{background:var(--bg);color:var(--muted);border:1px solid var(--border);padding:6px 13px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+/* ── CHART PANEL ── */
+.chart-panel{display:none;position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.97);border-top:1px solid var(--border);padding:12px 14px;z-index:700;backdrop-filter:blur(8px);}
+.chart-panel.open{display:block;}
+.chart-title{font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text);}
+.chart-bars{display:flex;gap:5px;align-items:flex-end;height:80px;overflow-x:auto;padding-bottom:2px;}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:40px;}
+.bar-bg{width:26px;height:72px;background:var(--bg);border-radius:4px;position:relative;display:flex;align-items:flex-end;overflow:hidden;}
+.bar-fill{width:100%;border-radius:4px;transition:height 0.5s;}
+.bar-pct{position:absolute;top:2px;width:100%;text-align:center;font-size:8px;font-weight:700;color:var(--muted);font-family:'DM Mono',monospace;}
+.bar-lbl{font-size:8px;color:var(--faint);text-align:center;margin-top:3px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:40px;}
+
+/* ── TOPBAR TAMBAHAN ── */
+.tb-btn-edit{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#CBD5E1;transition:all 0.15s;}
+.tb-btn-edit:hover{background:rgba(255,255,255,0.18);}
+.tb-btn-edit.active{background:#FEF3C7;color:#D97706;border-color:#FDE68A;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1C1C1A;color:white;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;transition:transform 0.3s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
 /* ── STRATEGI / TARGET PASAR ── */
 .strat-wrap{flex:1;display:grid;grid-template-columns:300px 1fr;overflow:hidden;}
 .tp-sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;height:100%;}
@@ -314,6 +416,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
     <div class="tb-right">
       <span class="tb-sync" id="tb-sync">● Lokal</span>
+      <button class="tb-btn-edit" id="btn-editor" onclick="toggleEditor()">✏️ Edit Data</button>
       <button class="tb-btn" onclick="doLogout()">Keluar</button>
     </div>
   </div>
@@ -407,7 +510,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
     <!-- ANALISA LOKASI -->
     <div class="divisi-pane" id="pane-analisa">
-      <div class="analisa-wrap">
+      <div class="analisa-wrap" style="position:relative;">
         <!-- Sidebar kiri -->
         <div class="sb">
           <div class="sb-sec">
@@ -440,7 +543,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
               <option value="overall">🏆 Skor Keseluruhan</option>
               <option value="rs">🏥 Jarak RS/Klinik</option>
               <option value="kampus">🎓 Jarak Kampus</option>
+              <option value="mall">🏬 Jarak Mall</option>
               <option value="tol">🛣️ Jarak Tol</option>
+              <option value="pemda">🏛️ Jarak Pemerintah</option>
+              <option value="industri">💼 Jarak Industri</option>
+              <option value="publik">🌳 Jarak Publik</option>
             </select>
           </div>
           <div class="rank-list" id="ranking-list"></div>
@@ -450,21 +557,77 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div id="analisa-map"></div>
           <div class="map-fabs">
             <button class="fab" id="heatmap-fab" onclick="toggleHeatmap()">🌡️ Heatmap</button>
+            <button class="fab" id="chart-fab" onclick="toggleChart()">📊 Chart</button>
+          </div>
+          <div class="chart-panel" id="chart-panel">
+            <div class="chart-title">📊 Progress Realisasi per Perumahan</div>
+            <div class="chart-bars" id="chart-bars"></div>
           </div>
         </div>
-        <!-- Detail sidebar kanan -->
+        <!-- Detail sidebar kanan — LENGKAP 5 TAB -->
         <div class="detail-sb">
           <div class="detail-empty" id="detail-empty"><div style="font-size:36px;margin-bottom:10px;">📍</div>Pilih perumahan dari<br>peta atau daftar ranking<br>untuk melihat analisa lengkap</div>
           <div class="detail-content" id="detail-content">
             <div class="tab-bar">
-              <div class="tab active" onclick="switchTab('overview',this)">Overview</div>
-              <div class="tab" onclick="switchTab('fasilitas',this)">Fasilitas</div>
-              <div class="tab" onclick="switchTab('kompetitor',this)">Kompetitor</div>
+              <div class="tab active" data-atab="overview" onclick="switchTab('overview',this)">📋 Info</div>
+              <div class="tab" data-atab="fasilitas" onclick="switchTab('fasilitas',this)">📍 Fasilitas</div>
+              <div class="tab" data-atab="compare" onclick="switchTab('compare',this)">⚖️ Vs Anchor</div>
+              <div class="tab" data-atab="radar" onclick="switchTab('radar',this)">📊 Radar</div>
+              <div class="tab" data-atab="nearby" onclick="switchTab('nearby',this)">🏘️ Sekitar</div>
             </div>
             <div class="tab-body">
               <div class="tab-pane active" id="tab-overview"></div>
               <div class="tab-pane" id="tab-fasilitas"></div>
-              <div class="tab-pane" id="tab-kompetitor"></div>
+              <div class="tab-pane" id="tab-compare"></div>
+              <div class="tab-pane" id="tab-radar"></div>
+              <div class="tab-pane" id="tab-nearby"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Editor Data overlay -->
+      <div class="editor-overlay" id="editor-overlay">
+        <div class="editor-inner">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:15px;font-weight:700;">✏️ Editor Data Perumahan & POI</div>
+            <div style="display:flex;gap:7px;">
+              <button class="btn-sm-secondary" onclick="resetEditorData()">↩ Reset Default</button>
+              <button class="btn-sm-primary" onclick="applyEditorToPeta()">✓ Terapkan ke Peta</button>
+            </div>
+          </div>
+          <div class="editor-tabs">
+            <button class="etab active" onclick="switchEtab('perumahan',this)">🏘️ Perumahan <span id="ecnt-p"></span></button>
+            <button class="etab" onclick="switchEtab('poi',this)">📍 POI <span id="ecnt-poi"></span></button>
+          </div>
+          <div id="etab-perumahan">
+            <div class="ecard">
+              <div class="ecard-head"><div><div class="ecard-title">Daftar Perumahan Kompetitor</div><div class="ecard-sub">Edit langsung di tabel, otomatis tersimpan.</div></div></div>
+              <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th>Nama</th><th>Area</th><th>Tipe</th><th>Lat</th><th>Lng</th><th>Developer</th><th>Unit</th><th>Realisasi</th><th>Tahun</th><th></th></tr></thead><tbody id="etbody-p"></tbody></table></div>
+              <div class="add-row-e">
+                <div class="ef"><label>Nama</label><input type="text" id="enp-nama" placeholder="Nama Perumahan" style="min-width:150px;"></div>
+                <div class="ef"><label>Area</label><input type="text" id="enp-area" placeholder="Kecamatan" style="min-width:90px;"></div>
+                <div class="ef"><label>Tipe</label><select id="enp-tipe" style="min-width:80px;"><option value="subsidi">Subsidi</option><option value="mix">Mix-use</option></select></div>
+                <div class="ef"><label>Lat</label><input type="number" id="enp-lat" placeholder="-6.55" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Lng</label><input type="number" id="enp-lng" placeholder="107.81" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Developer</label><input type="text" id="enp-dev" placeholder="PT ..." style="min-width:120px;"></div>
+                <div class="ef"><label>Unit</label><input type="number" id="enp-unit" placeholder="80" style="min-width:55px;"></div>
+                <div class="ef"><label>Realisasi</label><input type="number" id="enp-real" placeholder="0" style="min-width:65px;"></div>
+                <div class="ef"><label>Tahun</label><input type="number" id="enp-tahun" placeholder="2024" style="min-width:60px;"></div>
+                <div class="ef"><label>&nbsp;</label><button class="btn-sm-primary" onclick="addEPerumahan()">+ Tambah</button></div>
+              </div>
+            </div>
+          </div>
+          <div id="etab-poi" style="display:none;">
+            <div class="ecard">
+              <div class="ecard-head"><div><div class="ecard-title">Daftar POI</div><div class="ecard-sub">Fasilitas yang dipakai dalam kalkulasi skor lokasi.</div></div></div>
+              <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th>Nama</th><th>Kategori</th><th>Lat</th><th>Lng</th><th></th></tr></thead><tbody id="etbody-poi"></tbody></table></div>
+              <div class="add-row-e">
+                <div class="ef"><label>Nama</label><input type="text" id="epoi-nama" placeholder="Nama POI" style="min-width:170px;"></div>
+                <div class="ef"><label>Kategori</label><select id="epoi-kat" style="min-width:110px;"><option value="rs">RS/Klinik</option><option value="kampus">Kampus</option><option value="mall">Mall/Belanja</option><option value="tol">Transportasi</option><option value="pemda">Pemerintah</option><option value="industri">Industri</option><option value="publik">Ruang Publik</option></select></div>
+                <div class="ef"><label>Lat</label><input type="number" id="epoi-lat" placeholder="-6.55" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Lng</label><input type="number" id="epoi-lng" placeholder="107.81" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>&nbsp;</label><button class="btn-sm-primary" onclick="addEPoi()">+ Tambah</button></div>
+              </div>
             </div>
           </div>
         </div>
@@ -639,12 +802,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="toast" id="toast"></div>
 
+<!-- FORMULA EDITOR MODAL -->
+<div class="formula-trigger" id="formula-trigger" title="Edit Formula Scoring">⚙️</div>
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-modal">
+    <div class="admin-header">
+      <h2>⚙️ Formula Editor — Scoring Lokasi</h2>
+      <button class="admin-close-btn" onclick="document.getElementById('admin-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section">
+        <div class="admin-section-title">Bobot 3 Faktor Utama (total harus = 100%)</div>
+        <div class="admin-fw"><label>🚗 Aksesibilitas</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-aksesibilitas" min="0" max="100" value="50"> %</div></div>
+        <div class="admin-fw" style="background:#ECFDF5;"><label style="color:#059669;">🏥 Fasilitas & Infrastruktur</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-fasilitas" min="0" max="100" value="30" style="border-color:#059669;color:#059669;"> %</div></div>
+        <div class="admin-fw" style="background:#FFFBEB;"><label style="color:#D97706;">🏗️ Kondisi Fisik Jalan</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-fisik" min="0" max="100" value="20" style="border-color:#D97706;color:#D97706;"> %</div></div>
+        <div class="weight-total ok" id="weight-total-display">Total: 100% ✓</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Aksesibilitas (total = 100%)</div>
+        <div class="admin-row"><label>🛣️ Exit Tol</label><input type="range" min="0" max="100" value="40" id="sw-tol" oninput="syncNum('sw-tol','sn-tol')"><input type="number" id="sn-tol" value="40" min="0" max="100" oninput="syncRng('sn-tol','sw-tol')"> %</div>
+        <div class="admin-row"><label>🏙️ Pusat Kota (CBD)</label><input type="range" min="0" max="100" value="40" id="sw-cbd" oninput="syncNum('sw-cbd','sn-cbd')"><input type="number" id="sn-cbd" value="40" min="0" max="100" oninput="syncRng('sn-cbd','sw-cbd')"> %</div>
+        <div class="admin-row"><label>🚦 Transportasi Umum</label><input type="range" min="0" max="100" value="20" id="sw-transport" oninput="syncNum('sw-transport','sn-transport')"><input type="number" id="sn-transport" value="20" min="0" max="100" oninput="syncRng('sn-transport','sw-transport')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Fasilitas & Infrastruktur (total = 100%)</div>
+        <div class="admin-row"><label>🏥 RS / Klinik</label><input type="range" min="0" max="100" value="30" id="sw-rs" oninput="syncNum('sw-rs','sn-rs')"><input type="number" id="sn-rs" value="30" min="0" max="100" oninput="syncRng('sn-rs','sw-rs')"> %</div>
+        <div class="admin-row"><label>🎓 Kampus</label><input type="range" min="0" max="100" value="20" id="sw-kampus" oninput="syncNum('sw-kampus','sn-kampus')"><input type="number" id="sn-kampus" value="20" min="0" max="100" oninput="syncRng('sn-kampus','sw-kampus')"> %</div>
+        <div class="admin-row"><label>🏬 Mall / Belanja</label><input type="range" min="0" max="100" value="20" id="sw-mall" oninput="syncNum('sw-mall','sn-mall')"><input type="number" id="sn-mall" value="20" min="0" max="100" oninput="syncRng('sn-mall','sw-mall')"> %</div>
+        <div class="admin-row"><label>🏛️ Pemerintahan</label><input type="range" min="0" max="100" value="10" id="sw-pemda" oninput="syncNum('sw-pemda','sn-pemda')"><input type="number" id="sn-pemda" value="10" min="0" max="100" oninput="syncRng('sn-pemda','sw-pemda')"> %</div>
+        <div class="admin-row"><label>💼 Kawasan Industri</label><input type="range" min="0" max="100" value="10" id="sw-industri" oninput="syncNum('sw-industri','sn-industri')"><input type="number" id="sn-industri" value="10" min="0" max="100" oninput="syncRng('sn-industri','sw-industri')"> %</div>
+        <div class="admin-row"><label>🌳 Ruang Publik</label><input type="range" min="0" max="100" value="10" id="sw-publik" oninput="syncNum('sw-publik','sn-publik')"><input type="number" id="sn-publik" value="10" min="0" max="100" oninput="syncRng('sn-publik','sw-publik')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Kurva Decay (semakin besar = skor turun lebih cepat per km)</div>
+        <div class="admin-row"><label>🚗 Decay Aksesibilitas</label><input type="range" min="1" max="20" value="8" step="0.5" id="sw-decay-aks" oninput="syncNum('sw-decay-aks','sn-decay-aks')"><input type="number" id="sn-decay-aks" value="8" min="1" max="20" step="0.5" oninput="syncRng('sn-decay-aks','sw-decay-aks')"></div>
+        <div class="admin-row"><label>🏥 Decay Fasilitas</label><input type="range" min="1" max="20" value="6" step="0.5" id="sw-decay-fas" oninput="syncNum('sw-decay-fas','sn-decay-fas')"><input type="number" id="sn-decay-fas" value="6" min="1" max="20" step="0.5" oninput="syncRng('sn-decay-fas','sw-decay-fas')"></div>
+      </div>
+      <div class="admin-btn-row">
+        <button class="admin-btn admin-btn-primary" onclick="applyFormula()">✓ Terapkan & Hitung Ulang</button>
+        <button class="admin-btn admin-btn-reset" onclick="resetFormula()">↺ Reset Default</button>
+        <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ============================================================
 // CONFIG
 // ============================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxiTUB--I2FQkw8Txtm2gwskgV_alk1cuozuw45beqi4luWjoUrjQWQThDy15JITeA9rg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzc3Zm2qIIk08NZVO0Dir4fqKSGjTY9KljlXz9HrzU2HtVp4yaMhk0aNsdxl7bgc61Nng/exec';
 const USE_SHEETS = true;
 const BM4_PASSWORD = 'bm4property2024';
 const SESSION_KEY = 'bm4_auth';
@@ -856,68 +1064,152 @@ function selectPerumahan(id){
   if(analisaMapInit&&markers[id])analisaMap.panTo([p.lat,p.lng]);
   renderDetailOverview(p);
   renderDetailFasilitas(p);
-  renderDetailKompetitor(p);
+  renderDetailCompare(p);
+  renderDetailRadar(p);
+  renderDetailNearby(p);
+  // Reset to overview tab
+  document.querySelectorAll('.tab-bar .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-atab="overview"]').classList.add('active');
+  document.getElementById('tab-overview').classList.add('active');
 }
 function renderDetailOverview(p){
   const r=p._scoreDetail,gr=scoreGrade(r.overall),isAnch=p.id===ANCHOR_ID;
+  const pct_p=p.unit>0?Math.min(100,Math.round(p.realisasi/p.unit*100)):0;
   document.getElementById('tab-overview').innerHTML=`
-    ${isAnch?'<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;font-size:11px;color:#D97706;font-weight:600;margin-bottom:10px;">⭐ Ini adalah proyek kita sendiri</div>':''}
     <span class="pill" style="background:${TIPE_BG[p.tipe]||'#F0F0F0'};color:${TIPE_COLOR[p.tipe]||'#666'}">${TIPE_LABEL[p.tipe]||p.tipe}</span>
+    ${isAnch?'<span class="anchor-badge">⭐ Anchor</span>':''}
     <div class="d-name">${p.nama}</div>
-    <div class="d-area">${p.area} · ${p.developer}</div>
+    <div class="d-area">📍 ${p.area} · Launching ${p.tahun}</div>
     <div class="score-card">
-      <div><div class="score-label">Location Score</div><div class="score-big">${r.overall}</div><div style="margin-top:6px;"><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${r.overall}%"></div></div></div></div>
-      <div><div class="score-label">Grade</div><div class="score-grade">${gr.g}</div></div>
+      <div><div class="score-label">Location Score</div><div class="score-big">${r.overall}</div><div style="margin-top:5px;"><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${r.overall}%"></div></div></div></div>
+      <div style="flex:1"><div class="score-label">Grade</div><div class="score-grade">${gr.g}</div><div style="font-size:10px;opacity:0.65;margin-top:3px;">dari 100 poin</div></div>
     </div>
     <div class="score-breakdown">
-      ${[['🚗 Aksesibilitas',r.aksesibilitas,'#2563EB'],['🏥 Fasilitas',r.fasilitas,'#059669'],['🏗️ Kondisi Fisik',r.fisik,'#D97706']].map(([n,s,c])=>`
-      <div class="sb-factor"><div class="sb-factor-header"><span class="sb-factor-name">${n}</span><span class="sb-factor-score" style="color:${c}">${s}</span></div>
-      <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${s}%;background:${c}"></div></div></div>`).join('')}
+      <div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Breakdown Skor 3 Faktor</div>
+      <div class="sb-factor"><div class="sb-factor-header"><span class="sb-factor-name">🚗 Aksesibilitas (${FORMULA.wAksesibilitas}%)</span><span class="sb-factor-score" style="color:#2563EB">${r.aksesibilitas}</span></div>
+      <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${r.aksesibilitas}%;background:#2563EB"></div></div>
+      <div class="sb-sub"><span>Exit Tol: ${r.detail.tol.dist}km (${r.detail.tol.score}pts)</span><span>CBD: ${r.detail.cbd.dist}km</span><span>Transport: ${r.detail.transport.dist}km</span></div></div>
+      <div class="sb-factor"><div class="sb-factor-header"><span class="sb-factor-name">🏥 Fasilitas (${FORMULA.wFasilitas}%)</span><span class="sb-factor-score" style="color:#059669">${r.fasilitas}</span></div>
+      <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${r.fasilitas}%;background:#059669"></div></div>
+      <div class="sb-sub"><span>RS: ${r.detail.rs.dist}km (${r.detail.rs.score}pts)</span><span>Kampus: ${r.detail.kampus.dist}km</span><span>Mall: ${r.detail.mall.dist}km</span></div></div>
+      <div class="sb-factor"><div class="sb-factor-header"><span class="sb-factor-name">🏗️ Kondisi Fisik (${FORMULA.wFisik}%)</span><span class="sb-factor-score" style="color:#D97706">${r.fisik}</span></div>
+      <div class="sb-factor-bar"><div class="sb-factor-fill" style="width:${r.fisik}%;background:#D97706"></div></div></div>
     </div>
     <div class="stats-grid">
       <div class="stat-box"><div class="sl">Total Unit</div><div class="sv">${fmt(p.unit)}</div></div>
       <div class="stat-box"><div class="sl">Realisasi</div><div class="sv">${fmt(p.realisasi)}</div></div>
       <div class="stat-box"><div class="sl">Tahun</div><div class="sv">${p.tahun}</div></div>
-      <div class="stat-box"><div class="sl">% Terjual</div><div class="sv">${p.unit>0?Math.min(100,Math.round(p.realisasi/p.unit*100)):0}%</div></div>
-    </div>`;
+      <div class="stat-box"><div class="sl">Progress</div><div class="sv">${pct_p}%</div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-label"><span>Progress Realisasi</span><span style="font-weight:700">${pct_p}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct_p}%;background:${TIPE_COLOR[p.tipe]||'#65A30D'}"></div></div>
+    </div>
+    <div class="stat-box" style="font-size:11px;line-height:1.5;"><div class="sl">Developer</div>${p.developer}</div>
+    <div class="coords-small">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>`;
 }
 function renderDetailFasilitas(p){
   const nb=nearestByKat(p);
   document.getElementById('tab-fasilitas').innerHTML=`
-    <div class="section-title">Fasilitas Terdekat</div>
-    ${Object.entries(nb).map(([kat,x])=>`
+    <div class="section-title">Fasilitas Terdekat per Kategori</div>
+    ${Object.entries(KAT_LABEL).map(([kat,lbl])=>{const x=nb[kat];if(!x)return'';return`
     <div class="poi-row">
       <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-        <div class="poi-icon" style="background:${KAT_COLOR[kat]}">${x.emoji}</div>
-        <div><div class="poi-name">${x.nama}</div><div class="poi-cat">${KAT_LABEL[kat]}</div></div>
+        <div class="poi-icon" style="background:${KAT_COLOR[kat]}">${x.emoji||x.label[0]}</div>
+        <div><div class="poi-name">${x.nama}</div><div class="poi-cat">${lbl}</div></div>
       </div>
       <div class="poi-dist" style="flex-shrink:0;text-align:right;margin-left:8px;">
         <div class="km">${x.dist.toFixed(1)} km</div>
         <div class="mn">~${travelMin(x.dist)} mnt</div>
       </div>
+    </div>`;}).join('')}`;
+}
+function renderDetailCompare(p){
+  const anchor=perumahan.find(x=>x.id===ANCHOR_ID);
+  const isAnch=p.id===ANCHOR_ID;
+  if(isAnch){document.getElementById('tab-compare').innerHTML=`<div style="text-align:center;padding:40px 16px;color:var(--faint);font-size:12px;line-height:1.8">Ini adalah proyek Anchor.<br>Pilih perumahan lain untuk perbandingan.</div>`;return;}
+  const nb=nearestByKat(p),nb_a=nearestByKat(anchor);
+  const sd=p._scoreDetail,sd_a=anchor._scoreDetail||calcScoreFull(anchor);
+  const pct_p=p.unit>0?Math.min(100,Math.round(p.realisasi/p.unit*100)):0;
+  const pct_a=anchor.unit>0?Math.min(100,Math.round(anchor.realisasi/anchor.unit*100)):0;
+  const cats=Object.keys(KAT_LABEL);
+  const cmpRows=cats.map(k=>{const a=nb[k],b=nb_a[k];if(!a||!b)return'';const da=a.dist.toFixed(1),db=b.dist.toFixed(1),aWin=parseFloat(da)<=parseFloat(db),tie=da===db;return`<div class="cmp-row"><div class="cmp-lc">${a.emoji||'📍'} ${KAT_LABEL[k]}</div><div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-win':'cmp-lose'}">${da} km</div><div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-lose':'cmp-win'}">${db} km</div></div>`;}).join('');
+  const cw=(a,b)=>a>b?'cmp-win':a<b?'cmp-lose':'cmp-tie';
+  document.getElementById('tab-compare').innerHTML=`
+    <div class="cmp-header">
+      <div class="cmp-box" style="background:${TIPE_BG[p.tipe]||'#F0F0F0'};color:${TIPE_COLOR[p.tipe]||'#666'}"><div class="cl">Dipilih</div><div class="cn">${p.nama}</div><div class="ca">${p.area}</div></div>
+      <div class="cmp-box" style="background:var(--anchor-light);color:var(--anchor)"><div class="cl">⭐ Anchor</div><div class="cn">${anchor.nama}</div><div class="ca">${anchor.area}</div></div>
+    </div>
+    <div class="section-title">Skor Faktor</div>
+    <div class="cmp-row" style="background:var(--bg);border-radius:5px;padding:4px 7px;"><div class="cmp-lc" style="font-weight:600">Faktor</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--muted)">Dipilih</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--anchor)">⭐ Anchor</div></div>
+    <div class="cmp-row"><div class="cmp-lc">🏆 Total Skor</div><div class="cmp-val ${cw(sd.overall,sd_a.overall)}">${sd.overall}</div><div class="cmp-val ${cw(sd_a.overall,sd.overall)}">${sd_a.overall}</div></div>
+    <div class="cmp-row"><div class="cmp-lc">🚗 Aksesibilitas</div><div class="cmp-val ${cw(sd.aksesibilitas,sd_a.aksesibilitas)}">${sd.aksesibilitas}</div><div class="cmp-val ${cw(sd_a.aksesibilitas,sd.aksesibilitas)}">${sd_a.aksesibilitas}</div></div>
+    <div class="cmp-row"><div class="cmp-lc">🏥 Fasilitas</div><div class="cmp-val ${cw(sd.fasilitas,sd_a.fasilitas)}">${sd.fasilitas}</div><div class="cmp-val ${cw(sd_a.fasilitas,sd.fasilitas)}">${sd_a.fasilitas}</div></div>
+    <div class="section-title">Jarak ke Fasilitas</div>
+    <div class="cmp-row" style="background:var(--bg);border-radius:5px;padding:4px 7px;"><div class="cmp-lc" style="font-weight:600">Kategori</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--muted)">Dipilih</div><div style="font-size:10px;font-weight:600;text-align:center;color:var(--anchor)">⭐ Anchor</div></div>
+    ${cmpRows}
+    <div class="section-title">Data Proyek</div>
+    <div class="cmp-row"><div class="cmp-lc">Total Unit</div><div class="cmp-val ${cw(p.unit,anchor.unit)}">${fmt(p.unit)}</div><div class="cmp-val ${cw(anchor.unit,p.unit)}">${fmt(anchor.unit)}</div></div>
+    <div class="cmp-row"><div class="cmp-lc">Realisasi</div><div class="cmp-val ${cw(p.realisasi,anchor.realisasi)}">${fmt(p.realisasi)}</div><div class="cmp-val ${cw(anchor.realisasi,p.realisasi)}">${fmt(anchor.realisasi)}</div></div>
+    <div class="cmp-row"><div class="cmp-lc">Progress</div><div class="cmp-val ${cw(pct_p,pct_a)}">${pct_p}%</div><div class="cmp-val ${cw(pct_a,pct_p)}">${pct_a}%</div></div>
+    <div class="cmp-row"><div class="cmp-lc">Launching</div><div class="cmp-val ${cw(p.tahun,anchor.tahun)}">${p.tahun}</div><div class="cmp-val ${cw(anchor.tahun,p.tahun)}">${anchor.tahun}</div></div>`;
+}
+function renderDetailRadar(p){
+  const isAnch=p.id===ANCHOR_ID;
+  const anchor=perumahan.find(x=>x.id===ANCHOR_ID);
+  const nb_a=isAnch?null:nearestByKat(anchor);
+  document.getElementById('tab-radar').innerHTML=`
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;">Profil kekuatan lokasi per kategori fasilitas</div>
+    <canvas id="radar-canvas" width="260" height="245" style="width:100%;max-width:260px;display:block;margin:0 auto 8px;"></canvas>
+    ${!isAnch?`<div style="display:flex;gap:14px;justify-content:center;font-size:10px;color:var(--muted)">
+      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dipilih</span>
+      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:3px;background:#D97706;display:inline-block;border-radius:2px;"></span>Anchor</span>
+    </div>`:''}`;
+  setTimeout(()=>drawRadar(nearestByKat(p),nb_a),50);
+}
+function renderDetailNearby(p){
+  const near=[...perumahan].filter(x=>x.id!==p.id).map(x=>({...x,dist:haversine(p.lat,p.lng,x.lat,x.lng)})).sort((a,b)=>a.dist-b.dist).slice(0,6);
+  document.getElementById('tab-nearby').innerHTML=`
+    <div class="section-title">6 Perumahan Terdekat</div>
+    ${near.map(x=>`<div class="nearby-row">
+      <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0">
+        <span class="nearby-dot" style="background:${TIPE_COLOR[x.tipe]||'#65A30D'}"></span>
+        <div><div class="nearby-name">${x.id===ANCHOR_ID?'⭐ ':''}${x.nama}</div>
+        <div class="nearby-sub">${x.area} · ${TIPE_LABEL[x.tipe]||x.tipe} · Skor: ${x.score}</div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="nearby-dist">${x.dist.toFixed(1)} km</div>
+        <div class="nearby-min">~${travelMin(x.dist)} mnt</div>
+      </div>
     </div>`).join('')}`;
 }
-function renderDetailKompetitor(p){
-  const nearby=[...perumahan].filter(x=>x.id!==p.id).map(x=>({...x,dist:haversine(p.lat,p.lng,x.lat,x.lng)})).sort((a,b)=>a.dist-b.dist).slice(0,5);
-  document.getElementById('tab-kompetitor').innerHTML=`
-    <div class="section-title">5 Kompetitor Terdekat</div>
-    ${nearby.map(x=>`
-    <div class="poi-row" style="cursor:pointer;" onclick="selectPerumahan(${x.id})">
-      <div style="flex:1;min-width:0;">
-        <div class="poi-name">${x.id===ANCHOR_ID?'⭐ ':''}${x.nama}</div>
-        <div class="poi-cat">${x.area} · Skor: ${x.score}</div>
-      </div>
-      <div class="poi-dist" style="flex-shrink:0;text-align:right;margin-left:8px;">
-        <div class="km">${x.dist.toFixed(1)} km</div>
-        <div style="font-size:10px;color:var(--muted);">${TIPE_LABEL[x.tipe]||x.tipe}</div>
-      </div>
-    </div>`).join('')}`;
+function drawRadar(nb,nb_a){
+  const canvas=document.getElementById('radar-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cats=Object.keys(KAT_LABEL);
+  const W=260,H=245,cx=130,cy=128,R=85,n=cats.length;
+  ctx.clearRect(0,0,W,H);
+  const angles=cats.map((_,i)=>(-Math.PI/2)+(2*Math.PI*i/n));
+  for(let rv=0.25;rv<=1;rv+=0.25){ctx.beginPath();angles.forEach((a,i)=>{const x=cx+R*rv*Math.cos(a),y=cy+R*rv*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.closePath();ctx.strokeStyle=`rgba(0,0,0,${rv===1?0.12:0.05})`;ctx.lineWidth=rv===1?1.5:1;ctx.stroke();}
+  angles.forEach(a=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='rgba(0,0,0,0.06)';ctx.lineWidth=1;ctx.stroke();});
+  ctx.font='bold 8px DM Sans,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#5F5E5A';
+  angles.forEach((a,i)=>{const lx=cx+(R+14)*Math.cos(a),ly=cy+(R+14)*Math.sin(a);ctx.fillText(cats[i].toUpperCase().slice(0,4),lx,ly);});
+  function sc(nbD,k){if(!nbD||!nbD[k])return 0;return Math.max(0,Math.min(1,(100-(nbD[k].dist*FORMULA.decayFas))/100));}
+  function shape(nbD,color,alpha){ctx.beginPath();angles.forEach((a,i)=>{const s=sc(nbD,cats[i]),x=cx+R*s*Math.cos(a),y=cy+R*s*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.closePath();ctx.fillStyle=color.replace('rgb','rgba').replace(')',`,${alpha})`);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();angles.forEach((a,i)=>{const s=sc(nbD,cats[i]),x=cx+R*s*Math.cos(a),y=cy+R*s*Math.sin(a);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();});}
+  if(nb_a)shape(nb_a,'rgb(217,119,6)',0.12);
+  shape(nb,'rgb(37,99,235)',0.18);
 }
 function switchTab(t,el){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-bar .tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('tab-'+t).classList.add('active');
+  if(t==='radar'&&selectedId){
+    const p=perumahan.find(x=>x.id===selectedId);
+    const anchor=perumahan.find(x=>x.id===ANCHOR_ID);
+    setTimeout(()=>drawRadar(nearestByKat(p),p.id===ANCHOR_ID?null:nearestByKat(anchor)),50);
+  }
 }
 
 // ============================================================
@@ -1066,6 +1358,144 @@ function saveTpTarget(){
   if(editingTpId!==-1)selectTP(editingTpId);
   showToast('✅ Data tersimpan!');
 }
+
+// ============================================================
+// CHART
+// ============================================================
+function buildChart(){
+  const bars=document.getElementById('chart-bars');if(!bars)return;
+  const sorted=[...perumahan].sort((a,b)=>(b.realisasi/b.unit)-(a.realisasi/a.unit));
+  bars.innerHTML=sorted.map(p=>{const pc=p.unit>0?Math.min(100,Math.round(p.realisasi/p.unit*100)):0;const color=TIPE_COLOR[p.tipe]||'#65A30D';return`<div class="bar-col"><div class="bar-bg"><div class="bar-pct">${pc}%</div><div class="bar-fill" style="height:${pc}%;background:${color};"></div></div><div class="bar-lbl" title="${p.nama}">${p.nama.split(' ').slice(0,2).join(' ')}</div></div>`;}).join('');
+}
+function toggleChart(){
+  const panel=document.getElementById('chart-panel');const btn=document.getElementById('chart-fab');
+  const open=!panel.classList.contains('open');panel.classList.toggle('open',open);btn.classList.toggle('active',open);
+  if(open)buildChart();
+}
+
+// ============================================================
+// EDITOR DATA
+// ============================================================
+const KAT_EMOJI_E={rs:'🏥',kampus:'🎓',mall:'🏬',tol:'🛣️',pemda:'🏛️',industri:'💼',publik:'🌳'};
+const KAT_LBL_E={rs:'RS',kampus:'U',mall:'M',tol:'T',pemda:'G',industri:'I',publik:'P'};
+function toggleEditor(){
+  const ov=document.getElementById('editor-overlay');const btn=document.getElementById('btn-editor');
+  const open=!ov.classList.contains('open');ov.classList.toggle('open',open);btn.classList.toggle('active',open);
+  btn.textContent=open?'✖ Tutup Editor':'✏️ Edit Data';
+  if(open){renderEPerumahan();renderEPoi();}
+}
+function switchEtab(name,el){
+  document.getElementById('etab-perumahan').style.display=name==='perumahan'?'':'none';
+  document.getElementById('etab-poi').style.display=name==='poi'?'':'none';
+  document.querySelectorAll('.editor-tabs .etab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function renderEPerumahan(){
+  document.getElementById('ecnt-p').textContent='('+perumahan.length+')';
+  document.getElementById('etbody-p').innerHTML=perumahan.map((p,i)=>`<tr><td style="color:var(--faint);font-size:10px;font-family:'DM Mono',monospace;">${i+1}${i===0?'⭐':''}</td>
+    <td><input type="text" value="${p.nama}" onchange="perumahan[${i}].nama=this.value;autoSv()" style="min-width:140px;"></td>
+    <td><input type="text" value="${p.area}" onchange="perumahan[${i}].area=this.value;autoSv()" style="min-width:80px;"></td>
+    <td><select onchange="perumahan[${i}].tipe=this.value;autoSv()"><option value="subsidi" ${p.tipe==='subsidi'?'selected':''}>Subsidi</option><option value="mix" ${p.tipe==='mix'?'selected':''}>Mix</option></select></td>
+    <td><input type="number" value="${p.lat}" onchange="perumahan[${i}].lat=parseFloat(this.value);autoSv()" step="0.0000001" style="min-width:95px;font-family:'DM Mono',monospace;font-size:11px;"></td>
+    <td><input type="number" value="${p.lng}" onchange="perumahan[${i}].lng=parseFloat(this.value);autoSv()" step="0.0000001" style="min-width:95px;font-family:'DM Mono',monospace;font-size:11px;"></td>
+    <td><input type="text" value="${p.developer}" onchange="perumahan[${i}].developer=this.value;autoSv()" style="min-width:120px;"></td>
+    <td><input type="number" value="${p.unit}" onchange="perumahan[${i}].unit=parseInt(this.value)||0;autoSv()" style="min-width:50px;"></td>
+    <td><input type="number" value="${p.realisasi}" onchange="perumahan[${i}].realisasi=parseInt(this.value)||0;autoSv()" style="min-width:60px;"></td>
+    <td><input type="number" value="${p.tahun}" onchange="perumahan[${i}].tahun=parseInt(this.value)||2024;autoSv()" style="min-width:58px;"></td>
+    <td><button class="btn-sm-danger" onclick="delEP(${i})">Hapus</button></td></tr>`).join('');
+}
+function renderEPoi(){
+  document.getElementById('ecnt-poi').textContent='('+poi.length+')';
+  document.getElementById('etbody-poi').innerHTML=poi.map((x,i)=>`<tr><td style="color:var(--faint);font-size:10px;font-family:'DM Mono',monospace;">${i+1}</td>
+    <td><input type="text" value="${x.nama}" onchange="poi[${i}].nama=this.value;autoSv()" style="min-width:180px;"></td>
+    <td><select onchange="poi[${i}].kat=this.value;poi[${i}].label=KAT_LBL_E[this.value];poi[${i}].emoji=KAT_EMOJI_E[this.value];autoSv();">${Object.entries(KAT_LABEL).map(([k,v])=>`<option value="${k}" ${x.kat===k?'selected':''}>${v}</option>`).join('')}</select></td>
+    <td><input type="number" value="${x.lat}" onchange="poi[${i}].lat=parseFloat(this.value);autoSv()" step="0.0000001" style="min-width:95px;font-family:'DM Mono',monospace;font-size:11px;"></td>
+    <td><input type="number" value="${x.lng}" onchange="poi[${i}].lng=parseFloat(this.value);autoSv()" step="0.0000001" style="min-width:95px;font-family:'DM Mono',monospace;font-size:11px;"></td>
+    <td><button class="btn-sm-danger" onclick="delEPoi(${i})">Hapus</button></td></tr>`).join('');
+}
+let _svTimer=null;
+function autoSv(){clearTimeout(_svTimer);_svTimer=setTimeout(()=>{try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}},800);}
+function delEP(i){if(!confirm('Hapus "'+perumahan[i].nama+'"?'))return;perumahan.splice(i,1);perumahan.forEach((p,idx)=>p.id=idx+1);renderEPerumahan();autoSv();showToast('🗑️ Dihapus');}
+function delEPoi(i){if(!confirm('Hapus "'+poi[i].nama+'"?'))return;poi.splice(i,1);renderEPoi();autoSv();showToast('🗑️ Dihapus');}
+function addEPerumahan(){
+  const nama=document.getElementById('enp-nama').value.trim();const area=document.getElementById('enp-area').value.trim();
+  const lat=parseFloat(document.getElementById('enp-lat').value);const lng=parseFloat(document.getElementById('enp-lng').value);
+  if(!nama||!area||isNaN(lat)||isNaN(lng)){showToast('⚠️ Nama, Area, Lat & Lng wajib!');return;}
+  const newId=perumahan.length>0?Math.max(...perumahan.map(p=>p.id))+1:1;
+  perumahan.push({id:newId,nama:nama.toUpperCase(),lat,lng,tipe:document.getElementById('enp-tipe').value,realisasi:parseInt(document.getElementById('enp-real').value)||0,unit:parseInt(document.getElementById('enp-unit').value)||80,tahun:parseInt(document.getElementById('enp-tahun').value)||2024,developer:document.getElementById('enp-dev').value.trim()||'-',area});
+  ['enp-nama','enp-area','enp-lat','enp-lng','enp-dev','enp-unit','enp-real','enp-tahun'].forEach(id=>document.getElementById(id).value='');
+  renderEPerumahan();autoSv();showToast('✅ Perumahan ditambahkan!');
+}
+function addEPoi(){
+  const nama=document.getElementById('epoi-nama').value.trim();const lat=parseFloat(document.getElementById('epoi-lat').value);const lng=parseFloat(document.getElementById('epoi-lng').value);
+  if(!nama||isNaN(lat)||isNaN(lng)){showToast('⚠️ Nama, Lat & Lng wajib!');return;}
+  const kat=document.getElementById('epoi-kat').value;
+  poi.push({nama,lat,lng,kat,label:KAT_LBL_E[kat],emoji:KAT_EMOJI_E[kat]});
+  ['epoi-nama','epoi-lat','epoi-lng'].forEach(id=>document.getElementById(id).value='');
+  renderEPoi();autoSv();showToast('✅ POI ditambahkan!');
+}
+function resetEditorData(){if(!confirm('Reset semua data ke default?'))return;localStorage.removeItem('bm4_data');location.reload();}
+function applyEditorToPeta(){
+  recalcAll();
+  if(analisaMapInit){
+    Object.values(markers).forEach(({marker})=>analisaMap.removeLayer(marker));
+    Object.values(poiMarkers).forEach(({marker})=>analisaMap.removeLayer(marker));
+    markers={};poiMarkers={};
+    perumahan.forEach(p=>{const isAnch=p.id===ANCHOR_ID,color=TIPE_COLOR[p.tipe]||'#666',sz=isAnch?20:15;const icon=L.divIcon({html:`<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3);${isAnch?'border:3px solid #D97706;box-shadow:0 0 0 3px rgba(217,119,6,0.3);':''}"></div>${isAnch?'<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:12px;">⭐</div>':''}`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],className:''});const m=L.marker([p.lat,p.lng],{icon}).addTo(analisaMap);m.bindTooltip(`<b>${p.nama}</b><br>${p.area} · Skor: <b>${p.score}</b>`,{direction:'top',offset:[0,-10]});m.on('click',()=>selectPerumahan(p.id));markers[p.id]={marker:m,data:p};});
+    poi.forEach((x,i)=>{const color=KAT_COLOR[x.kat]||'#666';const icon=L.divIcon({html:`<div style="width:20px;height:20px;background:${color};border-radius:5px;border:1.5px solid rgba(255,255,255,0.8);box-shadow:0 1px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:9px;font-weight:700;">${(x.label||'P')[0]}</div>`,iconSize:[20,20],iconAnchor:[10,10],className:''});const m=L.marker([x.lat,x.lng],{icon,zIndexOffset:-100});m.bindTooltip(`${x.emoji||'📍'} ${x.nama}`,{direction:'top',offset:[0,-8]});poiMarkers[i]={marker:m,data:x};if(activePoi[x.kat])m.addTo(analisaMap);});
+    const sel=document.getElementById('perumahan-select');sel.innerHTML='<option value="">— Semua Perumahan —</option>';perumahan.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=(p.id===ANCHOR_ID?'⭐ ':'')+p.nama;sel.appendChild(o);});
+    buildRanking('overall');
+  }
+  autoSv();toggleEditor();showToast('✅ Peta diperbarui!');
+}
+
+// ============================================================
+// FORMULA EDITOR
+// ============================================================
+function syncNum(rId,nId){document.getElementById(nId).value=document.getElementById(rId).value;}
+function syncRng(nId,rId){document.getElementById(rId).value=document.getElementById(nId).value;}
+function updateWTotal(){const total=parseInt(document.getElementById('w-aksesibilitas').value||0)+parseInt(document.getElementById('w-fasilitas').value||0)+parseInt(document.getElementById('w-fisik').value||0);const el=document.getElementById('weight-total-display');el.textContent=`Total: ${total}% ${total===100?'✓':'⚠ harus = 100%'}`;el.className='weight-total '+(total===100?'ok':'bad');}
+['w-aksesibilitas','w-fasilitas','w-fisik'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateWTotal);});
+function loadAdminValues(){
+  document.getElementById('w-aksesibilitas').value=FORMULA.wAksesibilitas;
+  document.getElementById('w-fasilitas').value=FORMULA.wFasilitas;
+  document.getElementById('w-fisik').value=FORMULA.wFisik;
+  document.getElementById('sw-tol').value=FORMULA.wTol;document.getElementById('sn-tol').value=FORMULA.wTol;
+  document.getElementById('sw-cbd').value=FORMULA.wCBD;document.getElementById('sn-cbd').value=FORMULA.wCBD;
+  document.getElementById('sw-transport').value=FORMULA.wTransport;document.getElementById('sn-transport').value=FORMULA.wTransport;
+  document.getElementById('sw-rs').value=FORMULA.wRS;document.getElementById('sn-rs').value=FORMULA.wRS;
+  document.getElementById('sw-kampus').value=FORMULA.wKampus;document.getElementById('sn-kampus').value=FORMULA.wKampus;
+  document.getElementById('sw-mall').value=FORMULA.wMall;document.getElementById('sn-mall').value=FORMULA.wMall;
+  document.getElementById('sw-pemda').value=FORMULA.wPemda;document.getElementById('sn-pemda').value=FORMULA.wPemda;
+  document.getElementById('sw-industri').value=FORMULA.wIndustri;document.getElementById('sn-industri').value=FORMULA.wIndustri;
+  document.getElementById('sw-publik').value=FORMULA.wPublik;document.getElementById('sn-publik').value=FORMULA.wPublik;
+  document.getElementById('sw-decay-aks').value=FORMULA.decayAks;document.getElementById('sn-decay-aks').value=FORMULA.decayAks;
+  document.getElementById('sw-decay-fas').value=FORMULA.decayFas;document.getElementById('sn-decay-fas').value=FORMULA.decayFas;
+  updateWTotal();
+}
+document.getElementById('formula-trigger').addEventListener('click',()=>{loadAdminValues();document.getElementById('admin-overlay').classList.add('open');});
+document.getElementById('admin-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('admin-overlay'))document.getElementById('admin-overlay').classList.remove('open');});
+function applyFormula(){
+  const wA=parseInt(document.getElementById('w-aksesibilitas').value),wF=parseInt(document.getElementById('w-fasilitas').value),wFi=parseInt(document.getElementById('w-fisik').value);
+  if(wA+wF+wFi!==100){alert('Total bobot faktor utama harus = 100%\nSekarang: '+(wA+wF+wFi)+'%');return;}
+  FORMULA.wAksesibilitas=wA;FORMULA.wFasilitas=wF;FORMULA.wFisik=wFi;
+  FORMULA.wTol=parseInt(document.getElementById('sn-tol').value);FORMULA.wCBD=parseInt(document.getElementById('sn-cbd').value);FORMULA.wTransport=parseInt(document.getElementById('sn-transport').value);
+  FORMULA.wRS=parseInt(document.getElementById('sn-rs').value);FORMULA.wKampus=parseInt(document.getElementById('sn-kampus').value);FORMULA.wMall=parseInt(document.getElementById('sn-mall').value);
+  FORMULA.wPemda=parseInt(document.getElementById('sn-pemda').value);FORMULA.wIndustri=parseInt(document.getElementById('sn-industri').value);FORMULA.wPublik=parseInt(document.getElementById('sn-publik').value);
+  FORMULA.decayAks=parseFloat(document.getElementById('sn-decay-aks').value);FORMULA.decayFas=parseFloat(document.getElementById('sn-decay-fas').value);
+  try{localStorage.setItem('bm4_formula',JSON.stringify(FORMULA));}catch(e){}
+  recalcAll();
+  if(analisaMapInit){Object.entries(markers).forEach(([id,{marker,data}])=>{marker.setTooltipContent(`<b>${data.nama}</b><br>${data.area} · Skor: <b>${data.score}</b>`);});buildRanking(document.getElementById('rank-cat-select').value);}
+  if(selectedId)selectPerumahan(selectedId);
+  document.getElementById('admin-overlay').classList.remove('open');
+  showToast('✅ Formula diperbarui & skor dihitung ulang!');
+  const t=document.getElementById('formula-trigger');t.textContent='✓';t.style.background='#ECFDF5';setTimeout(()=>{t.textContent='⚙️';t.style.background='white';},1500);
+}
+function resetFormula(){if(!confirm('Reset formula ke default?'))return;FORMULA={wAksesibilitas:50,wFasilitas:30,wFisik:20,wTol:40,wCBD:40,wTransport:20,wRS:30,wKampus:20,wMall:20,wPemda:10,wIndustri:10,wPublik:10,decayAks:8,decayFas:6};loadAdminValues();}
+// Load saved formula
+try{const sf=localStorage.getItem('bm4_formula');if(sf)FORMULA={...FORMULA,...JSON.parse(sf)};recalcAll();}catch(e){}
+// Load saved data
+try{const sd=localStorage.getItem('bm4_data');if(sd){const d=JSON.parse(sd);if(d.perumahan&&d.perumahan.length>0){perumahan.length=0;d.perumahan.forEach(p=>perumahan.push(p));}if(d.poi&&d.poi.length>0){poi.length=0;d.poi.forEach(x=>poi.push(x));}recalcAll();}}catch(e){}
 
 // ============================================================
 // SCREENS & NAVIGATION
