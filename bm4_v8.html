@@ -385,30 +385,93 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* Mobile FAB for menu (appears on mobile only) */
 .mobile-menu-btn{display:none;}
 
-/* ── GALERI TIM (NEW v10) ── */
-.galeri-wrap{flex:1;overflow-y:auto;padding:24px;background:linear-gradient(135deg,#F8FAFC 0%,#EFF6FF 100%);}
-.galeri-head{text-align:center;margin-bottom:28px;}
-.galeri-head h2{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--navy);}
-.galeri-head p{font-size:13px;color:var(--muted);}
-.galeri-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;max-width:1200px;margin:0 auto;}
-.galeri-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.3s;position:relative;}
-.galeri-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,0.12);}
-.galeri-card-banner{height:80px;position:relative;}
-.galeri-card-banner.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
-.galeri-card-banner.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
-.galeri-card-banner.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
-.galeri-card-banner.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
-.galeri-card-banner.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
-.galeri-card-banner.finance{background:linear-gradient(135deg,#10B981,#047857);}
-.galeri-card-avatar{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);width:88px;height:88px;border-radius:50%;border:4px solid white;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
-.galeri-card-avatar img{width:100%;height:100%;object-fit:cover;}
-.galeri-card-body{padding:52px 20px 20px;text-align:center;}
-.galeri-card-name{font-size:16px;font-weight:700;margin-bottom:3px;color:var(--text);}
-.galeri-card-jabatan{font-size:12px;color:var(--muted);margin-bottom:10px;}
-.galeri-card-role{display:inline-flex;padding:3px 11px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:14px;}
-.galeri-card-bio{font-size:12px;color:var(--text);line-height:1.55;font-style:italic;background:#FAFAF8;border-radius:10px;padding:11px 13px;border-left:3px solid var(--accent);position:relative;min-height:58px;text-align:left;}
-.galeri-card-bio::before{content:'"';position:absolute;top:-4px;left:8px;font-size:28px;color:var(--accent);font-family:Georgia,serif;opacity:0.3;}
-.galeri-card-bio.empty{color:var(--faint);font-style:normal;text-align:center;background:none;border-left:none;padding:8px;}
+/* ── GALERI TIM (v11 — Premium Elegan) ── */
+.galeri-wrap{flex:1;overflow-y:auto;padding:36px 28px 48px;background:linear-gradient(180deg,#FAFAF7 0%,#F2F1EE 100%);}
+.galeri-wrap::-webkit-scrollbar{width:6px;}
+.galeri-wrap::-webkit-scrollbar-thumb{background:#d4d3ce;border-radius:3px;}
+
+/* Header editorial */
+.galeri-head{text-align:center;margin-bottom:40px;}
+.galeri-kicker{display:inline-block;padding:5px 16px;background:var(--navy);color:#60A5FA;font-size:10px;font-weight:600;letter-spacing:2.5px;border-radius:20px;margin-bottom:14px;text-transform:uppercase;}
+.galeri-head h2{font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:500;color:#1C1C1A;margin-bottom:8px;letter-spacing:-0.5px;line-height:1.2;}
+.galeri-head p{font-size:13px;color:var(--muted);font-style:italic;font-family:Georgia,serif;}
+
+/* Banner kata hari ini */
+.galeri-daily{max-width:880px;margin:0 auto 36px;padding:20px 26px;background:var(--navy);border-radius:14px;display:flex;align-items:center;gap:18px;box-shadow:0 10px 30px rgba(28,43,74,0.18);}
+.galeri-daily-icon{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:rgba(96,165,250,0.15);display:flex;align-items:center;justify-content:center;color:#60A5FA;font-size:20px;}
+.galeri-daily-label{color:#60A5FA;font-size:10px;letter-spacing:2.5px;font-weight:600;margin-bottom:3px;text-transform:uppercase;}
+.galeri-daily-text{color:white;font-family:Georgia,serif;font-size:15px;font-style:italic;line-height:1.5;}
+
+/* Grid */
+.galeri-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;max-width:1200px;margin:0 auto;}
+
+/* Card premium */
+.galeri-card{background:white;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.07);border:0.5px solid rgba(0,0,0,0.04);transition:all 0.45s cubic-bezier(0.2,0.8,0.2,1);position:relative;cursor:pointer;opacity:0;transform:translateY(24px);}
+.galeri-card.show{opacity:1;transform:translateY(0);}
+.galeri-card:hover{transform:translateY(-8px);box-shadow:0 20px 48px rgba(0,0,0,0.14);}
+
+/* Foto jadi bintang utama - tinggi 280px */
+.galeri-card-photo{height:280px;position:relative;overflow:hidden;background:var(--accent);}
+.galeri-card-photo img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s cubic-bezier(0.2,0.8,0.2,1);}
+.galeri-card:hover .galeri-card-photo img{transform:scale(1.05);}
+.galeri-card-initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:96px;font-weight:500;font-family:Georgia,serif;}
+
+/* Varian background inisial per role */
+.galeri-card-photo.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
+.galeri-card-photo.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
+.galeri-card-photo.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
+.galeri-card-photo.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
+.galeri-card-photo.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
+.galeri-card-photo.finance{background:linear-gradient(135deg,#10B981,#047857);}
+
+/* Badge role di pojok foto */
+.galeri-card-badge{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:1.2px;padding:5px 12px;border-radius:20px;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.galeri-card-badge.bm{color:#92400E;}
+.galeri-card-badge.sales{color:#1E40AF;}
+.galeri-card-badge.strategi{color:#6B21A8;}
+.galeri-card-badge.konstruksi{color:#9A3412;}
+.galeri-card-badge.legal{color:#0E7490;}
+.galeri-card-badge.finance{color:#047857;}
+
+/* Hint klik di bawah foto */
+.galeri-card-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(255,255,255,0.95);color:var(--navy);font-size:10px;font-weight:600;letter-spacing:0.5px;padding:5px 13px;border-radius:20px;opacity:0;transition:all 0.3s;}
+.galeri-card:hover .galeri-card-hint{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Body kartu */
+.galeri-card-body{padding:20px 22px 24px;text-align:center;}
+.galeri-card-name{font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:500;color:#1C1C1A;margin-bottom:4px;letter-spacing:-0.3px;}
+.galeri-card-jabatan{font-size:10px;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;font-weight:500;}
+.galeri-card-divider{width:28px;height:1px;background:#d4d3ce;margin:0 auto 14px;}
+.galeri-card-bio{font-family:Georgia,serif;font-size:13px;color:var(--muted);line-height:1.6;font-style:italic;min-height:42px;}
+.galeri-card-bio.empty{color:var(--faint);font-style:italic;opacity:0.6;}
+
+/* ── MODAL KATA MOTIVASI (v11) ── */
+.gmodal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(6px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.3s;}
+.gmodal-backdrop.show{display:flex;opacity:1;}
+.gmodal{background:white;border-radius:20px;max-width:480px;width:100%;overflow:hidden;transform:scale(0.92);transition:transform 0.4s cubic-bezier(0.2,0.8,0.2,1);box-shadow:0 30px 80px rgba(0,0,0,0.4);}
+.gmodal-backdrop.show .gmodal{transform:scale(1);}
+.gmodal-photo{height:260px;position:relative;overflow:hidden;background:var(--accent);}
+.gmodal-photo img{width:100%;height:100%;object-fit:cover;}
+.gmodal-photo-initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:100px;font-weight:500;font-family:Georgia,serif;}
+.gmodal-photo.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
+.gmodal-photo.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
+.gmodal-photo.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
+.gmodal-photo.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
+.gmodal-photo.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
+.gmodal-photo.finance{background:linear-gradient(135deg,#10B981,#047857);}
+.gmodal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.95);border:none;cursor:pointer;font-size:16px;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.2s;}
+.gmodal-close:hover{background:white;transform:scale(1.08);}
+.gmodal-body{padding:28px 32px 32px;text-align:center;}
+.gmodal-name{font-family:Georgia,serif;font-size:24px;font-weight:500;color:#1C1C1A;margin-bottom:4px;letter-spacing:-0.4px;}
+.gmodal-jabatan{font-size:11px;color:var(--faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;font-weight:500;}
+.gmodal-quote-label{display:inline-block;padding:4px 14px;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:2px;border-radius:20px;margin-bottom:18px;text-transform:uppercase;}
+.gmodal-quote{font-family:Georgia,serif;font-size:18px;color:#1C1C1A;line-height:1.55;font-style:italic;margin-bottom:18px;position:relative;padding:0 8px;transition:opacity 0.2s;}
+.gmodal-quote::before{content:'"';font-size:56px;color:var(--accent);opacity:0.25;position:absolute;top:-18px;left:-8px;font-family:Georgia,serif;line-height:1;}
+.gmodal-quote::after{content:'"';font-size:56px;color:var(--accent);opacity:0.25;position:absolute;bottom:-42px;right:-8px;font-family:Georgia,serif;line-height:1;}
+.gmodal-bio{font-family:Georgia,serif;font-size:13px;color:var(--muted);line-height:1.65;font-style:italic;padding:14px 0 0;border-top:1px solid #e8e7e2;margin-top:20px;}
+.gmodal-bio.empty{color:var(--faint);opacity:0.6;}
+.gmodal-refresh{margin-top:18px;padding:9px 20px;background:var(--navy);color:white;border:none;border-radius:22px;font-size:11px;font-weight:600;letter-spacing:0.5px;cursor:pointer;font-family:inherit;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.gmodal-refresh:hover{background:#0f1a2e;transform:translateY(-1px);}
 
 /* Bio textarea in forms */
 .acc-form-textarea{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;resize:vertical;min-height:60px;}
@@ -470,36 +533,74 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .dash-stat{text-align:left;}
   .dash-grid{grid-template-columns:1fr;gap:10px;}
   
-  /* Analisa Lokasi — sidebar jadi drawer */
-  .analisa-wrap{flex-direction:column;}
+  /* ── ANALISA LOKASI mobile ── */
+  .analisa-wrap{position:relative;display:block;}
+
+  /* Sidebar kiri → drawer dari kiri */
   .sb{position:fixed;top:0;left:-100%;width:82%;max-width:320px;height:100vh;z-index:998;background:white;transition:left 0.3s;box-shadow:2px 0 20px rgba(0,0,0,0.15);overflow-y:auto;padding-top:70px;}
   .sb.open{left:0;}
+
+  /* Peta → full height */
   .map-wrap{width:100%;height:calc(100vh - 94px);}
-  
-  /* Detail panel kanan → bottom sheet */
-  .detail-panel{position:fixed;bottom:-100%;left:0;right:0;width:100%;height:70vh;border-radius:18px 18px 0 0;transition:bottom 0.3s;z-index:997;box-shadow:0 -4px 20px rgba(0,0,0,0.15);}
-  .detail-panel.open{bottom:0;}
-  
-  /* Mobile menu FAB */
-  .mobile-menu-btn{display:flex;position:fixed;top:58px;left:10px;z-index:950;width:38px;height:38px;border-radius:50%;background:white;border:1px solid var(--border);align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-  
-  /* Sidebar overlay backdrop */
-  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:997;}
+
+  /* Detail panel kanan → bottom sheet (fix: pakai .detail-sb bukan .detail-panel) */
+  .detail-sb{position:fixed;bottom:-100%;left:0;right:0;width:100%;height:72vh;border-radius:20px 20px 0 0;transition:bottom 0.35s cubic-bezier(0.32,0.72,0,1);z-index:996;box-shadow:0 -6px 30px rgba(0,0,0,0.18);border-left:none;}
+  .detail-sb.open{bottom:0;}
+
+  /* Handle bar di atas bottom sheet detail */
+  .detail-sb::before{content:'';display:block;width:36px;height:4px;background:#D1D1D1;border-radius:4px;margin:10px auto 6px;}
+
+  /* Backdrop bersama untuk sb dan detail */
+  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:995;}
   .sb-backdrop.open{display:block;}
-  
-  /* Strategi */
-  .strat-wrap{grid-template-columns:1fr;}
-  .tp-sidebar{max-height:40vh;}
+
+  /* FAB kiri: buka filter/ranking */
+  .mobile-menu-btn{display:flex;position:fixed;top:58px;left:10px;z-index:950;width:40px;height:40px;border-radius:50%;background:white;border:1px solid var(--border);align-items:center;justify-content:center;font-size:17px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
+
+  /* Tutup detail bottom sheet */
+  .detail-close-mobile{display:flex;position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;font-size:14px;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+
+  /* ── STRATEGI mobile ── */
+  .strat-wrap{position:relative;display:block;height:calc(100vh - 94px);}
+
+  /* Peta → full height */
+  .tp-map-wrap{width:100%;height:100%;}
+  #strat-map{width:100%;height:100%;}
+
+  /* Sidebar target pasar → bottom drawer */
+  .tp-sidebar{position:fixed;bottom:-100%;left:0;right:0;height:68vh;border-radius:20px 20px 0 0;border-right:none;border-top:1px solid var(--border);transition:bottom 0.35s cubic-bezier(0.32,0.72,0,1);z-index:996;box-shadow:0 -6px 30px rgba(0,0,0,0.18);max-height:none;}
+  .tp-sidebar.open{bottom:0;}
+  .tp-sidebar::before{content:'';display:block;width:36px;height:4px;background:#D1D1D1;border-radius:4px;margin:10px auto 4px;flex-shrink:0;}
+
+  /* Detail target pasar → bottom sheet di atas drawer */
+  .tp-detail{position:fixed;bottom:-100%;left:0;right:0;width:100%;max-height:60vh;border-radius:20px 20px 0 0;top:auto;transition:bottom 0.35s cubic-bezier(0.32,0.72,0,1);z-index:997;box-shadow:0 -6px 30px rgba(0,0,0,0.18);}
+  .tp-detail.show{bottom:0;}
+  .tp-detail::before{content:'';display:block;width:36px;height:4px;background:#D1D1D1;border-radius:4px;margin:10px auto 4px;}
+
+  /* FAB untuk buka sidebar Strategi */
+  .mobile-strat-btn{display:flex;position:fixed;bottom:24px;right:16px;z-index:950;padding:10px 16px;border-radius:24px;background:var(--accent);color:white;border:none;font-size:12px;font-weight:600;font-family:inherit;align-items:center;gap:6px;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,0.35);}
+
+  /* Backdrop Strategi */
+  .strat-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:994;}
+  .strat-backdrop.open{display:block;}
   
   /* Tim BM4 */
   .tim-wrap{padding:14px;}
   .tim-grid{grid-template-columns:1fr;}
   .tim-head{flex-direction:column;align-items:flex-start;}
   
-  /* Galeri Tim mobile */
-  .galeri-wrap{padding:16px;}
-  .galeri-grid{grid-template-columns:1fr;gap:14px;}
-  .galeri-head h2{font-size:18px;}
+  /* Galeri Tim mobile (v11) */
+  .galeri-wrap{padding:24px 16px 32px;}
+  .galeri-grid{grid-template-columns:1fr;gap:18px;}
+  .galeri-head h2{font-size:24px;}
+  .galeri-daily{padding:16px 18px;gap:12px;}
+  .galeri-daily-icon{width:36px;height:36px;font-size:16px;}
+  .galeri-daily-text{font-size:13px;}
+  .galeri-card-photo{height:320px;}
+  .gmodal-photo{height:240px;}
+  .gmodal-body{padding:22px 22px 26px;}
+  .gmodal-name{font-size:21px;}
+  .gmodal-quote{font-size:16px;}
   
   /* Modal - full screen on mobile */
   .acc-modal{max-height:94vh;border-radius:14px;}
@@ -808,7 +909,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           </div>
         </div>
         <!-- Detail sidebar kanan — LENGKAP 5 TAB -->
-        <div class="detail-sb">
+        <div class="detail-sb" id="detail-sb">
+          <button class="detail-close-mobile" id="detail-close-mobile" onclick="closeDetailMobile()" style="display:none;">✕</button>
           <div class="detail-empty" id="detail-empty"><div style="font-size:36px;margin-bottom:10px;">📍</div>Pilih perumahan dari<br>peta atau daftar ranking<br>untuk melihat analisa lengkap</div>
           <div class="detail-content" id="detail-content">
             <div class="tab-bar">
@@ -1047,8 +1149,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="divisi-pane" id="pane-galeri">
       <div class="galeri-wrap">
         <div class="galeri-head">
-          <h2>✨ Tim BM Area 4</h2>
-          <p>Kenali anggota tim beserta semangat dan motivasi mereka</p>
+          <div class="galeri-kicker">Tim BM Area 4</div>
+          <h2>Wajah di Balik Kinerja</h2>
+          <p>Klik foto untuk kata-kata hari ini</p>
+        </div>
+        <div class="galeri-daily" id="galeri-daily">
+          <div class="galeri-daily-icon">✦</div>
+          <div style="flex:1;">
+            <div class="galeri-daily-label">Kata Hari Ini</div>
+            <div class="galeri-daily-text" id="galeri-daily-text">—</div>
+          </div>
         </div>
         <div class="galeri-grid" id="galeri-grid"></div>
       </div>
@@ -1057,8 +1167,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div><!-- end content-area -->
 </div><!-- end s-app -->
 
+<!-- MODAL GALERI (v11) -->
+<div class="gmodal-backdrop" id="gmodal-backdrop" onclick="closeGmodal(event)">
+  <div class="gmodal" onclick="event.stopPropagation()">
+    <div class="gmodal-photo" id="gmodal-photo">
+      <button class="gmodal-close" onclick="closeGmodal()">✕</button>
+    </div>
+    <div class="gmodal-body">
+      <div class="gmodal-name" id="gmodal-name">—</div>
+      <div class="gmodal-jabatan" id="gmodal-jabatan">—</div>
+      <div class="gmodal-quote-label">Kata untukmu</div>
+      <div class="gmodal-quote" id="gmodal-quote">—</div>
+      <button class="gmodal-refresh" onclick="refreshGmodalQuote()">↻ Kata Lain</button>
+      <div class="gmodal-bio" id="gmodal-bio"></div>
+    </div>
+  </div>
+</div>
+
+
 <!-- MOBILE MENU BUTTON (untuk buka sidebar di Analisa Lokasi) -->
 <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;">☰</button>
+
+<!-- MOBILE FAB: buka sidebar Strategi -->
+<button class="mobile-strat-btn" id="mobile-strat-btn" onclick="toggleMobileStratSidebar()" style="display:none;">🎯 Target</button>
+
+<!-- BACKDROP STRATEGI -->
+<div class="strat-backdrop" id="strat-backdrop" onclick="toggleMobileStratSidebar()"></div>
 <div class="sb-backdrop" id="sb-backdrop" onclick="toggleMobileSidebar()"></div>
 
 <!-- SCREEN: PENGATURAN AKUN -->
@@ -1475,6 +1609,15 @@ function selectPerumahan(id){
   document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
   document.querySelector('.tab[data-atab="overview"]').classList.add('active');
   document.getElementById('tab-overview').classList.add('active');
+  // Mobile: buka detail sebagai bottom sheet
+  if(window.innerWidth<=768){
+    document.getElementById('detail-sb')?.classList.add('open');
+    document.getElementById('sb-backdrop')?.classList.add('open');
+    document.getElementById('detail-close-mobile').style.display='flex';
+    // Tutup sidebar filter kalau terbuka
+    const sb=document.querySelector('#pane-analisa .sb');
+    if(sb?.classList.contains('open')){sb.classList.remove('open');}
+  }
 }
 function renderDetailOverview(p){
   const r=p._scoreDetail,gr=scoreGrade(r.overall),isAnch=p.id===ANCHOR_ID;
@@ -2361,34 +2504,165 @@ function exportLogCSV(){
 }
 
 // ============================================================
-// GALERI TIM RENDERING (NEW v10)
+// GALERI TIM RENDERING (v11 — Premium Elegan)
 // ============================================================
+
+// Bank kutipan properti / sales / motivasi kerja
+const GALERI_QUOTES = [
+  "Properti terbaik bukan yang termahal, tapi yang paling dicari.",
+  "Setiap closing adalah cerita baru yang layak dirayakan.",
+  "Lokasi bisa dihitung, tapi kepercayaan harus dibangun.",
+  "Pasar tidak pernah tidur — yang tidur hanyalah kesempatan yang terlewat.",
+  "Target bukan beban, target adalah undangan untuk bertumbuh.",
+  "Hari ini satu langkah kecil, bulan depan satu penjualan besar.",
+  "Rumah bukan hanya bangunan, tapi masa depan yang sedang dicicil.",
+  "Kompetitor mengajari kita apa yang harus dilakukan lebih baik.",
+  "Data berbicara, tapi intuisi yang menutup deal.",
+  "Peta tanpa arah hanyalah gambar — strategi yang membuatnya bernilai.",
+  "Senyum pertama menentukan kunjungan kedua.",
+  "Yang membedakan kita bukan produk, tapi cara kita hadir.",
+  "Negosiasi terbaik adalah ketika kedua pihak pulang tersenyum.",
+  "Pelanggan membeli kenyamanan, bukan material bangunan.",
+  "Konsistensi mengalahkan intensitas — setiap hari, setiap kali.",
+  "Satu tim yang solid lebih kuat dari sepuluh bintang individu.",
+  "Kerja keras itu wajib, kerja cerdas itu pilihan, kerja tuntas itu karakter.",
+  "Mimpi besar dimulai dari langkah kecil yang dilakukan hari ini.",
+  "Branch manager bukan jabatan, tapi tanggung jawab membawa tim naik.",
+  "Peluang sering datang dalam bentuk pekerjaan yang tidak nyaman.",
+  "Kegagalan hari ini adalah brief untuk kemenangan besok.",
+  "Kolega hebat tidak dilahirkan — mereka dibentuk oleh kepercayaan.",
+  "Jangan jual rumah, jual kehidupan di dalamnya.",
+  "Setiap prospek layak diperlakukan seperti closing.",
+  "Integritas lebih mahal dari komisi tertinggi sekalipun.",
+  "Kalau mudah, semua orang akan melakukannya. Kalau sulit, kamulah yang dicari.",
+  "Peta lokasi memberitahu di mana, tim yang hebat memberitahu mengapa.",
+  "Hasil besar adalah akumulasi dari tindakan kecil yang tepat.",
+  "Menang hari ini dimulai dari persiapan tadi malam.",
+  "Kalau bukan sekarang, kapan lagi? Kalau bukan kita, siapa lagi?"
+];
+
+// Ambil kutipan random (opsional: kecualikan satu index)
+function randomQuote(exclude){
+  let idx;
+  do { idx = Math.floor(Math.random() * GALERI_QUOTES.length); }
+  while(idx === exclude && GALERI_QUOTES.length > 1);
+  return { idx: idx, text: GALERI_QUOTES[idx] };
+}
+
+// Kutipan harian - seed pakai tanggal supaya satu hari sama untuk semua user
+function dailyQuote(){
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+  const idx = seed % GALERI_QUOTES.length;
+  return GALERI_QUOTES[idx];
+}
+
+// State untuk modal - simpan data user yang sedang dibuka
+let gmodalCurrentUser = null;
+let gmodalCurrentQuoteIdx = -1;
+
 function renderGaleri(){
   const grid = document.getElementById('galeri-grid');
   if(!grid) return;
   grid.innerHTML = '';
-  accounts.forEach(a => {
+
+  // Set kata hari ini
+  const dailyEl = document.getElementById('galeri-daily-text');
+  if(dailyEl) dailyEl.textContent = '"' + dailyQuote() + '"';
+
+  accounts.forEach((a, idx) => {
     const card = document.createElement('div');
     card.className = 'galeri-card';
     const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
-    const avatarHtml = a.foto ? `<img src="${a.foto}" alt="">` : initial;
     const role = a.role || 'sales';
+    const photoInner = a.foto
+      ? `<img src="${a.foto}" alt="${escapeHtml(a.nama || '')}">`
+      : `<div class="galeri-card-initial">${initial}</div>`;
     const bioHtml = a.bio
-      ? `<div class="galeri-card-bio">${escapeHtml(a.bio)}</div>`
+      ? `<div class="galeri-card-bio">"${escapeHtml(a.bio)}"</div>`
       : `<div class="galeri-card-bio empty">— Belum ada kata motivasi —</div>`;
+
     card.innerHTML = `
-      <div class="galeri-card-banner ${role}"></div>
-      <div class="galeri-card-avatar">${avatarHtml}</div>
+      <div class="galeri-card-photo ${role}">
+        ${photoInner}
+        <div class="galeri-card-badge ${role}">${roleLabel(role)}</div>
+        <div class="galeri-card-hint">✦ Klik untuk kata hari ini</div>
+      </div>
       <div class="galeri-card-body">
         <div class="galeri-card-name">${escapeHtml(a.nama || a.username)}</div>
         <div class="galeri-card-jabatan">${escapeHtml(a.jabatan || '-')}</div>
-        <span class="galeri-card-role ${roleBadgeClass(role)}">${roleLabel(role)}</span>
+        <div class="galeri-card-divider"></div>
         ${bioHtml}
       </div>
     `;
+    card.onclick = () => openGmodal(a.username);
     grid.appendChild(card);
+
+    // Animasi masuk bertahap
+    setTimeout(() => card.classList.add('show'), 60 * idx);
   });
 }
+
+// Buka modal dengan kutipan random
+function openGmodal(username){
+  const a = findAccount(username);
+  if(!a) return;
+  gmodalCurrentUser = a;
+
+  const role = a.role || 'sales';
+  const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+  const photoEl = document.getElementById('gmodal-photo');
+  photoEl.className = 'gmodal-photo ' + role;
+  const photoInner = a.foto
+    ? `<img src="${a.foto}" alt="">`
+    : `<div class="gmodal-photo-initial">${initial}</div>`;
+  photoEl.innerHTML = photoInner + '<button class="gmodal-close" onclick="closeGmodal()">✕</button>';
+
+  document.getElementById('gmodal-name').textContent = a.nama || a.username;
+  document.getElementById('gmodal-jabatan').textContent = a.jabatan || '-';
+
+  const q = randomQuote(-1);
+  gmodalCurrentQuoteIdx = q.idx;
+  document.getElementById('gmodal-quote').textContent = q.text;
+
+  const bioEl = document.getElementById('gmodal-bio');
+  if(a.bio){
+    bioEl.className = 'gmodal-bio';
+    bioEl.textContent = '— ' + a.bio;
+  } else {
+    bioEl.className = 'gmodal-bio empty';
+    bioEl.textContent = '';
+  }
+
+  document.getElementById('gmodal-backdrop').classList.add('show');
+}
+
+// Ganti kutipan tanpa menutup modal
+function refreshGmodalQuote(){
+  const q = randomQuote(gmodalCurrentQuoteIdx);
+  gmodalCurrentQuoteIdx = q.idx;
+  const el = document.getElementById('gmodal-quote');
+  // Efek fade cepat
+  el.style.opacity = '0';
+  setTimeout(() => {
+    el.textContent = q.text;
+    el.style.opacity = '1';
+  }, 150);
+}
+
+function closeGmodal(e){
+  if(e && e.target && !e.target.classList.contains('gmodal-backdrop')) return;
+  document.getElementById('gmodal-backdrop').classList.remove('show');
+  gmodalCurrentUser = null;
+}
+
+// Tutup modal dengan tombol ESC
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    const m = document.getElementById('gmodal-backdrop');
+    if(m && m.classList.contains('show')) closeGmodal();
+  }
+});
 
 // ============================================================
 // BIO HELPERS
@@ -2624,6 +2898,31 @@ function toggleMobileSidebar(){
   backdrop.classList.toggle('open');
 }
 
+// Tutup detail bottom sheet (Analisa)
+function closeDetailMobile(){
+  document.getElementById('detail-sb')?.classList.remove('open');
+  document.getElementById('sb-backdrop')?.classList.remove('open');
+  document.getElementById('detail-close-mobile').style.display='none';
+}
+
+// Toggle sidebar Target Pasar (Strategi) di mobile
+function toggleMobileStratSidebar(){
+  const sidebar = document.querySelector('#pane-strategi .tp-sidebar');
+  const backdrop = document.getElementById('strat-backdrop');
+  if(!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('open', isOpen);
+}
+
+function updateMobileStratBtn(){
+  const btn = document.getElementById('mobile-strat-btn');
+  if(!btn) return;
+  const isMobile = window.innerWidth <= 768;
+  const strActive = document.getElementById('pane-strategi')?.classList.contains('active');
+  const appScreenActive = document.getElementById('s-app')?.classList.contains('active');
+  btn.style.display = (isMobile && strActive && appScreenActive) ? 'flex' : 'none';
+}
+
 function updateMobileMenuBtn(){
   const btn = document.getElementById('mobile-menu-btn');
   if(!btn) return;
@@ -2662,14 +2961,22 @@ function switchDivHook(div, el){
   if(div === 'galeri'){
     renderGaleri();
   }
-  // Tutup sidebar mobile kalau terbuka
+  // Tutup sidebar mobile analisa kalau terbuka
   const sb = document.querySelector('#pane-analisa .sb');
   const backdrop = document.getElementById('sb-backdrop');
   if(sb?.classList.contains('open')){ sb.classList.remove('open'); backdrop?.classList.remove('open'); }
+  // Tutup detail bottom sheet analisa kalau terbuka
+  const detailSb = document.getElementById('detail-sb');
+  const detailCloseBtn = document.getElementById('detail-close-mobile');
+  if(detailSb?.classList.contains('open')){ detailSb.classList.remove('open'); if(detailCloseBtn) detailCloseBtn.style.display='none'; }
+  // Tutup sidebar strategi kalau terbuka
+  const stratSb = document.querySelector('#pane-strategi .tp-sidebar');
+  if(stratSb?.classList.contains('open')){ stratSb.classList.remove('open'); document.getElementById('strat-backdrop')?.classList.remove('open'); }
   updateMobileMenuBtn();
+  updateMobileStratBtn();
 }
 
-window.addEventListener('resize', updateMobileMenuBtn);
+window.addEventListener('resize', ()=>{ updateMobileMenuBtn(); updateMobileStratBtn(); });
 
 // Override doLogin — pakai window agar aman
 window.doLogin = function(){ doLoginNew(); };
@@ -2724,6 +3031,7 @@ window.doLogout = function(){
   }
   if(USE_SHEETS) loadFromSheets();
   updateMobileMenuBtn();
+  updateMobileStratBtn();
 })();
 </script>
 </body>
