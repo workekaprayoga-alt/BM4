@@ -1414,7 +1414,30 @@ function renderEPoi(){
     <td><button class="btn-sm-danger" onclick="delEPoi(${i})">Hapus</button></td></tr>`).join('');
 }
 let _svTimer=null;
-function autoSv(){clearTimeout(_svTimer);_svTimer=setTimeout(()=>{try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}},800);}
+function autoSv(){
+  clearTimeout(_svTimer);
+  _svTimer=setTimeout(async()=>{
+    // 1) Simpan backup lokal (biar data tidak hilang kalau offline)
+    try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}
+    // 2) Sinkronkan ke Google Sheet
+    try{
+      showToast('💾 Menyimpan ke Sheet...');
+      const [r1,r2]=await Promise.all([
+        fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'savePerumahan',rows:perumahan})}).then(r=>r.json()),
+        fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'savePoi',rows:poi})}).then(r=>r.json())
+      ]);
+      if(r1.success && r2.success){
+        showToast('✅ Tersimpan ke Sheet ('+r1.saved+' perumahan, '+r2.saved+' POI)');
+      }else{
+        showToast('⚠️ Gagal sync: '+(r1.error||r2.error||'unknown'));
+        console.error('Sync error:',r1,r2);
+      }
+    }catch(e){
+      showToast('⚠️ Gagal sync ke Sheet');
+      console.error('Gagal sync ke Sheet:',e);
+    }
+  },800);
+}
 function delEP(i){if(!confirm('Hapus "'+perumahan[i].nama+'"?'))return;perumahan.splice(i,1);perumahan.forEach((p,idx)=>p.id=idx+1);renderEPerumahan();autoSv();showToast('🗑️ Dihapus');}
 function delEPoi(i){if(!confirm('Hapus "'+poi[i].nama+'"?'))return;poi.splice(i,1);renderEPoi();autoSv();showToast('🗑️ Dihapus');}
 function addEPerumahan(){
