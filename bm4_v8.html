@@ -2,6 +2,18 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<script>
+(function(){
+  try {
+    if(location.search.indexOf('desktop=1') > -1) return;
+    var isMobileSize = window.innerWidth < 768;
+    var isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(isMobileSize || isMobileUA){
+      location.replace('mobile.html' + (location.search || ''));
+    }
+  } catch(e){}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -100,6 +112,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .dash-stat-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;}
 .dash-stat-lbl{font-size:10px;color:#94A3B8;}
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px;}
+.dash-quote-card{background:#1C2B4A;border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:16px;box-shadow:0 8px 24px rgba(28,43,74,0.18);margin-bottom:16px;}
+.dash-quote-icon{flex-shrink:0;width:42px;height:42px;border-radius:50%;background:rgba(96,165,250,0.18);display:flex;align-items:center;justify-content:center;color:#60A5FA;font-size:18px;}
+.dash-quote-body{flex:1;min-width:0;}
+.dash-quote-label{color:#60A5FA;font-size:10px;letter-spacing:2.2px;font-weight:600;margin-bottom:4px;text-transform:uppercase;}
+.dash-quote-text{color:white;font-family:Georgia,'Times New Roman',serif;font-size:15px;font-style:italic;line-height:1.5;}
 .dash-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all 0.15s;}
 .dash-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08);transform:translateY(-1px);}
 .dash-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
@@ -632,6 +649,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .tp-list::-webkit-scrollbar{width:3px;}
 .tp-list::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
 .tp-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+.tp-item-head-v11{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.tp-item-badge-v11{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:9px;font-weight:700;letter-spacing:0.4px;}
+.tp-item-edit-v11{background:var(--bg);color:var(--muted);border:1px solid var(--border);border-radius:6px;width:26px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all 0.15s;padding:0;}
+.tp-item-edit-v11:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.tp-status-hero-v11{border-radius:8px;padding:14px 16px;margin-bottom:12px;text-align:center;}
+.tp-status-hero-v11 .icon{font-size:28px;line-height:1;margin-bottom:6px;}
+.tp-status-hero-v11 .lbl{font-size:9px;letter-spacing:1.5px;margin-bottom:2px;font-weight:700;opacity:0.75;}
+.tp-status-hero-v11 .val{font-size:14px;font-weight:700;}
 .tp-item:hover{background:var(--bg);}
 .tp-item.selected{background:#FEF3C7;}
 .tp-item-top{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
@@ -849,6 +874,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
             <div class="dash-coming">🚧 Segera hadir — monitoring cashflow & realisasi anggaran</div>
           </div>
         </div>
+
+        <div class="dash-quote-card">
+          <div class="dash-quote-icon">✦</div>
+          <div class="dash-quote-body">
+            <div class="dash-quote-label">Kata Hari Ini</div>
+            <div class="dash-quote-text" id="dash-quote-text">—</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1007,6 +1040,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
               <button class="tp-detail-close" onclick="closeTpDetail()">✕</button>
             </div>
             <div class="tp-detail-body">
+              <div id="tp-d-status-hero" class="tp-status-hero-v11"></div>
               <div class="tp-info-row"><span class="tp-info-label">📍 Jarak dari Proyek</span><span class="tp-info-val" id="tp-d-jarak">—</span></div>
               <div class="tp-info-row"><span class="tp-info-label">👥 Est. Karyawan</span><span class="tp-info-val" id="tp-d-karyawan">—</span></div>
               <div class="tp-info-row"><span class="tp-info-label">🏠 Potensi Unit</span><span class="tp-info-val" id="tp-d-potensi">—</span></div>
@@ -1233,6 +1267,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
       <button class="acc-btn-save" style="width:100%;" onclick="savePasswordChange()">💾 Simpan Password Baru</button>
     </div>
+    <div class="settings-section" id="settings-formula-section" style="display:none;">
+      <div class="settings-section-title">⚙️ Formula Potensi Unit <span style="background:var(--anchor-light);color:var(--anchor);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:0.4px;">BM ONLY</span></div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Formula ini menghitung <b>potensi pembelian unit</b> dari setiap target pasar berdasarkan jumlah karyawan. Perubahan berlaku untuk semua target pasar secara otomatis.</div>
+      <div style="background:var(--accent-light);border:1px solid var(--accent);border-radius:8px;padding:12px 14px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0.8px;margin-bottom:4px;">FORMULA SAAT INI</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);">Potensi = Karyawan × <span id="set-formula-pct-disp" style="color:var(--anchor);">15</span>%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;">Contoh: 5.000 karyawan × <span id="set-formula-pct-disp2">15</span>% = <b id="set-formula-sample" style="color:#15803D;">750</b> unit potensial</div>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Persentase (1–100%)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="number" class="acc-form-input" id="set-formula-pct" min="1" max="100" step="0.5" value="15" style="flex:1;" oninput="previewFormulaPotensi()">
+          <span style="font-size:15px;font-weight:600;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="saveFormulaPotensi()">💾 Simpan Formula</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5;">⚠️ Perubahan akan diterapkan ke <b>semua target pasar</b> untuk seluruh tim di perangkat ini.</div>
+    </div>
   </div>
 </div>
 
@@ -1402,6 +1454,59 @@ const PROYEK = {
   dpr: { nama:'Dirgantara Parahyangan Residence', area:'Subang', tipe:'Subsidi', unit:0, lat:-6.5700000, lng:107.7800000 }
 };
 let currentProyek = null;
+
+// ════════════════════════════════════════════════════════
+// [v11+] FORMAT TANGGAL INDONESIA
+// ════════════════════════════════════════════════════════
+const BULAN_ID=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN_ID_SHORT=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+function formatTanggalID(input, style){
+  if(!input||input==='-')return '—';
+  const d=new Date(input);
+  if(isNaN(d.getTime()))return String(input);
+  if(style==='short')return `${d.getDate()} ${BULAN_ID_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()} ${BULAN_ID[d.getMonth()]} ${d.getFullYear()}`;
+}
+function todayISO_ID(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════════════════════
+// [v11+] FORMULA POTENSI UNIT — dapat diubah BM
+// ════════════════════════════════════════════════════════
+const POTENSI_KEY='bm4_potensi_formula';
+let POTENSI_PCT=15;
+(function loadPotensi(){
+  try{const s=localStorage.getItem(POTENSI_KEY);if(s){const n=parseFloat(s);if(!isNaN(n)&&n>0&&n<=100)POTENSI_PCT=n;}}catch(e){}
+})();
+function calcPotensiUnit(karyawan){return Math.round(((karyawan||0)*POTENSI_PCT)/100);}
+function savePotensiFormula(pct){POTENSI_PCT=pct;try{localStorage.setItem(POTENSI_KEY,String(pct));}catch(e){}}
+
+// ════════════════════════════════════════════════════════
+// [v11+] OSRM ROUTING — jarak via jalan sesungguhnya
+// ════════════════════════════════════════════════════════
+const routeCache={};
+async function getRouteDistance(lat1,lng1,lat2,lng2){
+  const key=`${lat1.toFixed(5)},${lng1.toFixed(5)}_${lat2.toFixed(5)},${lng2.toFixed(5)}`;
+  if(routeCache[key])return routeCache[key];
+  try{
+    const url=`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),7000);
+    const res=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(tid);
+    const data=await res.json();
+    if(data.code==='Ok'&&data.routes&&data.routes.length>0){
+      const r=data.routes[0];
+      const out={km:r.distance/1000,menit:Math.round(r.duration/60),coords:r.geometry.coordinates.map(c=>[c[1],c[0]]),viaRoad:true};
+      routeCache[key]=out;
+      return out;
+    }
+  }catch(e){console.warn('OSRM gagal, fallback ke lurus:',e.message);}
+  const km=haversine(lat1,lng1,lat2,lng2);
+  return {km,menit:Math.round(km/40*60),coords:[[lat1,lng1],[lat2,lng2]],viaRoad:false};
+}
 
 // ============================================================
 // KOMPETITOR & POI DATA
@@ -1682,7 +1787,44 @@ function renderDetailCompare(p){
   const cats=Object.keys(KAT_LABEL);
   const cmpRows=cats.map(k=>{const a=nb[k],b=nb_a[k];if(!a||!b)return'';const da=a.dist.toFixed(1),db=b.dist.toFixed(1),aWin=parseFloat(da)<=parseFloat(db),tie=da===db;return`<div class="cmp-row"><div class="cmp-lc">${a.emoji||'📍'} ${KAT_LABEL[k]}</div><div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-win':'cmp-lose'}">${da} km</div><div class="cmp-val ${tie?'cmp-tie':aWin?'cmp-lose':'cmp-win'}">${db} km</div></div>`;}).join('');
   const cw=(a,b)=>a>b?'cmp-win':a<b?'cmp-lose':'cmp-tie';
+
+  // [v11+] Jarak antar proyek (haversine) + insight
+  const jarakLurus=haversine(p.lat,p.lng,anchor.lat,anchor.lng);
+  const menitLurus=Math.round(jarakLurus/40*60);
+  const selisihSkor=(sd_a.overall||0)-(sd.overall||0); // positif = kita unggul
+  const selisihPct=pct_p-pct_a;
+
+  // [v11+] Generate verdict & insight otomatis
+  let verdict='',verdictColor='#5F5E5A',verdictIcon='⚖️',verdictBg='#F8FAFC';
+  if(selisihSkor>=10){verdict=`Kita jauh lebih unggul ${Math.abs(selisihSkor)} poin. Lokasi kita lebih strategis.`;verdictColor='#15803D';verdictIcon='✨';verdictBg='#ECFDF5';}
+  else if(selisihSkor>=3){verdict=`Kita unggul ${Math.abs(selisihSkor)} poin. Keunggulan kompetitif di sisi kita.`;verdictColor='#15803D';verdictIcon='✅';verdictBg='#ECFDF5';}
+  else if(selisihSkor<=-10){verdict=`Kompetitor jauh lebih unggul ${Math.abs(selisihSkor)} poin. Perlu waspada.`;verdictColor='#DC2626';verdictIcon='⚠️';verdictBg='#FEF2F2';}
+  else if(selisihSkor<=-3){verdict=`Kompetitor sedikit unggul ${Math.abs(selisihSkor)} poin. Pantau perkembangan.`;verdictColor='#D97706';verdictIcon='👀';verdictBg='#FFFBEB';}
+  else {verdict='Skor hampir setara. Differensiasi dari fasilitas, harga, atau pelayanan.';verdictColor='#5F5E5A';verdictIcon='⚖️';verdictBg='#F8FAFC';}
+
+  // [v11+] Insight bullet points
+  const insights=[];
+  if(jarakLurus<3)insights.push({type:'warn',text:`Jarak sangat dekat (${jarakLurus.toFixed(1)} km) — kemungkinan target market overlap tinggi`});
+  else if(jarakLurus>10)insights.push({type:'good',text:`Jarak cukup jauh (${jarakLurus.toFixed(1)} km) — kemungkinan segmen pasar berbeda`});
+  if(pct_a>=80)insights.push({type:'warn',text:`Realisasi kompetitor ${pct_a}% — proyek mereka sudah mature dan laku`});
+  else if(pct_a>0&&pct_a<30)insights.push({type:'good',text:`Realisasi kompetitor baru ${pct_a}% — ruang serap pasar masih ada`});
+  if(p.tipe===anchor.tipe)insights.push({type:'warn',text:'Tipe proyek sama — kompetitor langsung'});
+  else insights.push({type:'good',text:'Tipe proyek berbeda — segmen berbeda'});
+  if(sd_a.fasilitas-sd.fasilitas>=10)insights.push({type:'warn',text:`Skor fasilitas kompetitor ${sd.fasilitas-sd_a.fasilitas>0?'lebih rendah':'lebih tinggi'} — pelajari fasilitas apa yang mereka miliki/kurang`});
+
+  const insightsHtml=insights.length?insights.map(i=>`<div style="font-size:11px;line-height:1.5;padding:4px 0;color:${i.type==='good'?'#15803D':'#B45309'};">${i.type==='good'?'✓':'⚠'} ${i.text}</div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic;">Profil kompetitor netral — fokus pada diferensiasi produk.</div>';
+
   document.getElementById('tab-compare').innerHTML=`
+    <div style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:8px;padding:10px 14px;margin-bottom:10px;text-align:center;">
+      <div style="font-size:9px;color:#92400E;letter-spacing:0.8px;font-weight:600;margin-bottom:2px;">📏 JARAK ANTAR PROYEK</div>
+      <div style="font-size:18px;font-weight:700;color:#92400E;font-family:monospace;">${jarakLurus.toFixed(1)} <span style="font-size:11px;">km lurus · ±${menitLurus} mnt</span></div>
+      <div id="cmp-jarak-road" style="font-size:10px;color:#92400E;margin-top:3px;cursor:pointer;text-decoration:underline;" onclick="hitungJarakViaJalanCompare(${p.id})">hitung via jalan →</div>
+    </div>
+    <div style="background:${verdictBg};border:1px solid ${verdictColor}33;border-radius:6px;padding:8px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;">
+      <div style="font-size:15px;flex-shrink:0;">${verdictIcon}</div>
+      <div style="font-size:11px;color:${verdictColor};line-height:1.4;font-weight:500;">${verdict}</div>
+    </div>
+
     <div class="cmp-header">
       <div class="cmp-box" style="background:${TIPE_BG[p.tipe]||'#F0F0F0'};color:${TIPE_COLOR[p.tipe]||'#666'}"><div class="cl">Dipilih</div><div class="cn">${p.nama}</div><div class="ca">${p.area}</div></div>
       <div class="cmp-box" style="background:var(--anchor-light);color:var(--anchor)"><div class="cl">⭐ Anchor</div><div class="cn">${anchor.nama}</div><div class="ca">${anchor.area}</div></div>
@@ -1699,7 +1841,25 @@ function renderDetailCompare(p){
     <div class="cmp-row"><div class="cmp-lc">Total Unit</div><div class="cmp-val ${cw(p.unit,anchor.unit)}">${fmt(p.unit)}</div><div class="cmp-val ${cw(anchor.unit,p.unit)}">${fmt(anchor.unit)}</div></div>
     <div class="cmp-row"><div class="cmp-lc">Realisasi</div><div class="cmp-val ${cw(p.realisasi,anchor.realisasi)}">${fmt(p.realisasi)}</div><div class="cmp-val ${cw(anchor.realisasi,p.realisasi)}">${fmt(anchor.realisasi)}</div></div>
     <div class="cmp-row"><div class="cmp-lc">Progress</div><div class="cmp-val ${cw(pct_p,pct_a)}">${pct_p}%</div><div class="cmp-val ${cw(pct_a,pct_p)}">${pct_a}%</div></div>
-    <div class="cmp-row"><div class="cmp-lc">Launching</div><div class="cmp-val ${cw(p.tahun,anchor.tahun)}">${p.tahun}</div><div class="cmp-val ${cw(anchor.tahun,p.tahun)}">${anchor.tahun}</div></div>`;
+    <div class="cmp-row"><div class="cmp-lc">Launching</div><div class="cmp-val ${cw(p.tahun,anchor.tahun)}">${p.tahun}</div><div class="cmp-val ${cw(anchor.tahun,p.tahun)}">${anchor.tahun}</div></div>
+
+    <div class="section-title">💡 Insight Strategis</div>
+    <div style="background:var(--bg);border-radius:6px;padding:8px 12px;">${insightsHtml}</div>`;
+}
+
+async function hitungJarakViaJalanCompare(pid){
+  const p=perumahan.find(x=>x.id===pid);if(!p)return;
+  const anchor=perumahan.find(x=>x.id===ANCHOR_ID);if(!anchor)return;
+  const el=document.getElementById('cmp-jarak-road');
+  if(el){el.textContent='menghitung...';el.style.cursor='default';}
+  const r=await getRouteDistance(p.lat,p.lng,anchor.lat,anchor.lng);
+  if(!el)return;
+  if(r.viaRoad){
+    el.innerHTML=`<b>${r.km.toFixed(1)} km via jalan · ${r.menit} mnt berkendara</b>`;
+    el.style.textDecoration='none';el.style.cursor='default';
+  } else {
+    el.innerHTML='⚠ OSRM tidak respons — pakai jarak lurus';el.style.textDecoration='none';
+  }
 }
 function renderDetailRadar(p){
   const isAnch=p.id===ANCHOR_ID;
@@ -1820,13 +1980,20 @@ function renderTPList(filter){
     const color=STATUS_COLOR[t.status]||'#94A3B8';
     const dist=haversine(proj.lat,proj.lng,t.lat,t.lng).toFixed(1);
     const ji=t.jenis==='pabrik'?'🏭':t.jenis==='kawasan'?'🏗️':'🏢';
+    const st=STATUS_STEPS[t.status]||{label:'—',icon:'•'};
+    const potensi=calcPotensiUnit(t.karyawan);
     return`<div class="tp-item${selectedTpId===t.id?' selected':''}" onclick="selectTP(${t.id})">
-      <div class="tp-item-top">
+      <div class="tp-item-head-v11">
+        <div class="tp-item-badge-v11" style="background:${color}22;color:${color};border:1px solid ${color}44;">
+          <span>${st.icon}</span><span>${st.label.toUpperCase()}</span>
+        </div>
+        <button class="tp-item-edit-v11" onclick="event.stopPropagation();openTpModal(${t.id});" title="Edit target">✎</button>
+      </div>
+      <div class="tp-item-top" style="margin-top:4px;">
         <div class="tp-item-icon" style="background:${color}20;">${ji}</div>
         <div class="tp-item-name">${t.nama}</div>
-        <div class="tp-status-dot" style="background:${color};"></div>
       </div>
-      <div class="tp-item-meta">${STATUS_STEPS[t.status].icon} ${STATUS_STEPS[t.status].label} · ${dist} km · ~${t.karyawan.toLocaleString('id')} karyawan</div>
+      <div class="tp-item-meta">${dist} km · ${t.karyawan.toLocaleString('id')} karyawan · <b style="color:var(--accent);">${potensi} unit potensi</b></div>
     </div>`;
   }).join('');
   document.getElementById('tp-total').textContent=tpTargets.length;
@@ -1838,20 +2005,36 @@ function filterTP(f,el){
 }
 function selectTP(id){
   selectedTpId=id;
+  clearTpJumpRoute();
   const t=tpTargets.find(x=>x.id===id);if(!t)return;
   renderTPList(tpFilter);
   const proj=currentProyek?PROYEK[currentProyek]:PROYEK.gwc;
   const dist=haversine(proj.lat,proj.lng,t.lat,t.lng).toFixed(1);
   const menit=Math.round(parseFloat(dist)/40*60);
-  const potensi=Math.round(t.karyawan*0.15);
+  const potensi=calcPotensiUnit(t.karyawan);
   const ji=t.jenis==='pabrik'?'🏭 Pabrik / Manufaktur':t.jenis==='kawasan'?'🏗️ Kawasan Industri':'🏢 Perusahaan';
+
+  // Status Hero Box (v11+)
+  const st=STATUS_STEPS[t.status]||{label:'—',icon:'•'};
+  const stColor=STATUS_COLOR[t.status]||'#94A3B8';
+  const heroEl=document.getElementById('tp-d-status-hero');
+  if(heroEl){
+    heroEl.style.background=stColor+'15';
+    heroEl.style.border=`1px solid ${stColor}40`;
+    heroEl.innerHTML=`
+      <div class="icon" style="color:${stColor};">${st.icon}</div>
+      <div class="lbl" style="color:${stColor};">STATUS SAAT INI</div>
+      <div class="val" style="color:${stColor};">${st.label}</div>
+    `;
+  }
+
   document.getElementById('tp-d-name').textContent=t.nama;
   document.getElementById('tp-d-type').textContent=ji;
-  document.getElementById('tp-d-jarak').textContent=`${dist} km · ±${menit} menit`;
+  document.getElementById('tp-d-jarak').innerHTML=`${dist} km lurus · ±${menit} mnt <a id="tp-d-jarak-road" style="display:inline-block;margin-left:6px;font-size:10px;color:white;background:var(--accent);padding:3px 9px;border-radius:10px;cursor:pointer;font-weight:600;letter-spacing:0.3px;" onclick="hitungJarakViaJalanTP(${id})">🗺️ TAMPILKAN RUTE</a>`;
   document.getElementById('tp-d-karyawan').textContent=`~${t.karyawan.toLocaleString('id')} orang`;
-  document.getElementById('tp-d-potensi').textContent=`~${potensi} unit (est. 15%)`;
+  document.getElementById('tp-d-potensi').textContent=`~${potensi} unit (est. ${POTENSI_PCT}%)`;
   document.getElementById('tp-d-pic').textContent=t.pic||'—';
-  document.getElementById('tp-d-lastcontact').textContent=t.lastcontact&&t.lastcontact!=='-'?t.lastcontact:'Belum ada';
+  document.getElementById('tp-d-lastcontact').textContent=t.lastcontact&&t.lastcontact!=='-'?formatTanggalID(t.lastcontact):'Belum ada';
   document.getElementById('tp-d-catatan').textContent=t.catatan||'—';
   document.getElementById('tp-d-progres').innerHTML=STATUS_STEPS.map((s,i)=>{
     let cls=i<t.status?'done':i===t.status?'current':'pending';
@@ -1862,7 +2045,83 @@ function selectTP(id){
   document.getElementById('tp-detail').classList.add('show');
   if(tpMap&&tpMarkers[id])tpMap.panTo([t.lat,t.lng]);
 }
-function closeTpDetail(){document.getElementById('tp-detail').classList.remove('show');selectedTpId=null;renderTPList(tpFilter);}
+
+let tpJumpLine=null;
+let tpJumpPulse=null;
+
+async function hitungJarakViaJalanTP(id){
+  const t=tpTargets.find(x=>x.id===id);if(!t)return;
+  const proj=currentProyek?PROYEK[currentProyek]:PROYEK.gwc;
+  const el=document.getElementById('tp-d-jarak-road');
+  if(el){el.textContent='menghitung...';el.style.cursor='default';}
+
+  const r=await getRouteDistance(proj.lat,proj.lng,t.lat,t.lng);
+  const span=document.getElementById('tp-d-jarak-road');
+
+  if(!span)return;
+  if(r.viaRoad){
+    span.innerHTML=`<b style="color:var(--accent);">${r.km.toFixed(1)} km via jalan</b> <span style="color:var(--muted);">(${r.menit} mnt)</span>`;
+    span.style.textDecoration='none';
+  } else {
+    span.innerHTML=`<span style="color:#B45309;">⚠ OSRM tidak respons</span>`;
+    span.style.textDecoration='none';
+  }
+
+  // Gambar rute di peta strategi
+  if(tpMap && tpMapInit){
+    if(tpJumpLine){tpMap.removeLayer(tpJumpLine);tpJumpLine=null;}
+    if(tpJumpPulse){tpMap.removeLayer(tpJumpPulse);tpJumpPulse=null;}
+
+    const lineStyle=r.viaRoad
+      ? {color:'#D97706',weight:4,opacity:0.85}
+      : {color:'#D97706',weight:3,opacity:0.7,dashArray:'8,6'};
+    tpJumpLine=L.polyline(r.coords,lineStyle).addTo(tpMap);
+
+    // Pulsing circle
+    tpJumpPulse=L.circleMarker([t.lat,t.lng],{
+      radius:32,color:'#D97706',fillColor:'#FBBF24',
+      fillOpacity:0.4,weight:3
+    }).addTo(tpMap);
+    let opacity=0.4;
+    const pulseInterval=setInterval(()=>{
+      opacity-=0.018;
+      if(opacity<=0){
+        clearInterval(pulseInterval);
+        if(tpJumpPulse){tpMap.removeLayer(tpJumpPulse);tpJumpPulse=null;}
+      } else if(tpJumpPulse){
+        tpJumpPulse.setStyle({fillOpacity:opacity,opacity:Math.min(1,opacity*2)});
+      }
+    },60);
+
+    // Fit bounds ke rute lengkap
+    tpMap.fitBounds(tpJumpLine.getBounds(),{padding:[50,50],maxZoom:14,animate:true});
+
+    // Popup di marker target
+    const tpM=tpMarkers[t.id];
+    if(tpM){
+      const ji={pabrik:'🏭',perusahaan:'🏢',kawasan:'🏗️'};
+      const jarakLabel=r.viaRoad
+        ? `<b>${r.km.toFixed(1)} km via jalan</b> (${r.menit} mnt)`
+        : `<b>${r.km.toFixed(1)} km</b> jarak udara <span style="color:#B45309;font-size:9px;">(rute gagal)</span>`;
+      tpM.unbindTooltip();
+      tpM.bindPopup(`
+        <div style="padding:4px 6px;min-width:200px;">
+          <div style="font-size:13px;font-weight:700;color:#1C1C1A;margin-bottom:3px;">${ji[t.jenis]||'🏢'} ${escapeHtml(t.nama)}</div>
+          <div style="font-size:11px;color:#666;margin-bottom:8px;">${fmt(t.karyawan)} karyawan</div>
+          <div style="background:#FEF3C7;padding:7px 10px;border-radius:6px;font-size:12px;color:#92400E;margin-bottom:4px;">${jarakLabel}</div>
+          <div style="font-size:10px;color:#666;">dari ${escapeHtml(proj.nama)}</div>
+        </div>
+      `,{closeButton:true,autoClose:false}).openPopup();
+    }
+  }
+}
+
+// Clear rute jalan saat pilih target lain atau tutup detail
+function clearTpJumpRoute(){
+  if(tpJumpLine && tpMap){tpMap.removeLayer(tpJumpLine);tpJumpLine=null;}
+  if(tpJumpPulse && tpMap){tpMap.removeLayer(tpJumpPulse);tpJumpPulse=null;}
+}
+function closeTpDetail(){document.getElementById('tp-detail').classList.remove('show');selectedTpId=null;renderTPList(tpFilter);clearTpJumpRoute();}
 function deleteTP(id){
   if(!confirm('Hapus target ini?'))return;
   tpTargets=tpTargets.filter(t=>t.id!==id);
@@ -2090,6 +2349,9 @@ function selectProyek(id){
   // Anchor score for dashboard
   const anchorScore=perumahan.find(x=>x.id===ANCHOR_ID);
   if(anchorScore)document.getElementById('d-anchor-score').textContent=anchorScore.score+' pts';
+  // [v12] Kata Hari Ini di dashboard
+  const dq=document.getElementById('dash-quote-text');
+  if(dq)dq.textContent='"'+dailyQuote()+'"';
   updateTpDashCount();
   tpMapInit=false;tpMap=null;tpMarkers={};
   showScreen('s-app');
@@ -2830,7 +3092,45 @@ function openSettings(){
   document.getElementById('set-pw-old').value = '';
   document.getElementById('set-pw-new').value = '';
   document.getElementById('set-pw-new2').value = '';
+
+  // [v11+] Formula Potensi Unit — hanya BM yang lihat
+  const formulaSection=document.getElementById('settings-formula-section');
+  if(formulaSection){
+    if(currentUser.role==='bm'){
+      formulaSection.style.display='block';
+      document.getElementById('set-formula-pct').value=POTENSI_PCT;
+      document.getElementById('set-formula-pct-disp').textContent=POTENSI_PCT;
+      document.getElementById('set-formula-pct-disp2').textContent=POTENSI_PCT;
+      document.getElementById('set-formula-sample').textContent=fmt(calcPotensiUnit(5000));
+    } else {
+      formulaSection.style.display='none';
+    }
+  }
+
   showScreen('s-settings');
+}
+
+function previewFormulaPotensi(){
+  const v=parseFloat(document.getElementById('set-formula-pct').value)||0;
+  document.getElementById('set-formula-pct-disp').textContent=v;
+  document.getElementById('set-formula-pct-disp2').textContent=v;
+  document.getElementById('set-formula-sample').textContent=fmt(Math.round(5000*v/100));
+}
+
+function saveFormulaPotensi(){
+  const v=parseFloat(document.getElementById('set-formula-pct').value);
+  if(isNaN(v)||v<=0||v>100){showToast('⚠ Persentase harus 1–100');return;}
+  savePotensiFormula(v);
+  logActivity(currentUser?.username||'system','edit',`Ubah formula potensi unit: ${v}%`);
+  showToast(`✓ Formula disimpan: ${v}%`);
+  // Refresh detail target jika terbuka
+  if(selectedTpId!==null){
+    const t=tpTargets.find(x=>x.id===selectedTpId);
+    if(t){
+      const el=document.getElementById('tp-d-potensi');
+      if(el)el.textContent=`~${calcPotensiUnit(t.karyawan)} unit (est. ${POTENSI_PCT}%)`;
+    }
+  }
 }
 
 function closeSettings(){
