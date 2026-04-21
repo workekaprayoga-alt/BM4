@@ -1,0 +1,2845 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BM4">
+<meta name="theme-color" content="#1C2B4A">
+<title>BM4 Mobile — Property Intelligence</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F1EE;--surface:#FFFFFF;--border:rgba(0,0,0,0.08);
+  --text:#1C1C1A;--muted:#5F5E5A;--faint:#9B9A96;
+  --accent:#2563EB;--accent-light:#EFF6FF;
+  --anchor:#D97706;--anchor-light:#FFFBEB;
+  --subsidi:#65A30D;--mix:#B45309;
+  --rs:#DC2626;--kampus:#059669;--mall:#7C3AED;
+  --tol:#475569;--pemda:#1D4ED8;--industri:#92400E;--publik:#0891B2;
+  --navy:#1C2B4A;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
+  overflow:hidden;overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+input,select,textarea{font-family:inherit;font-size:16px;}
+
+/* ════════════════════════════════════════════════
+   SCREENS (layar dasar)
+   ════════════════════════════════════════════════ */
+.screen{display:none;position:fixed;inset:0;z-index:100;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ════════════════════════════════════════════════
+   LOGIN
+   ════════════════════════════════════════════════ */
+#s-login{background:var(--navy);align-items:center;justify-content:center;padding:24px;}
+.login-card{background:white;border-radius:20px;padding:36px 28px 32px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.login-logo{font-size:28px;font-weight:700;margin-bottom:4px;text-align:center;color:var(--text);}
+.login-logo span{color:var(--accent);}
+.login-sub{font-size:12px;color:var(--faint);margin-bottom:28px;text-align:center;}
+.login-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;display:block;}
+.login-input{width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:10px;padding:14px 16px;font-size:15px;color:var(--text);outline:none;margin-bottom:14px;transition:border-color 0.15s;background:#FAFAF8;}
+.login-input:focus{border-color:var(--accent);background:white;}
+.login-btn{width:100%;background:var(--accent);color:white;border-radius:10px;padding:14px;font-size:14px;font-weight:600;margin-top:6px;min-height:48px;transition:background 0.15s;}
+.login-btn:active{background:#1D4ED8;}
+.login-error{font-size:12px;color:#DC2626;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:none;}
+.login-error.show{display:block;}
+.login-footer{font-size:10px;color:var(--faint);margin-top:22px;text-align:center;}
+
+/* ════════════════════════════════════════════════
+   PILIH PROYEK
+   ════════════════════════════════════════════════ */
+#s-proyek{background:var(--navy);padding:calc(40px + var(--safe-top)) 20px 20px;overflow-y:auto;}
+.proyek-header{text-align:center;margin-bottom:32px;}
+.proyek-header h1{font-size:22px;font-weight:700;color:white;margin-bottom:6px;}
+.proyek-header h1 span{color:#60A5FA;}
+.proyek-header p{font-size:13px;color:#94A3B8;}
+.proyek-cards{display:flex;flex-direction:column;gap:14px;max-width:400px;margin:0 auto;}
+.proyek-card{background:white;border-radius:16px;padding:22px 20px;cursor:pointer;text-align:center;border:2px solid transparent;transition:transform 0.15s;}
+.proyek-card:active{transform:scale(0.98);}
+.proyek-card-icon{font-size:36px;margin-bottom:10px;}
+.proyek-card-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
+.proyek-card-area{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.proyek-card-badge{display:inline-flex;gap:6px;align-items:center;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-light);color:var(--accent);}
+
+/* ════════════════════════════════════════════════
+   MAIN APP SHELL
+   ════════════════════════════════════════════════ */
+#s-app{background:var(--bg);}
+.topbar{background:var(--navy);padding:calc(var(--safe-top) + 10px) 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;min-height:54px;}
+.tb-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+.tb-back{color:white;font-size:22px;padding:4px 8px;margin-left:-8px;flex-shrink:0;display:none;}
+.tb-back.show{display:block;}
+.tb-title{font-size:15px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-sub{font-size:11px;color:#94A3B8;margin-top:1px;}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tb-icon-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);color:white;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.tb-icon-btn:active{background:rgba(255,255,255,0.2);}
+
+/* ════════════════════════════════════════════════
+   CONTENT & PANES (layar di dalam app)
+   ════════════════════════════════════════════════ */
+.content-area{flex:1;overflow:hidden;position:relative;}
+.mpane{display:none;position:absolute;inset:0;overflow-y:auto;padding-bottom:calc(72px + var(--safe-bottom));}
+.mpane.active{display:block;}
+.mpane::-webkit-scrollbar{width:0;}
+
+/* Layar fullscreen untuk peta (tidak ada padding bawah karena ada bottom sheet) */
+.mpane.fullscreen{padding-bottom:0;overflow:hidden;}
+
+/* ════════════════════════════════════════════════
+   BERANDA (Dashboard)
+   ════════════════════════════════════════════════ */
+.home-hero{background:var(--navy);padding:8px 18px 24px;color:white;}
+.home-greeting-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.home-avatar-wrap{flex-shrink:0;}
+.home-avatar{width:58px;height:58px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;overflow:hidden;border:2.5px solid rgba(96,165,250,0.35);box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+.home-avatar img{width:100%;height:100%;object-fit:cover;}
+.home-greeting{font-size:11px;color:#94A3B8;margin-bottom:2px;letter-spacing:0.3px;}
+.home-username{font-size:18px;font-weight:600;line-height:1.15;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.home-user-jabatan{font-size:11px;color:#CBD5E1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.home-proyek-card{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.home-proyek-icon{width:44px;height:44px;border-radius:12px;background:rgba(96,165,250,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.home-proyek-info{flex:1;min-width:0;}
+.home-proyek-label{font-size:10px;color:#94A3B8;letter-spacing:0.8px;margin-bottom:2px;}
+.home-proyek-name{font-size:14px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.home-proyek-area{font-size:11px;color:#CBD5E1;margin-top:1px;}
+.home-proyek-switch{font-size:11px;color:#60A5FA;font-weight:500;padding:6px 10px;border-radius:8px;background:rgba(96,165,250,0.15);flex-shrink:0;}
+
+.home-body{padding:18px 16px 20px;}
+.home-section-label{font-size:10px;color:var(--faint);letter-spacing:1.2px;margin:4px 4px 10px;font-weight:600;text-transform:uppercase;}
+.home-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.home-stat{background:white;border-radius:14px;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.04);}
+.home-stat-label{font-size:10px;color:var(--faint);letter-spacing:0.8px;margin-bottom:4px;font-weight:500;}
+.home-stat-val{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);line-height:1;}
+.home-stat-val.accent{color:var(--accent);}
+.home-stat-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+
+.home-quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.home-quick-card{background:white;border-radius:14px;padding:16px 14px;text-align:center;border:0.5px solid rgba(0,0,0,0.04);cursor:pointer;transition:transform 0.15s;}
+.home-quick-card:active{transform:scale(0.96);}
+.home-quick-icon{width:44px;height:44px;margin:0 auto 8px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.home-quick-icon.peta{background:var(--accent-light);}
+.home-quick-icon.target{background:#FEF3C7;}
+.home-quick-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.home-quick-sub{font-size:10px;color:var(--faint);}
+
+.home-info-card{background:white;border-radius:14px;padding:16px 18px;border:0.5px solid rgba(0,0,0,0.04);}
+.home-info-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.home-info-icon{width:32px;height:32px;border-radius:8px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.home-info-title{font-size:13px;font-weight:600;color:var(--text);}
+.home-info-text{font-family:Georgia,serif;font-size:13px;color:var(--muted);line-height:1.6;font-style:italic;}
+
+/* ════════════════════════════════════════════════
+   MENU (Hub Divisi)
+   ════════════════════════════════════════════════ */
+.menu-header{background:var(--navy);padding:4px 18px 20px;color:white;}
+.menu-title{font-size:18px;font-weight:600;margin-bottom:2px;}
+.menu-subtitle{font-size:12px;color:#94A3B8;}
+
+.menu-body{padding:18px 16px;}
+.menu-section-label{font-size:10px;color:var(--faint);letter-spacing:1.2px;margin:4px 4px 12px;font-weight:600;text-transform:uppercase;}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+
+.menu-card{background:white;border-radius:14px;padding:18px 12px;text-align:center;border:0.5px solid rgba(0,0,0,0.04);position:relative;cursor:pointer;transition:transform 0.15s;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.menu-card:active{transform:scale(0.96);}
+.menu-card.soon{opacity:0.72;}
+.menu-card-badge{position:absolute;top:8px;right:8px;background:#FEF3C7;color:#92400E;font-size:8px;font-weight:700;padding:3px 7px;border-radius:10px;letter-spacing:0.4px;}
+.menu-card-icon{width:48px;height:48px;margin-bottom:10px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;}
+.menu-card-icon.analisa{background:#EFF6FF;}
+.menu-card-icon.strategi{background:#FEF3C7;}
+.menu-card-icon.sales{background:#DCFCE7;}
+.menu-card-icon.konstruksi{background:#FFEDD5;}
+.menu-card-icon.legal{background:#CFFAFE;}
+.menu-card-icon.finance{background:#D1FAE5;}
+.menu-card-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.menu-card-sub{font-size:10px;color:var(--faint);}
+
+/* List akun */
+.menu-list{background:white;border-radius:14px;border:0.5px solid rgba(0,0,0,0.04);overflow:hidden;}
+.menu-list-item{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid rgba(0,0,0,0.06);cursor:pointer;transition:background 0.15s;min-height:56px;}
+.menu-list-item:last-child{border-bottom:none;}
+.menu-list-item:active{background:#FAFAF8;}
+.menu-list-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.menu-list-icon.settings{background:#F3E8FF;}
+.menu-list-icon.logout{background:#FEE2E2;}
+.menu-list-info{flex:1;min-width:0;}
+.menu-list-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;}
+.menu-list-title.danger{color:#DC2626;}
+.menu-list-sub{font-size:10px;color:var(--faint);}
+.menu-list-arrow{color:var(--faint);font-size:16px;flex-shrink:0;}
+
+/* ════════════════════════════════════════════════
+   GALERI TIM (adaptasi dari v11 desktop)
+   ════════════════════════════════════════════════ */
+.galeri-wrap{padding:24px 16px 20px;background:linear-gradient(180deg,#FAFAF7 0%,#F2F1EE 100%);min-height:100%;}
+.galeri-head{text-align:center;margin-bottom:22px;}
+.galeri-kicker{display:inline-block;padding:4px 14px;background:var(--navy);color:#60A5FA;font-size:9px;font-weight:600;letter-spacing:2px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;}
+.galeri-head h2{font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:500;color:#1C1C1A;margin-bottom:6px;letter-spacing:-0.3px;line-height:1.2;}
+.galeri-head p{font-size:12px;color:var(--muted);font-style:italic;font-family:Georgia,serif;}
+
+.galeri-daily{margin-bottom:22px;padding:16px 18px;background:var(--navy);border-radius:14px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px rgba(28,43,74,0.18);}
+.galeri-daily-icon{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:rgba(96,165,250,0.15);display:flex;align-items:center;justify-content:center;color:#60A5FA;font-size:17px;}
+.galeri-daily-label{color:#60A5FA;font-size:9px;letter-spacing:2.2px;font-weight:600;margin-bottom:3px;text-transform:uppercase;}
+.galeri-daily-text{color:white;font-family:Georgia,serif;font-size:13px;font-style:italic;line-height:1.5;}
+
+.galeri-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+.galeri-card{background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.07);border:0.5px solid rgba(0,0,0,0.04);position:relative;cursor:pointer;opacity:0;transform:translateY(20px);transition:opacity 0.5s,transform 0.5s;}
+.galeri-card.show{opacity:1;transform:translateY(0);}
+.galeri-card:active{transform:translateY(-2px) scale(0.98);}
+.galeri-card-photo{height:320px;position:relative;overflow:hidden;background:var(--accent);}
+.galeri-card-photo img{width:100%;height:100%;object-fit:cover;}
+.galeri-card-initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:100px;font-weight:500;font-family:Georgia,serif;}
+.galeri-card-photo.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
+.galeri-card-photo.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
+.galeri-card-photo.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
+.galeri-card-photo.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
+.galeri-card-photo.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
+.galeri-card-photo.finance{background:linear-gradient(135deg,#10B981,#047857);}
+.galeri-card-badge{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.95);font-size:9px;font-weight:700;letter-spacing:1.2px;padding:5px 12px;border-radius:20px;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.galeri-card-badge.bm{color:#92400E;}
+.galeri-card-badge.sales{color:#1E40AF;}
+.galeri-card-badge.strategi{color:#6B21A8;}
+.galeri-card-badge.konstruksi{color:#9A3412;}
+.galeri-card-badge.legal{color:#0E7490;}
+.galeri-card-badge.finance{color:#047857;}
+.galeri-card-body{padding:18px 20px 20px;text-align:center;}
+.galeri-card-name{font-family:Georgia,serif;font-size:18px;font-weight:500;color:#1C1C1A;margin-bottom:4px;letter-spacing:-0.2px;}
+.galeri-card-jabatan{font-size:10px;color:var(--faint);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:12px;font-weight:500;}
+.galeri-card-divider{width:24px;height:1px;background:#d4d3ce;margin:0 auto 12px;}
+.galeri-card-bio{font-family:Georgia,serif;font-size:13px;color:var(--muted);line-height:1.55;font-style:italic;min-height:40px;}
+.galeri-card-bio.empty{color:var(--faint);opacity:0.6;}
+
+/* Modal galeri */
+.gmodal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.3s;}
+.gmodal-backdrop.show{display:flex;opacity:1;}
+.gmodal{background:white;border-radius:18px;max-width:400px;width:100%;overflow:hidden;transform:scale(0.92);transition:transform 0.35s;box-shadow:0 24px 60px rgba(0,0,0,0.4);max-height:92vh;overflow-y:auto;}
+.gmodal-backdrop.show .gmodal{transform:scale(1);}
+.gmodal-photo{height:260px;position:relative;overflow:hidden;background:var(--accent);}
+.gmodal-photo img{width:100%;height:100%;object-fit:cover;}
+.gmodal-photo-initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:100px;font-weight:500;font-family:Georgia,serif;}
+.gmodal-photo.bm{background:linear-gradient(135deg,#F59E0B,#D97706);}
+.gmodal-photo.sales{background:linear-gradient(135deg,#3B82F6,#1E40AF);}
+.gmodal-photo.strategi{background:linear-gradient(135deg,#A855F7,#6B21A8);}
+.gmodal-photo.konstruksi{background:linear-gradient(135deg,#F97316,#9A3412);}
+.gmodal-photo.legal{background:linear-gradient(135deg,#06B6D4,#0E7490);}
+.gmodal-photo.finance{background:linear-gradient(135deg,#10B981,#047857);}
+.gmodal-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.95);font-size:16px;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.gmodal-body{padding:22px 24px 26px;text-align:center;}
+.gmodal-name{font-family:Georgia,serif;font-size:22px;font-weight:500;color:#1C1C1A;margin-bottom:4px;letter-spacing:-0.3px;}
+.gmodal-jabatan{font-size:10px;color:var(--faint);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:20px;font-weight:500;}
+.gmodal-quote-label{display:inline-block;padding:4px 14px;background:var(--accent-light);color:var(--accent);font-size:9px;font-weight:700;letter-spacing:2px;border-radius:20px;margin-bottom:16px;text-transform:uppercase;}
+.gmodal-quote{font-family:Georgia,serif;font-size:16px;color:#1C1C1A;line-height:1.5;font-style:italic;margin-bottom:16px;position:relative;padding:0 6px;transition:opacity 0.2s;}
+.gmodal-bio{font-family:Georgia,serif;font-size:12px;color:var(--muted);line-height:1.6;font-style:italic;padding:14px 0 0;border-top:1px solid #e8e7e2;margin-top:18px;}
+.gmodal-bio.empty{display:none;}
+.gmodal-refresh{margin-top:16px;padding:10px 20px;background:var(--navy);color:white;border-radius:22px;font-size:11px;font-weight:600;letter-spacing:0.5px;min-height:42px;display:inline-flex;align-items:center;gap:6px;}
+
+/* ════════════════════════════════════════════════
+   TIM BM4 (khusus BM)
+   ════════════════════════════════════════════════ */
+.tim-wrap{padding:18px 16px;}
+.tim-head-info{background:white;border-radius:14px;padding:14px 16px;margin-bottom:16px;border:0.5px solid rgba(0,0,0,0.04);display:flex;align-items:center;gap:12px;}
+.tim-head-icon{width:42px;height:42px;border-radius:11px;background:#F3E8FF;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.tim-head-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.tim-head-sub{font-size:11px;color:var(--muted);}
+.tim-head-btn{background:var(--accent);color:white;padding:8px 14px;border-radius:10px;font-size:11px;font-weight:600;}
+.tim-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tim-tab{flex:1;padding:9px 12px;border-radius:10px;font-size:11px;font-weight:600;background:white;color:var(--muted);border:0.5px solid rgba(0,0,0,0.06);text-align:center;}
+.tim-tab.active{background:var(--accent);color:white;border-color:var(--accent);}
+.tim-list{display:flex;flex-direction:column;gap:10px;}
+.tim-card{background:white;border-radius:12px;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.04);display:flex;align-items:center;gap:12px;}
+.tim-card-avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0;overflow:hidden;}
+.tim-card-avatar img{width:100%;height:100%;object-fit:cover;}
+.tim-card-info{flex:1;min-width:0;}
+.tim-card-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tim-card-meta{display:flex;align-items:center;gap:6px;}
+.tim-card-role{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;text-transform:uppercase;}
+.tim-card-jabatan{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.role-bm{background:#FEF3C7;color:#92400E;}
+.role-sales{background:#DBEAFE;color:#1E40AF;}
+.role-strategi{background:#F3E8FF;color:#6B21A8;}
+.role-konstruksi{background:#FFEDD5;color:#9A3412;}
+.role-legal{background:#CFFAFE;color:#0E7490;}
+.role-finance{background:#D1FAE5;color:#047857;}
+.tim-card-actions{display:flex;flex-direction:column;gap:4px;}
+.tim-card-btn{background:#F1EFE8;color:var(--muted);padding:6px 10px;border-radius:7px;font-size:10px;font-weight:600;}
+.tim-card-btn.edit{background:#DBEAFE;color:#1E40AF;}
+.tim-card-btn.delete{background:#FEE2E2;color:#B91C1C;}
+
+/* Log list */
+.log-item{background:white;border-radius:10px;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.04);margin-bottom:8px;}
+.log-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.log-user{font-size:12px;font-weight:600;color:var(--text);}
+.log-time{font-size:10px;color:var(--faint);font-family:'DM Mono',monospace;}
+.log-action{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.3px;display:inline-block;margin-bottom:3px;text-transform:uppercase;}
+.log-detail{font-size:11px;color:var(--muted);line-height:1.4;}
+.badge-login{background:#DCFCE7;color:#15803D;}
+.badge-logout{background:#FEE2E2;color:#B91C1C;}
+.badge-edit{background:#DBEAFE;color:#1E40AF;}
+.badge-tambah{background:#F3E8FF;color:#6B21A8;}
+.badge-hapus{background:#FED7AA;color:#9A3412;}
+.badge-password{background:#FEF3C7;color:#92400E;}
+.badge-foto{background:#CFFAFE;color:#0E7490;}
+.badge-bio{background:#E0E7FF;color:#3730A3;}
+
+/* ════════════════════════════════════════════════
+   ANALISA LOKASI — PETA
+   ════════════════════════════════════════════════ */
+#analisa-map-m{position:absolute;inset:0;width:100%;height:100%;}
+.map-fabs-m{position:absolute;top:12px;right:12px;z-index:800;display:flex;flex-direction:column;gap:8px;}
+.fab-m{width:42px;height:42px;border-radius:11px;background:white;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 10px rgba(0,0,0,0.15);color:var(--muted);}
+.fab-m.active{background:var(--accent-light);color:var(--accent);}
+
+/* Bottom sheet untuk detail perumahan */
+.bsheet{position:absolute;bottom:0;left:0;right:0;background:white;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.15);z-index:900;transition:transform 0.35s cubic-bezier(0.2,0.9,0.3,1);max-height:80vh;display:flex;flex-direction:column;transform:translateY(100%);}
+.bsheet.open{transform:translateY(0);}
+.bsheet.collapsed{transform:translateY(calc(100% - 120px));}
+.bsheet-handle{width:100%;padding:10px 0 6px;display:flex;justify-content:center;cursor:pointer;flex-shrink:0;}
+.bsheet-handle-bar{width:40px;height:4px;background:#d4d3ce;border-radius:2px;}
+.bsheet-close{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;background:#F1EFE8;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
+.bsheet-close:active{background:#E0DED7;}
+.bsheet-head{padding:4px 18px 14px;flex-shrink:0;display:flex;align-items:flex-start;gap:12px;border-bottom:0.5px solid rgba(0,0,0,0.06);}
+.bsheet-head-info{flex:1;min-width:0;}
+.bsheet-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.bsheet-meta{font-size:11px;color:var(--muted);}
+.bsheet-score{text-align:right;flex-shrink:0;}
+.bsheet-score-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.bsheet-score-grade{font-size:9px;font-weight:700;letter-spacing:0.5px;margin-top:2px;}
+.bsheet-tabs{display:flex;border-bottom:0.5px solid rgba(0,0,0,0.08);flex-shrink:0;overflow-x:auto;}
+.bsheet-tabs::-webkit-scrollbar{display:none;}
+.bsheet-tab{padding:10px 14px;font-size:11px;font-weight:600;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap;}
+.bsheet-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.bsheet-body{flex:1;overflow-y:auto;padding:14px 18px 20px;}
+.bsheet-bp{display:none;}
+.bsheet-bp.active{display:block;}
+
+.bs-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.05);font-size:12px;}
+.bs-row:last-child{border-bottom:none;}
+.bs-row-lbl{color:var(--muted);}
+.bs-row-val{color:var(--text);font-weight:600;}
+.bs-factor{margin-bottom:12px;}
+.bs-factor-head{display:flex;justify-content:space-between;margin-bottom:5px;}
+.bs-factor-name{font-size:11px;color:var(--muted);font-weight:500;}
+.bs-factor-val{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;}
+.bs-factor-bar{height:5px;background:#E8E8E4;border-radius:3px;overflow:hidden;}
+.bs-factor-fill{height:100%;border-radius:3px;transition:width 0.4s;}
+.bs-near-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.05);}
+.bs-near-item:last-child{border-bottom:none;}
+.bs-near-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.bs-near-info{flex:1;min-width:0;}
+.bs-near-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bs-near-meta{font-size:10px;color:var(--faint);}
+.bs-near-dist{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);flex-shrink:0;}
+
+/* Filter panel yang geser dari atas */
+.filter-panel{position:absolute;top:0;left:0;right:0;background:white;z-index:850;transform:translateY(-100%);transition:transform 0.3s;max-height:80%;overflow-y:auto;padding-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+.filter-panel.open{transform:translateY(0);}
+.fp-head{padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid rgba(0,0,0,0.06);}
+.fp-title{font-size:15px;font-weight:700;}
+.fp-close{width:32px;height:32px;border-radius:8px;background:#F1EFE8;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);}
+.fp-section{padding:14px 18px;border-bottom:0.5px solid rgba(0,0,0,0.04);}
+.fp-lbl{font-size:10px;font-weight:600;color:var(--faint);letter-spacing:0.8px;margin-bottom:8px;text-transform:uppercase;}
+.fp-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.fp-chip{padding:7px 12px;border-radius:18px;font-size:11px;font-weight:500;background:#F1EFE8;color:var(--muted);min-height:32px;display:inline-flex;align-items:center;gap:5px;}
+.fp-chip.active{background:var(--accent-light);color:var(--accent);}
+.fp-chip .dot{width:7px;height:7px;border-radius:2px;}
+.fp-chip[data-kat="rs"].active{background:#FEF2F2;color:var(--rs);}
+.fp-chip[data-kat="kampus"].active{background:#ECFDF5;color:var(--kampus);}
+.fp-chip[data-kat="mall"].active{background:#F5F3FF;color:var(--mall);}
+.fp-chip[data-kat="tol"].active{background:#F8FAFC;color:var(--tol);}
+.fp-chip[data-kat="pemda"].active{background:#EFF6FF;color:var(--pemda);}
+.fp-chip[data-kat="industri"].active{background:#FEF3C7;color:var(--industri);}
+.fp-chip[data-kat="publik"].active{background:#ECFEFF;color:var(--publik);}
+.fp-select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:#FAFAF8;}
+.fp-apply{width:100%;margin:10px 18px 0;width:calc(100% - 36px);background:var(--accent);color:white;padding:12px;border-radius:10px;font-size:13px;font-weight:600;min-height:44px;}
+
+/* Ranking list */
+.fp-rank{display:flex;flex-direction:column;gap:8px;padding:14px 18px;}
+.fp-rank-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:#FAFAF8;cursor:pointer;min-height:50px;}
+.fp-rank-item:active{background:#F1EFE8;}
+.fp-rank-num{font-size:11px;font-weight:700;color:var(--faint);font-family:'DM Mono',monospace;min-width:20px;text-align:center;}
+.fp-rank-info{flex:1;min-width:0;}
+.fp-rank-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fp-rank-bar{height:4px;background:#E8E8E4;border-radius:2px;overflow:hidden;}
+.fp-rank-fill{height:100%;border-radius:2px;}
+.fp-rank-val{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;}
+
+/* ════════════════════════════════════════════════
+   TARGET PASAR / STRATEGI
+   ════════════════════════════════════════════════ */
+.tp-header{background:var(--navy);padding:4px 16px 14px;color:white;}
+.tp-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.tp-header-title{font-size:16px;font-weight:600;}
+.tp-header-sub{font-size:11px;color:#94A3B8;}
+.tp-add-mini{background:var(--accent);color:white;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;min-height:38px;display:inline-flex;align-items:center;gap:4px;}
+
+.tp-mode{display:flex;gap:6px;background:rgba(255,255,255,0.9);padding:4px;border-radius:11px;box-shadow:0 2px 10px rgba(0,0,0,0.12);backdrop-filter:blur(6px);border:0.5px solid rgba(255,255,255,0.6);}
+.tp-mode-wrap{position:sticky;top:0;z-index:50;padding:10px 16px 8px;background:linear-gradient(to bottom,var(--bg) 50%,transparent);}
+.tp-mode-btn{flex:1;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--muted);background:transparent;min-height:36px;}
+.tp-mode-btn.active{background:var(--navy);color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+
+.tp-filters{display:flex;gap:6px;overflow-x:auto;padding:12px 16px;background:white;border-bottom:0.5px solid rgba(0,0,0,0.06);}
+.tp-filters::-webkit-scrollbar{display:none;}
+.tp-chip-m{padding:7px 14px;border-radius:18px;font-size:11px;font-weight:500;background:#F1EFE8;color:var(--muted);white-space:nowrap;min-height:32px;display:inline-flex;align-items:center;}
+.tp-chip-m.active{background:#FEF3C7;color:#92400E;border:1px solid #D97706;}
+
+.tp-list-m{padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px;}
+.tp-card-m{background:white;border-radius:12px;padding:12px 14px;border:0.5px solid rgba(0,0,0,0.06);cursor:pointer;transition:transform 0.15s;}
+.tp-card-m:active{transform:scale(0.99);}
+.tp-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.tp-card-status-badge{padding:4px 10px;border-radius:14px;font-size:10px;font-weight:700;letter-spacing:0.5px;display:inline-flex;align-items:center;gap:5px;}
+.tp-card-edit-btn{background:#F1EFE8;color:#5F5E5A;padding:5px 11px;border-radius:7px;font-size:10px;font-weight:600;border:none;transition:background 0.15s;}
+.tp-card-edit-btn:active{background:#E0DED7;}
+.tp-card-body{display:flex;align-items:flex-start;gap:10px;}
+.tp-card-icon-m{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.tp-card-info{flex:1;min-width:0;}
+.tp-card-name-m{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.25;}
+.tp-card-meta-m{font-size:11px;color:var(--muted);line-height:1.4;}
+
+/* Mode peta untuk target pasar — peta full tapi toggle tetap floating */
+.tp-mapmode{position:relative;height:calc(100vh - 180px);display:none;}
+.tp-mapmode.active{display:block;}
+#strat-map-m{position:absolute;inset:0;width:100%;height:100%;}
+
+/* TP detail modal — layout sesuai screenshot referensi */
+.tp-detail-m{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1500;display:none;align-items:flex-end;}
+.tp-detail-m.show{display:flex;}
+.tp-detail-card{background:white;width:100%;border-radius:20px 20px 0 0;height:92vh;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;}
+.tp-detail-handle{width:40px;height:4px;background:#d4d3ce;border-radius:2px;margin:10px auto 0;flex-shrink:0;}
+.tp-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 14px;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,0.08);}
+.tp-modal-title{font-size:16px;font-weight:700;color:var(--text);}
+.tp-modal-close{width:32px;height:32px;border-radius:50%;background:#F1EFE8;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;transition:background 0.15s;}
+.tp-modal-close:active{background:#E0DED7;}
+.tp-modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 14px;overscroll-behavior:contain;}
+.tp-status-hero{border-radius:14px;padding:22px 16px;text-align:center;margin-bottom:20px;}
+.tp-status-icon{font-size:42px;line-height:1;margin-bottom:10px;}
+.tp-status-label{font-size:10px;color:rgba(0,0,0,0.5);letter-spacing:1.5px;margin-bottom:4px;font-weight:600;}
+.tp-status-value{font-size:19px;font-weight:700;letter-spacing:-0.2px;}
+.tp-namebox{margin-bottom:18px;}
+.tp-name-big{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.25;}
+.tp-jenis{font-size:12px;color:var(--muted);}
+.tp-info-rows{display:flex;flex-direction:column;}
+.tp-info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid rgba(0,0,0,0.08);gap:10px;}
+.tp-info-row:last-child{border-bottom:none;}
+.tp-info-lbl{font-size:12px;color:var(--muted);flex-shrink:0;}
+.tp-info-val{font-size:13px;font-weight:600;color:var(--text);text-align:right;word-break:break-word;}
+.tp-jump-to-map{cursor:pointer;transition:background 0.15s;border-radius:8px;padding:10px 10px !important;margin:0 -10px;}
+.tp-jump-to-map:active{background:#FFF8EC;}
+.tp-catatan-box{background:#F5F4EF;border-radius:10px;padding:14px 16px;margin-top:16px;}
+.tp-catatan-label{font-size:10px;color:var(--muted);letter-spacing:1.2px;font-weight:700;margin-bottom:6px;}
+.tp-catatan-text{font-size:12.5px;color:var(--text);line-height:1.5;}
+.tp-modal-actions{display:flex;gap:10px;padding:14px 20px calc(14px + var(--safe-bottom));background:white;border-top:0.5px solid rgba(0,0,0,0.08);flex-shrink:0;}
+.tp-action-btn{padding:13px;border-radius:10px;font-size:14px;font-weight:700;min-height:46px;transition:opacity 0.15s;}
+.tp-action-btn:active{opacity:0.8;}
+.tp-action-hapus{flex:1;background:#FEE2E2;color:#B91C1C;}
+.tp-action-edit{flex:2;background:var(--accent);color:white;}
+
+/* Form edit target */
+.tp-edit-field{margin-bottom:14px;}
+.tp-edit-field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.tp-edit-field input[type="text"],.tp-edit-field input[type="number"],.tp-edit-field input[type="date"],.tp-edit-field textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:11px 12px;font-size:14px;background:#FAFAF8;outline:none;transition:border-color 0.15s;color:var(--text);}
+.tp-edit-field input:focus,.tp-edit-field textarea:focus{border-color:var(--accent);background:white;}
+.tp-edit-field input:disabled{background:#F1EFE8;cursor:not-allowed;}
+.tp-edit-field textarea{resize:vertical;font-family:inherit;min-height:70px;}
+.tp-edit-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tp-edit-segment{display:flex;gap:4px;background:#F1EFE8;padding:3px;border-radius:9px;}
+.tp-edit-seg{flex:1;padding:9px 6px;border-radius:6px;font-size:11px;font-weight:500;color:var(--muted);background:transparent;border:none;transition:background 0.15s;min-height:38px;}
+.tp-edit-seg.active{background:white;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.tp-edit-status-pick{display:flex;flex-direction:column;gap:6px;}
+.tp-edit-status-btn{padding:10px 12px;border-radius:9px;font-size:12px;font-weight:500;text-align:left;background:white;color:var(--muted);border:1px solid var(--border);transition:all 0.15s;min-height:40px;}
+.tp-edit-status-btn.active{font-weight:700;border-width:1.5px;}
+.tp-edit-hint{font-size:11px;color:var(--muted);padding:8px 10px;background:#FEF9E7;border-radius:7px;line-height:1.4;margin-bottom:14px;}
+
+/* ════════════════════════════════════════════════
+   PENGATURAN AKUN
+   ════════════════════════════════════════════════ */
+.settings-wrap{padding:18px 16px;}
+.settings-section{background:white;border-radius:14px;padding:18px 16px;margin-bottom:14px;border:0.5px solid rgba(0,0,0,0.04);}
+.settings-label-m{font-size:10px;color:var(--faint);letter-spacing:1.2px;margin:4px 4px 10px;font-weight:600;text-transform:uppercase;}
+.settings-avatar-wrap{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.settings-avatar{width:64px;height:64px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;overflow:hidden;flex-shrink:0;}
+.settings-avatar img{width:100%;height:100%;object-fit:cover;}
+.settings-avatar-info{flex:1;min-width:0;}
+.settings-avatar-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.settings-avatar-role{font-size:11px;color:var(--muted);}
+.settings-field{margin-bottom:14px;}
+.settings-field:last-child{margin-bottom:0;}
+.settings-field-lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.settings-field-input{width:100%;border:1px solid var(--border);border-radius:9px;padding:11px 14px;font-size:14px;background:#FAFAF8;outline:none;transition:border-color 0.15s;}
+.settings-field-input:focus{border-color:var(--accent);background:white;}
+.settings-field-textarea{min-height:80px;resize:vertical;font-family:inherit;}
+.settings-field-counter{font-size:10px;color:var(--faint);text-align:right;margin-top:4px;}
+.settings-btn-full{width:100%;background:var(--accent);color:white;padding:12px;border-radius:10px;font-size:13px;font-weight:600;min-height:46px;margin-top:8px;}
+.settings-btn-upload{display:block;background:#F1EFE8;color:var(--text);padding:10px;border-radius:10px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;}
+
+/* ════════════════════════════════════════════════
+   PLACEHOLDER (Segera Hadir)
+   ════════════════════════════════════════════════ */
+.soon-wrap{padding:40px 20px;text-align:center;}
+.soon-icon{width:80px;height:80px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;}
+.soon-title{font-size:19px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.soon-badge{display:inline-block;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:4px 12px;border-radius:12px;letter-spacing:0.5px;margin-bottom:16px;}
+.soon-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px;max-width:320px;margin-left:auto;margin-right:auto;}
+.soon-features{display:flex;flex-direction:column;gap:8px;max-width:320px;margin:0 auto;}
+.soon-feat{background:white;border-radius:10px;padding:12px 14px;font-size:12px;color:var(--muted);border:0.5px solid rgba(0,0,0,0.04);text-align:left;display:flex;align-items:center;gap:10px;}
+
+/* ════════════════════════════════════════════════
+   BOTTOM NAV
+   ════════════════════════════════════════════════ */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:0.5px solid rgba(0,0,0,0.08);padding:8px 0 calc(8px + var(--safe-bottom));display:flex;justify-content:space-around;z-index:100;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;color:var(--faint);transition:color 0.15s;min-height:52px;}
+.bnav-item.active{color:var(--accent);}
+.bnav-item-icon{font-size:20px;line-height:1;}
+.bnav-item-label{font-size:10px;font-weight:500;letter-spacing:0.2px;}
+.bnav-item.active .bnav-item-label{font-weight:600;}
+
+/* Sembunyikan bottom nav di layar tertentu */
+.bnav.hide{display:none;}
+
+/* ════════════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════════════ */
+.toast{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(100px);background:var(--navy);color:white;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:500;opacity:0;transition:all 0.3s;z-index:3000;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-width:85%;text-align:center;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* ════════════════════════════════════════════════
+   CONFIRM MODAL
+   ════════════════════════════════════════════════ */
+.cm-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2500;display:none;align-items:center;justify-content:center;padding:20px;}
+.cm-backdrop.show{display:flex;}
+.cm{background:white;border-radius:16px;max-width:340px;width:100%;overflow:hidden;}
+.cm-body{padding:22px 20px 16px;text-align:center;}
+.cm-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.cm-msg{font-size:13px;color:var(--muted);line-height:1.5;}
+.cm-actions{display:flex;border-top:0.5px solid rgba(0,0,0,0.08);}
+.cm-btn{flex:1;padding:14px;font-size:13px;font-weight:600;color:var(--muted);background:white;border-right:0.5px solid rgba(0,0,0,0.08);min-height:48px;}
+.cm-btn:last-child{border-right:none;}
+.cm-btn.primary{color:var(--accent);}
+.cm-btn.danger{color:#DC2626;}
+
+/* ════════════════════════════════════════════════
+   LEAFLET FIXES untuk mobile
+   ════════════════════════════════════════════════ */
+.leaflet-container{font-family:inherit;background:#e8e6df;}
+.leaflet-popup-content{margin:10px 12px;font-size:12px;}
+.leaflet-control-zoom{border:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.15)!important;}
+.leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important;font-size:18px!important;}
+.leaflet-bar{border-radius:10px!important;overflow:hidden;}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: LOGIN
+     ════════════════════════════════════════════════ -->
+<div id="s-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">BM<span>4</span></div>
+    <div class="login-sub">Property Intelligence</div>
+    <div class="login-error" id="login-error">Username atau password salah</div>
+    <label class="login-label" for="login-username">Username</label>
+    <input type="text" id="login-username" class="login-input" autocomplete="username" autocapitalize="none">
+    <label class="login-label" for="login-password">Password</label>
+    <input type="password" id="login-password" class="login-input" autocomplete="current-password">
+    <button class="login-btn" onclick="doLoginNew()">Masuk</button>
+    <div class="login-footer">BM Area 4 — Internal Use</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: PILIH PROYEK
+     ════════════════════════════════════════════════ -->
+<div id="s-proyek" class="screen">
+  <div class="proyek-header">
+    <h1>Pilih <span>Proyek</span></h1>
+    <p>Pilih proyek yang akan dianalisa</p>
+  </div>
+  <div class="proyek-cards" id="proyek-cards"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: MAIN APP
+     ════════════════════════════════════════════════ -->
+<div id="s-app" class="screen">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="tb-back" id="tb-back" onclick="goBack()">‹</button>
+      <div style="flex:1;min-width:0;">
+        <div class="tb-title" id="tb-title">BM<span style="color:#60A5FA;">4</span></div>
+        <div class="tb-sub" id="tb-sub">Property Intelligence</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-icon-btn" id="tb-filter" onclick="openFilter()" style="display:none;" title="Filter & Ranking">🎛️</button>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- BERANDA -->
+    <div class="mpane active" id="mpane-home">
+      <div class="home-hero">
+        <div class="home-greeting-row">
+          <div class="home-avatar-wrap" id="home-avatar-wrap">
+            <div class="home-avatar" id="home-avatar">?</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="home-greeting">Selamat datang</div>
+            <div class="home-username" id="home-username">—</div>
+            <div class="home-user-jabatan" id="home-user-jabatan">—</div>
+          </div>
+        </div>
+        <div class="home-proyek-card" onclick="goto('proyek-switch')">
+          <div class="home-proyek-icon">🏘️</div>
+          <div class="home-proyek-info">
+            <div class="home-proyek-label">PROYEK AKTIF</div>
+            <div class="home-proyek-name" id="home-proyek-name">—</div>
+            <div class="home-proyek-area" id="home-proyek-area">—</div>
+          </div>
+          <div class="home-proyek-switch">Ganti</div>
+        </div>
+      </div>
+      <div class="home-body">
+        <div class="home-section-label">Ringkasan</div>
+        <div class="home-stats">
+          <div class="home-stat">
+            <div class="home-stat-label">KOMPETITOR</div>
+            <div class="home-stat-val" id="home-stat-kompetitor">0</div>
+            <div class="home-stat-sub">Perumahan terdata</div>
+          </div>
+          <div class="home-stat">
+            <div class="home-stat-label">TARGET PASAR</div>
+            <div class="home-stat-val accent" id="home-stat-tp">0</div>
+            <div class="home-stat-sub">Prospek aktif</div>
+          </div>
+        </div>
+        <div class="home-section-label">Akses Cepat</div>
+        <div class="home-quick">
+          <div class="home-quick-card" onclick="goto('analisa')">
+            <div class="home-quick-icon peta">📍</div>
+            <div class="home-quick-name">Peta Analisa</div>
+            <div class="home-quick-sub">Lokasi & skor</div>
+          </div>
+          <div class="home-quick-card" onclick="goto('strategi')">
+            <div class="home-quick-icon target">🎯</div>
+            <div class="home-quick-name">Target Pasar</div>
+            <div class="home-quick-sub">Prospek pabrik</div>
+          </div>
+        </div>
+        <div class="home-info-card">
+          <div class="home-info-head">
+            <div class="home-info-icon">✦</div>
+            <div class="home-info-title">Kata Hari Ini</div>
+          </div>
+          <div class="home-info-text" id="home-quote">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div class="mpane" id="mpane-menu">
+      <div class="menu-header">
+        <div class="menu-title">Menu</div>
+        <div class="menu-subtitle">Pilih divisi atau pengaturan</div>
+      </div>
+      <div class="menu-body">
+        <div class="menu-section-label">Divisi Kerja</div>
+        <div class="menu-grid" id="menu-divisi-grid"></div>
+        <div class="menu-section-label">Akun</div>
+        <div class="menu-list">
+          <div class="menu-list-item" onclick="goto('settings')">
+            <div class="menu-list-icon settings">⚙️</div>
+            <div class="menu-list-info">
+              <div class="menu-list-title">Pengaturan Akun</div>
+              <div class="menu-list-sub">Foto, password, bio</div>
+            </div>
+            <div class="menu-list-arrow">›</div>
+          </div>
+          <div class="menu-list-item" onclick="confirmLogout()">
+            <div class="menu-list-icon logout">🚪</div>
+            <div class="menu-list-info">
+              <div class="menu-list-title danger">Keluar</div>
+              <div class="menu-list-sub">Logout dari aplikasi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GALERI -->
+    <div class="mpane" id="mpane-galeri">
+      <div class="galeri-wrap">
+        <div class="galeri-head">
+          <div class="galeri-kicker">Tim BM Area 4</div>
+          <h2>Wajah di Balik Kinerja</h2>
+          <p>Ketuk foto untuk kata hari ini</p>
+        </div>
+        <div class="galeri-daily">
+          <div class="galeri-daily-icon">✦</div>
+          <div style="flex:1;">
+            <div class="galeri-daily-label">Kata Hari Ini</div>
+            <div class="galeri-daily-text" id="galeri-daily-text">—</div>
+          </div>
+        </div>
+        <div class="galeri-grid" id="galeri-grid"></div>
+      </div>
+    </div>
+
+    <!-- TIM (khusus BM) -->
+    <div class="mpane" id="mpane-tim">
+      <div class="tim-wrap">
+        <div class="tim-head-info">
+          <div class="tim-head-icon">👥</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tim-head-title">Tim BM Area 4</div>
+            <div class="tim-head-sub" id="tim-count">0 anggota</div>
+          </div>
+        </div>
+        <div class="tim-tabs">
+          <div class="tim-tab active" id="tim-tab-list" onclick="switchTimTab('list')">📋 Anggota</div>
+          <div class="tim-tab" id="tim-tab-log" onclick="switchTimTab('log')">📊 Log</div>
+        </div>
+        <div id="tim-content-list">
+          <div class="tim-list" id="tim-list-m"></div>
+        </div>
+        <div id="tim-content-log" style="display:none;">
+          <div id="tim-log-m"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALISA LOKASI -->
+    <div class="mpane fullscreen" id="mpane-analisa">
+      <div id="analisa-map-m"></div>
+      <div class="map-fabs-m">
+        <button class="fab-m" onclick="locateMe()" title="Lokasi saya">📍</button>
+      </div>
+
+      <!-- Filter panel (geser dari atas) -->
+      <div class="filter-panel" id="filter-panel">
+        <div class="fp-head">
+          <div class="fp-title">Filter & Ranking</div>
+          <button class="fp-close" onclick="closeFilter()">✕</button>
+        </div>
+        <div class="fp-section">
+          <div class="fp-lbl">Tampilan Peta</div>
+          <div class="fp-chips">
+            <button class="fp-chip" id="fp-heatmap-btn" onclick="toggleHeatmapM(this)">🌡️ Heatmap Skor</button>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-lbl">Tipe Perumahan</div>
+          <div class="fp-chips">
+            <button class="fp-chip active" data-filter="all" onclick="setFilterM('all',this)">Semua</button>
+            <button class="fp-chip" data-filter="subsidi" onclick="setFilterM('subsidi',this)">Subsidi</button>
+            <button class="fp-chip" data-filter="mix" onclick="setFilterM('mix',this)">Mix-use</button>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-lbl">POI di Peta</div>
+          <div class="fp-chips">
+            <button class="fp-chip active" data-kat="rs" onclick="togglePoiM('rs',this)"><span class="dot" style="background:var(--rs)"></span>RS</button>
+            <button class="fp-chip active" data-kat="kampus" onclick="togglePoiM('kampus',this)"><span class="dot" style="background:var(--kampus)"></span>Kampus</button>
+            <button class="fp-chip active" data-kat="mall" onclick="togglePoiM('mall',this)"><span class="dot" style="background:var(--mall)"></span>Belanja</button>
+            <button class="fp-chip active" data-kat="tol" onclick="togglePoiM('tol',this)"><span class="dot" style="background:var(--tol)"></span>Transport</button>
+            <button class="fp-chip active" data-kat="pemda" onclick="togglePoiM('pemda',this)"><span class="dot" style="background:var(--pemda)"></span>Pemda</button>
+            <button class="fp-chip active" data-kat="industri" onclick="togglePoiM('industri',this)"><span class="dot" style="background:var(--industri)"></span>Industri</button>
+            <button class="fp-chip active" data-kat="publik" onclick="togglePoiM('publik',this)"><span class="dot" style="background:var(--publik)"></span>Publik</button>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-lbl">Ranking berdasarkan</div>
+          <select class="fp-select" id="rank-cat-m" onchange="buildRankingM(this.value)">
+            <option value="overall">🏆 Skor Keseluruhan</option>
+            <option value="rs">🏥 Jarak RS/Klinik</option>
+            <option value="kampus">🎓 Jarak Kampus</option>
+            <option value="mall">🏬 Jarak Mall</option>
+            <option value="tol">🛣️ Jarak Tol</option>
+            <option value="pemda">🏛️ Jarak Pemda</option>
+            <option value="industri">💼 Jarak Industri</option>
+            <option value="publik">🌳 Jarak Publik</option>
+          </select>
+        </div>
+        <div class="fp-rank" id="rank-list-m"></div>
+      </div>
+
+      <!-- Bottom sheet untuk detail perumahan -->
+      <div class="bsheet" id="bsheet">
+        <div class="bsheet-handle" onclick="toggleBsheet()">
+          <div class="bsheet-handle-bar"></div>
+        </div>
+        <button class="bsheet-close" onclick="closeBsheet()" title="Tutup">✕</button>
+        <div class="bsheet-head">
+          <div class="bsheet-head-info">
+            <div class="bsheet-name" id="bs-name">—</div>
+            <div class="bsheet-meta" id="bs-meta">—</div>
+          </div>
+          <div class="bsheet-score">
+            <div class="bsheet-score-val" id="bs-score">—</div>
+            <div class="bsheet-score-grade" id="bs-grade">—</div>
+          </div>
+        </div>
+        <div class="bsheet-tabs">
+          <div class="bsheet-tab active" data-bp="overview" onclick="switchBs('overview',this)">Overview</div>
+          <div class="bsheet-tab" data-bp="vskita" onclick="switchBs('vskita',this)" style="position:relative;">vs Kita<span style="display:inline-block;margin-left:4px;background:#D97706;color:white;font-size:8px;padding:2px 5px;border-radius:6px;font-weight:700;">⚡</span></div>
+          <div class="bsheet-tab" data-bp="fasilitas" onclick="switchBs('fasilitas',this)">Fasilitas</div>
+          <div class="bsheet-tab" data-bp="nearby" onclick="switchBs('nearby',this)">Terdekat</div>
+        </div>
+        <div class="bsheet-body">
+          <div class="bsheet-bp active" id="bp-overview"></div>
+          <div class="bsheet-bp" id="bp-vskita"></div>
+          <div class="bsheet-bp" id="bp-fasilitas"></div>
+          <div class="bsheet-bp" id="bp-nearby"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STRATEGI / TARGET PASAR -->
+    <div class="mpane" id="mpane-strategi">
+      <div class="tp-header">
+        <div class="tp-header-row">
+          <div>
+            <div class="tp-header-title">Target Pasar</div>
+            <div class="tp-header-sub"><span id="tp-count-m">0</span> prospek aktif</div>
+          </div>
+          <button class="tp-add-mini" onclick="openTpModalM(-1)">＋ Tambah</button>
+        </div>
+      </div>
+      <!-- Toggle mode floating — selalu kelihatan di atas peta maupun daftar -->
+      <div class="tp-mode-wrap">
+        <div class="tp-mode">
+          <button class="tp-mode-btn active" id="tp-mode-list" onclick="switchTpMode('list')">📋 Daftar</button>
+          <button class="tp-mode-btn" id="tp-mode-map" onclick="switchTpMode('map')">🗺️ Peta</button>
+        </div>
+      </div>
+      <div id="tp-list-container">
+        <div class="tp-filters">
+          <button class="tp-chip-m active" onclick="filterTpM('semua',this)">Semua</button>
+          <button class="tp-chip-m" onclick="filterTpM('pabrik',this)">🏭 Pabrik</button>
+          <button class="tp-chip-m" onclick="filterTpM('perusahaan',this)">🏢 Perusahaan</button>
+          <button class="tp-chip-m" onclick="filterTpM('kawasan',this)">🏗️ Kawasan</button>
+        </div>
+        <div class="tp-list-m" id="tp-list-m-body"></div>
+      </div>
+      <div id="tp-map-container" class="tp-mapmode" style="display:none;">
+        <div id="strat-map-m"></div>
+      </div>
+    </div>
+
+    <!-- PENGATURAN AKUN -->
+    <div class="mpane" id="mpane-settings">
+      <div class="settings-wrap">
+        <div class="settings-section">
+          <div class="settings-avatar-wrap">
+            <div class="settings-avatar" id="set-avatar-m">?</div>
+            <div class="settings-avatar-info">
+              <div class="settings-avatar-name" id="set-name-m">—</div>
+              <div class="settings-avatar-role" id="set-role-m">—</div>
+            </div>
+          </div>
+          <input type="file" id="set-avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatarM(event)">
+          <label for="set-avatar-input" class="settings-btn-upload">📷 Ganti Foto</label>
+        </div>
+        <div class="settings-label-m">Bio / Kata Motivasi</div>
+        <div class="settings-section">
+          <div class="settings-field">
+            <textarea class="settings-field-input settings-field-textarea" id="set-bio-m" maxlength="150" placeholder="Tulis kata motivasimu..." oninput="updateBioCounterM()"></textarea>
+            <div class="settings-field-counter"><span id="set-bio-count-m">0</span>/150</div>
+          </div>
+          <button class="settings-btn-full" onclick="saveBioM()">Simpan Bio</button>
+        </div>
+        <div class="settings-label-m">Ubah Password</div>
+        <div class="settings-section">
+          <div class="settings-field">
+            <label class="settings-field-lbl">Password Lama</label>
+            <input type="password" class="settings-field-input" id="set-pw-old-m">
+          </div>
+          <div class="settings-field">
+            <label class="settings-field-lbl">Password Baru</label>
+            <input type="password" class="settings-field-input" id="set-pw-new-m">
+          </div>
+          <div class="settings-field">
+            <label class="settings-field-lbl">Ulangi Password Baru</label>
+            <input type="password" class="settings-field-input" id="set-pw-new2-m">
+          </div>
+          <button class="settings-btn-full" onclick="savePasswordM()">Simpan Password</button>
+        </div>
+
+        <!-- BM ONLY: Formula Potensi Unit -->
+        <div id="set-formula-section" style="display:none;">
+          <div class="settings-label-m">⚙️ Formula Potensi Unit <span style="color:#D97706;font-weight:700;background:#FEF3C7;padding:2px 8px;border-radius:8px;font-size:9px;margin-left:4px;">BM ONLY</span></div>
+          <div class="settings-section">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
+              Formula ini menghitung <b>potensi pembelian unit</b> dari setiap target pasar berdasarkan jumlah karyawan.
+            </div>
+            <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:center;">
+              <div style="font-size:11px;color:#1D4ED8;font-weight:600;margin-bottom:6px;">FORMULA SAAT INI</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;color:#1C1C1A;font-weight:600;">
+                Potensi = Karyawan × <span id="formula-pct-display" style="color:#D97706;">${POTENSI_PCT}</span>%
+              </div>
+              <div style="font-size:10px;color:var(--muted);margin-top:8px;font-style:italic;">
+                Contoh: 5.000 karyawan × <span id="formula-pct-display-2">${POTENSI_PCT}</span>% = <b id="formula-sample" style="color:#15803D;">${fmt(calcPotensiUnit(5000))}</b> unit potensial
+              </div>
+            </div>
+            <div class="settings-field">
+              <label class="settings-field-lbl">Persentase (1–100%)</label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="number" class="settings-field-input" id="set-formula-pct" min="1" max="100" step="0.5" value="${POTENSI_PCT}" style="flex:1;" oninput="previewFormula()">
+                <span style="font-size:16px;font-weight:600;color:var(--muted);">%</span>
+              </div>
+            </div>
+            <button class="settings-btn-full" onclick="saveFormulaPotensi()">Simpan Formula</button>
+            <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5;">
+              ⚠️ Perubahan ini akan diterapkan ke <b>semua target pasar</b> untuk seluruh tim.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PLACEHOLDER: Segera Hadir -->
+    <div class="mpane" id="mpane-soon">
+      <div class="soon-wrap">
+        <div class="soon-icon" id="soon-icon">📊</div>
+        <div class="soon-badge">SEGERA HADIR</div>
+        <div class="soon-title" id="soon-title">Divisi</div>
+        <div class="soon-desc" id="soon-desc">Modul ini sedang dalam pengembangan.</div>
+        <div class="soon-features" id="soon-features"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav" id="bnav">
+    <button class="bnav-item active" data-tab="home" onclick="bnavGo('home')">
+      <div class="bnav-item-icon">🏠</div>
+      <div class="bnav-item-label">Beranda</div>
+    </button>
+    <button class="bnav-item" data-tab="menu" onclick="bnavGo('menu')">
+      <div class="bnav-item-icon">☰</div>
+      <div class="bnav-item-label">Menu</div>
+    </button>
+    <button class="bnav-item" data-tab="galeri" onclick="bnavGo('galeri')">
+      <div class="bnav-item-icon">✨</div>
+      <div class="bnav-item-label">Galeri</div>
+    </button>
+    <button class="bnav-item" data-tab="tim" id="bnav-tim" onclick="bnavGo('tim')" style="display:none;">
+      <div class="bnav-item-icon">👥</div>
+      <div class="bnav-item-label">Tim</div>
+    </button>
+  </nav>
+
+</div>
+
+<!-- MODAL GALERI -->
+<div class="gmodal-backdrop" id="gmodal-backdrop" onclick="closeGmodal(event)">
+  <div class="gmodal" onclick="event.stopPropagation()">
+    <div class="gmodal-photo" id="gmodal-photo">
+      <button class="gmodal-close" onclick="closeGmodal()">✕</button>
+    </div>
+    <div class="gmodal-body">
+      <div class="gmodal-name" id="gmodal-name">—</div>
+      <div class="gmodal-jabatan" id="gmodal-jabatan">—</div>
+      <div class="gmodal-quote-label">Kata untukmu</div>
+      <div class="gmodal-quote" id="gmodal-quote">—</div>
+      <button class="gmodal-refresh" onclick="refreshGmodalQuote()">↻ Kata Lain</button>
+      <div class="gmodal-bio" id="gmodal-bio"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TP DETAIL MODAL -->
+<div class="tp-detail-m" id="tp-detail-m" onclick="closeTpDetailM(event)">
+  <div class="tp-detail-card" onclick="event.stopPropagation()">
+    <div class="tp-detail-handle"></div>
+    <div id="tp-detail-content"></div>
+  </div>
+</div>
+
+<!-- TP EDIT MODAL -->
+<div class="tp-detail-m" id="tp-edit-m" onclick="if(event.target===this)closeTpEditM()">
+  <div class="tp-detail-card" onclick="event.stopPropagation()">
+    <div class="tp-detail-handle"></div>
+    <div id="tp-edit-content"></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="cm-backdrop" id="cm-backdrop">
+  <div class="cm">
+    <div class="cm-body">
+      <div class="cm-title" id="cm-title">Konfirmasi</div>
+      <div class="cm-msg" id="cm-msg">—</div>
+    </div>
+    <div class="cm-actions">
+      <button class="cm-btn" onclick="closeCM()">Batal</button>
+      <button class="cm-btn primary" id="cm-ok" onclick="">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">—</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG — sama persis dengan desktop
+// ════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyPm0hR8SqqI572qjkaZ97PERPocBcE7ydhRcjoY_hve1qI6PItWMJeZ94kwG_q_gHpaw/exec';
+const USE_SHEETS = true;
+const BM4_PASSWORD = 'bm4property2024';
+const SESSION_KEY = 'bm4_auth';
+const ACCOUNTS_KEY = 'bm4_accounts';
+const CURRENT_USER_KEY = 'bm4_current_user';
+const STORAGE_KEY = 'bm4_data';
+
+// PROYEK
+const PROYEK = {
+  gwc: { nama:'Griya Wijaya Cibogo', area:'Cibogo, Subang', tipe:'Mix-use', unit:1000, lat:-6.5578890, lng:107.8131269 },
+  dpr: { nama:'Dirgantara Parahyangan Residence', area:'Subang', tipe:'Subsidi', unit:0, lat:-6.5700000, lng:107.7800000 }
+};
+let currentProyek = null;
+
+// DATA STORES
+let perumahan = [];
+let poi = [];
+let targetPasar = [];
+let accounts = [];
+let currentUser = null;
+
+// FORMULA SCORING
+let FORMULA = {
+  wAksesibilitas:50, wFasilitas:30, wFisik:20,
+  wTol:40, wCBD:40, wTransport:20,
+  wRS:30, wKampus:20, wMall:20, wPemda:10, wIndustri:10, wPublik:10,
+  decayAks:8, decayFas:6
+};
+
+// MAP STATES
+let analisaMap = null;
+let stratMap = null;
+let analisaMarkers = {};
+let poiMarkers = {};
+let activePoiKats = new Set(['rs','kampus','mall','tol','pemda','industri','publik']);
+let heatmapLayer = null;
+let currentFilter = 'all';
+let selectedPerumahanId = null;
+let selectedTpId = null;
+let tpFilter = 'semua';
+let tpMarkers = {};
+
+// NAVIGATION STATE
+let currentTab = 'home';
+let navStack = []; // untuk tombol back
+
+// ════════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════════
+function escapeHtml(s){
+  if(s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function haversine(la1,ln1,la2,ln2){
+  const R=6371, dL=(la2-la1)*Math.PI/180, dN=(ln2-ln1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ════════════════════════════════════════════════
+// OSRM ROUTING — jarak via jalan (mirip Google Maps)
+// ════════════════════════════════════════════════
+// Cache rute supaya tidak request OSRM berulang untuk titik yang sama
+const routeCache = {};
+
+async function getRouteDistance(lat1, lng1, lat2, lng2){
+  const key = `${lat1.toFixed(5)},${lng1.toFixed(5)}_${lat2.toFixed(5)},${lng2.toFixed(5)}`;
+  if(routeCache[key]) return routeCache[key];
+
+  try {
+    // OSRM public API - format: /route/v1/driving/lng1,lat1;lng2,lat2
+    const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=> controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+
+    if(data.code === 'Ok' && data.routes && data.routes.length > 0){
+      const route = data.routes[0];
+      const result = {
+        km: route.distance / 1000,
+        menit: Math.round(route.duration / 60),
+        coords: route.geometry.coordinates.map(c => [c[1], c[0]]), // convert [lng,lat] → [lat,lng]
+        viaRoad: true
+      };
+      routeCache[key] = result;
+      return result;
+    }
+  } catch(e){
+    console.warn('OSRM gagal, fallback ke jarak lurus:', e.message);
+  }
+
+  // Fallback: jarak lurus
+  const km = haversine(lat1, lng1, lat2, lng2);
+  return {
+    km,
+    menit: travelMin(km),
+    coords: [[lat1, lng1], [lat2, lng2]],
+    viaRoad: false
+  };
+}
+function fmt(n){ return (n||0).toLocaleString('id'); }
+function travelMin(km){ return Math.round(km/40*60); }
+function distToScore(km,decay){ return Math.max(0,Math.round(100-(km*decay))); }
+
+// ════════════════════════════════════════════════
+// STATUS TARGET PASAR
+// ════════════════════════════════════════════════
+const STATUS_LABELS = ['Identifikasi', 'Kontak Awal', 'Presentasi', 'Negosiasi', 'Kerjasama'];
+const STATUS_ICONS  = ['🎯', '📞', '📊', '🤝', '✅'];
+const STATUS_COLORS = [
+  { bg:'#F3E8FF', fg:'#6B21A8', solid:'#9333EA' }, // Identifikasi - ungu
+  { bg:'#EFF6FF', fg:'#1D4ED8', solid:'#2563EB' }, // Kontak Awal - biru
+  { bg:'#FEF3C7', fg:'#92400E', solid:'#D97706' }, // Presentasi - kuning
+  { bg:'#FED7AA', fg:'#9A3412', solid:'#EA580C' }, // Negosiasi - oranye
+  { bg:'#DCFCE7', fg:'#15803D', solid:'#16A34A' }  // Kerjasama - hijau
+];
+function getStatusInfo(s){
+  const idx = Math.max(0, Math.min(4, s || 0));
+  return {
+    label: STATUS_LABELS[idx],
+    icon: STATUS_ICONS[idx],
+    color: STATUS_COLORS[idx],
+    index: idx
+  };
+}
+
+// ════════════════════════════════════════════════
+// FORMAT TANGGAL — parse apa saja, output Indonesia
+// ════════════════════════════════════════════════
+const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function formatTanggalID(input){
+  if(!input) return '—';
+  const d = new Date(input);
+  if(isNaN(d.getTime())) return String(input);
+  return `${d.getDate()} ${BULAN_ID[d.getMonth()]} ${d.getFullYear()}`;
+}
+function todayISO(){
+  // Format YYYY-MM-DD lokal, bukan toISOString yang UTC
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// ════════════════════════════════════════════════
+// FORMULA POTENSI UNIT — bisa diubah BM
+// ════════════════════════════════════════════════
+const POTENSI_KEY = 'bm4_potensi_formula';
+let POTENSI_PCT = 15; // default 15%
+
+function loadPotensiFormula(){
+  try {
+    const saved = localStorage.getItem(POTENSI_KEY);
+    if(saved){
+      const n = parseFloat(saved);
+      if(!isNaN(n) && n > 0 && n <= 100) POTENSI_PCT = n;
+    }
+  } catch(e) {}
+}
+
+function savePotensiFormula(pct){
+  POTENSI_PCT = pct;
+  try { localStorage.setItem(POTENSI_KEY, String(pct)); } catch(e) {}
+}
+
+function calcPotensiUnit(karyawan){
+  return Math.round(((karyawan || 0) * POTENSI_PCT) / 100);
+}
+
+function nearestByKat(p){
+  const res={};
+  poi.forEach(x=>{
+    const d=haversine(p.lat,p.lng,x.lat,x.lng);
+    if(!res[x.kat] || d<res[x.kat].dist) res[x.kat]={...x,dist:d};
+  });
+  return res;
+}
+
+function calcScoreFull(p){
+  const near = nearestByKat(p);
+  const tol = near.tol ? distToScore(near.tol.dist, FORMULA.decayAks) : 0;
+  const pemda = near.pemda ? distToScore(near.pemda.dist, FORMULA.decayAks) : 0;
+  const publik = near.publik ? distToScore(near.publik.dist, FORMULA.decayFas) : 0;
+  const rs = near.rs ? distToScore(near.rs.dist, FORMULA.decayFas) : 0;
+  const kampus = near.kampus ? distToScore(near.kampus.dist, FORMULA.decayFas) : 0;
+  const mall = near.mall ? distToScore(near.mall.dist, FORMULA.decayFas) : 0;
+  const industri = near.industri ? distToScore(near.industri.dist, FORMULA.decayFas) : 0;
+  const aks = Math.round((tol*FORMULA.wTol + pemda*FORMULA.wCBD + publik*FORMULA.wTransport)/100);
+  const fas = Math.round((rs*FORMULA.wRS + kampus*FORMULA.wKampus + mall*FORMULA.wMall + pemda*FORMULA.wPemda + industri*FORMULA.wIndustri + publik*FORMULA.wPublik)/100);
+  const fisik = 70;
+  const overall = Math.round((aks*FORMULA.wAksesibilitas + fas*FORMULA.wFasilitas + fisik*FORMULA.wFisik)/100);
+  return { overall, aks, fas, fisik, tol, pemda, publik, rs, kampus, mall, industri, near };
+}
+
+function scoreGrade(s){
+  if(s>=85) return {g:"Prime",c:"#15803D"};
+  if(s>=75) return {g:"Sangat Strategis",c:"#2563EB"};
+  if(s>=65) return {g:"Strategis",c:"#D97706"};
+  if(s>=55) return {g:"Cukup Strategis",c:"#EA580C"};
+  return {g:"Kurang Strategis",c:"#DC2626"};
+}
+
+function recalcAll(){
+  perumahan.forEach(p=>{ const r=calcScoreFull(p); p.score=r.overall; p._scoreDetail=r; });
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=> t.classList.remove('show'), 2400);
+}
+
+// Confirm modal — pengganti confirm() browser yang jelek di mobile
+function showConfirm(title, msg, onOk){
+  document.getElementById('cm-title').textContent = title;
+  document.getElementById('cm-msg').textContent = msg;
+  const btn = document.getElementById('cm-ok');
+  btn.onclick = () => { closeCM(); onOk && onOk(); };
+  document.getElementById('cm-backdrop').classList.add('show');
+}
+function closeCM(){ document.getElementById('cm-backdrop').classList.remove('show'); }
+
+// ════════════════════════════════════════════════
+// DEFAULT DATA SEED (fallback kalau Sheets belum ada)
+// ════════════════════════════════════════════════
+const DEFAULT_PERUMAHAN = [
+  {id:1,nama:"GRIYA WIJAYA CIBOGO",lat:-6.5578890,lng:107.8131269,tipe:"mix",realisasi:0,unit:1000,tahun:2023,developer:"PT WIJAYA INTAN NURYAKSA",area:"Cibogo"}
+];
+const DEFAULT_POI = [];
+
+function loadLocalData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const obj = JSON.parse(raw);
+      if(Array.isArray(obj.perumahan)) perumahan = obj.perumahan;
+      if(Array.isArray(obj.poi)) poi = obj.poi;
+      if(Array.isArray(obj.targetPasar)) targetPasar = obj.targetPasar;
+    }
+  } catch(e) {}
+  if(!perumahan.length) perumahan = [...DEFAULT_PERUMAHAN];
+  if(!poi.length) poi = [...DEFAULT_POI];
+}
+
+function saveLocalData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      perumahan, poi, targetPasar
+    }));
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+// SHEETS SYNC — GET & POST sama persis pola desktop
+// ════════════════════════════════════════════════
+async function loadFromSheets(){
+  if(!USE_SHEETS) return;
+  try {
+    const [pRes, poiRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getPerumahan').then(r=>r.json()),
+      fetch(GAS_URL + '?action=getPoi').then(r=>r.json())
+    ]);
+    if(pRes && pRes.success && Array.isArray(pRes.data) && pRes.data.length){
+      perumahan = pRes.data.map(r => ({
+        id: Number(r.id)||0, nama: r.nama||'', area: r.area||'',
+        tipe: r.tipe||'', lat: Number(r.lat)||0, lng: Number(r.lng)||0,
+        developer: r.developer||'', unit: Number(r.unit)||0,
+        realisasi: Number(r.realisasi)||0, tahun: Number(r.tahun)||2024
+      }));
+    }
+    if(poiRes && poiRes.success && Array.isArray(poiRes.data) && poiRes.data.length){
+      poi = poiRes.data.map(r => ({
+        nama: r.nama||'', lat: Number(r.lat)||0, lng: Number(r.lng)||0,
+        kat: r.kat||'', label: r.label||'', emoji: r.emoji||''
+      }));
+    }
+    recalcAll();
+    saveLocalData();
+    // Refresh UI kalau sedang di layar terkait
+    if(currentTab === 'home') renderHome();
+    if(analisaMap) refreshAnalisaMarkers();
+  } catch(e){ console.error('loadFromSheets error:', e); }
+}
+
+async function loadTpFromSheets(){
+  if(!USE_SHEETS) return;
+  try {
+    const res = await fetch(GAS_URL + '?action=getTargetPasar').then(r=>r.json());
+    if(res && res.success && Array.isArray(res.data)){
+      targetPasar = res.data.map(r => ({
+        id: Number(r.id)||0, nama: r.nama||'', jenis: r.jenis||'',
+        lat: Number(r.lat)||0, lng: Number(r.lng)||0,
+        karyawan: Number(r.karyawan)||0, pic: r.pic||'',
+        lastcontact: r.lastcontact||'', status: Number(r.status)||0,
+        catatan: r.catatan||''
+      }));
+      saveLocalData();
+      updateTpCount();
+      renderTpListM(tpFilter);
+    }
+  } catch(e){ console.error('loadTp error:', e); }
+}
+
+async function saveTpToSheets(){
+  if(!USE_SHEETS) return;
+  try {
+    await fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'saveTargetPasar', rows: targetPasar })
+    });
+  } catch(e){ console.error('saveTp error:', e); }
+}
+
+// ════════════════════════════════════════════════
+// ACCOUNT MANAGEMENT
+// ════════════════════════════════════════════════
+const DEFAULT_ACCOUNTS = [
+  { username:'admin', password:'bm4property2024', nama:'Branch Manager', jabatan:'Branch Manager BM Area 4', role:'bm', foto:'', akses:['analisa','strategi','sales','konstruksi','legal','finance','tim','galeri'], bio:'Memimpin dengan hati, bekerja dengan strategi.' }
+];
+
+function loadAccounts(){
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length) { accounts = arr; return; }
+    }
+  } catch(e) {}
+  accounts = [...DEFAULT_ACCOUNTS];
+  try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)); } catch(e) {}
+}
+
+function saveAccountsLocal(){
+  try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)); } catch(e) {}
+}
+
+async function loadAccountsFromSheets(){
+  if(!USE_SHEETS) return false;
+  try {
+    const res = await fetch(GAS_URL + '?action=getAccounts').then(r=>r.json());
+    if(res && res.success && Array.isArray(res.data) && res.data.length){
+      accounts = res.data.map(a => ({
+        username: a.username||'', password: a.password||'',
+        nama: a.nama||'', jabatan: a.jabatan||'',
+        role: a.role||'sales', foto: a.foto||'',
+        akses: Array.isArray(a.akses) ? a.akses : (a.akses ? String(a.akses).split(',').map(s=>s.trim()).filter(Boolean) : []),
+        bio: a.bio||''
+      }));
+      saveAccountsLocal();
+      return true;
+    }
+  } catch(e){ console.error('loadAccounts error:', e); }
+  return false;
+}
+
+async function syncAccountsToSheets(){
+  if(!USE_SHEETS) return;
+  try {
+    await fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'saveAccounts', data: accounts })
+    });
+  } catch(e){ console.error('syncAcc error:', e); }
+}
+
+function findAccount(username){
+  return accounts.find(a => a.username === username);
+}
+
+async function logActivity(username, action, detail){
+  if(!USE_SHEETS) return;
+  try {
+    await fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action:'logActivity',
+        data:{ timestamp:new Date().toISOString(), username, action, detail }
+      })
+    });
+  } catch(e){}
+}
+
+function roleLabel(role){
+  const map = {bm:'Branch Manager', sales:'Sales', strategi:'Strategi', konstruksi:'Konstruksi', legal:'Legal', finance:'Finance'};
+  return map[role] || role;
+}
+
+// ════════════════════════════════════════════════
+// LOGIN FLOW
+// ════════════════════════════════════════════════
+function doLoginNew(){
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  if(!u || !p){ err.textContent='Isi username dan password'; err.classList.add('show'); return; }
+  const acc = accounts.find(a => a.username.toLowerCase() === u.toLowerCase() && a.password === p);
+  if(!acc){ err.textContent='Username atau password salah'; err.classList.add('show'); return; }
+  err.classList.remove('show');
+  currentUser = acc;
+  sessionStorage.setItem(SESSION_KEY, 'ok');
+  sessionStorage.setItem(CURRENT_USER_KEY, acc.username);
+  logActivity(acc.username, 'login', 'Login via mobile');
+  document.getElementById('login-password').value = '';
+  goToProyek();
+}
+
+function applyUserAccess(){
+  if(!currentUser) return;
+  const akses = currentUser.akses || [];
+  // Render ulang menu grid sesuai akses
+  renderMenuGrid();
+  // Tab Tim hanya untuk BM
+  const bnavTim = document.getElementById('bnav-tim');
+  if(bnavTim) bnavTim.style.display = (currentUser.role === 'bm') ? 'flex' : 'none';
+}
+
+function doLogout(){
+  if(currentUser) logActivity(currentUser.username, 'logout', 'Logout via mobile');
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(CURRENT_USER_KEY);
+  currentUser = null;
+  currentProyek = null;
+  showScreen('s-login');
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+function confirmLogout(){
+  showConfirm('Keluar', 'Yakin ingin logout dari aplikasi?', doLogout);
+}
+
+// ════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToProyek(){
+  renderProyekCards();
+  showScreen('s-proyek');
+}
+
+function renderProyekCards(){
+  const container = document.getElementById('proyek-cards');
+  container.innerHTML = '';
+  Object.entries(PROYEK).forEach(([id, p]) => {
+    const card = document.createElement('div');
+    card.className = 'proyek-card';
+    card.innerHTML = `
+      <div class="proyek-card-icon">🏘️</div>
+      <div class="proyek-card-name">${escapeHtml(p.nama)}</div>
+      <div class="proyek-card-area">${escapeHtml(p.area)}</div>
+      <div class="proyek-card-badge">${escapeHtml(p.tipe)} · ${fmt(p.unit)} unit</div>
+    `;
+    card.onclick = () => selectProyek(id);
+    container.appendChild(card);
+  });
+}
+
+function selectProyek(id){
+  currentProyek = { id, ...PROYEK[id] };
+  showScreen('s-app');
+  bnavGo('home');
+  renderHome();
+  applyUserAccess();
+}
+
+// ════════════════════════════════════════════════
+// BOTTOM NAV + PANE ROUTING
+// ════════════════════════════════════════════════
+function bnavGo(tab){
+  // Sembunyikan semua pane
+  document.querySelectorAll('.mpane').forEach(p => p.classList.remove('active'));
+  // Reset bottom nav active
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.bnav-item[data-tab="${tab}"]`);
+  if(btn) btn.classList.add('active');
+
+  currentTab = tab;
+  navStack = [tab];
+  updateTopbar();
+
+  // Tampilkan pane sesuai tab
+  if(tab === 'home') { document.getElementById('mpane-home').classList.add('active'); renderHome(); }
+  else if(tab === 'menu') { document.getElementById('mpane-menu').classList.add('active'); renderMenuGrid(); }
+  else if(tab === 'galeri') { document.getElementById('mpane-galeri').classList.add('active'); renderGaleriM(); }
+  else if(tab === 'tim') {
+    if(currentUser?.role !== 'bm'){ showToast('Hanya Branch Manager yang bisa akses'); bnavGo('home'); return; }
+    document.getElementById('mpane-tim').classList.add('active'); renderTimM();
+  }
+
+  // Reset tombol back & filter
+  document.getElementById('tb-back').classList.remove('show');
+  document.getElementById('tb-filter').style.display = 'none';
+  document.getElementById('bnav').classList.remove('hide');
+}
+
+function goto(dest){
+  // Untuk halaman sekunder (Analisa, Strategi, Settings, Soon)
+  document.querySelectorAll('.mpane').forEach(p => p.classList.remove('active'));
+  navStack.push(dest);
+
+  if(dest === 'analisa'){
+    if(!checkAkses('analisa')) return;
+    document.getElementById('mpane-analisa').classList.add('active');
+    document.getElementById('tb-filter').style.display = 'flex';
+    initAnalisaMapM();
+  } else if(dest === 'strategi'){
+    if(!checkAkses('strategi')) return;
+    document.getElementById('mpane-strategi').classList.add('active');
+    loadTpFromSheets();
+  } else if(dest === 'settings'){
+    document.getElementById('mpane-settings').classList.add('active');
+    renderSettingsM();
+  } else if(dest === 'proyek-switch'){
+    navStack.pop();
+    goToProyek();
+    return;
+  } else if(dest === 'sales' || dest === 'konstruksi' || dest === 'legal' || dest === 'finance'){
+    if(!checkAkses(dest)) return;
+    document.getElementById('mpane-soon').classList.add('active');
+    renderSoon(dest);
+  }
+
+  document.getElementById('tb-back').classList.add('show');
+  updateTopbar();
+  // Bottom nav tetap kelihatan supaya user bisa loncat ke tab lain
+  if(dest === 'analisa') document.getElementById('bnav').classList.add('hide'); // peta full-screen
+  else document.getElementById('bnav').classList.remove('hide');
+}
+
+function goBack(){
+  if(navStack.length > 1) navStack.pop();
+  const prev = navStack[navStack.length-1];
+
+  if(['home','menu','galeri','tim'].includes(prev)) bnavGo(prev);
+  else { navStack = ['home']; bnavGo('home'); }
+}
+
+function checkAkses(div){
+  if(!currentUser) return true;
+  if(div === 'galeri') return true;
+  const akses = currentUser.akses || [];
+  if(!akses.includes(div)){
+    showToast('Anda tidak memiliki akses ke menu ini');
+    return false;
+  }
+  return true;
+}
+
+function updateTopbar(){
+  const t = document.getElementById('tb-title');
+  const s = document.getElementById('tb-sub');
+  const current = navStack[navStack.length-1];
+  const titleMap = {
+    home: ['BM<span style="color:#60A5FA;">4</span>', 'Property Intelligence'],
+    menu: ['Menu', 'Semua fitur'],
+    galeri: ['Galeri Tim', 'BM Area 4'],
+    tim: ['Tim BM4', 'Manajemen anggota'],
+    analisa: ['Analisa Lokasi', currentProyek?.nama || ''],
+    strategi: ['Strategi', 'Target pasar'],
+    settings: ['Pengaturan', 'Akun saya'],
+    sales: ['Sales', 'Segera hadir'],
+    konstruksi: ['Konstruksi', 'Segera hadir'],
+    legal: ['Legal', 'Segera hadir'],
+    finance: ['Finance', 'Segera hadir']
+  };
+  const [title, sub] = titleMap[current] || ['BM4', ''];
+  t.innerHTML = title;
+  s.textContent = sub;
+}
+
+// ════════════════════════════════════════════════
+// BERANDA (Home) — RENDER
+// ════════════════════════════════════════════════
+const HOME_QUOTES = [
+  "Properti terbaik bukan yang termahal, tapi yang paling dicari.",
+  "Setiap closing adalah cerita baru yang layak dirayakan.",
+  "Lokasi bisa dihitung, tapi kepercayaan harus dibangun.",
+  "Pasar tidak pernah tidur — yang tidur hanyalah kesempatan yang terlewat.",
+  "Target bukan beban, target adalah undangan untuk bertumbuh.",
+  "Hari ini satu langkah kecil, bulan depan satu penjualan besar.",
+  "Rumah bukan hanya bangunan, tapi masa depan yang sedang dicicil.",
+  "Data berbicara, tapi intuisi yang menutup deal.",
+  "Peta tanpa arah hanyalah gambar — strategi yang membuatnya bernilai.",
+  "Senyum pertama menentukan kunjungan kedua.",
+  "Yang membedakan kita bukan produk, tapi cara kita hadir.",
+  "Konsistensi mengalahkan intensitas — setiap hari, setiap kali.",
+  "Satu tim yang solid lebih kuat dari sepuluh bintang individu.",
+  "Kerja keras itu wajib, kerja cerdas itu pilihan, kerja tuntas itu karakter.",
+  "Mimpi besar dimulai dari langkah kecil yang dilakukan hari ini.",
+  "Peluang sering datang dalam bentuk pekerjaan yang tidak nyaman.",
+  "Jangan jual rumah, jual kehidupan di dalamnya.",
+  "Setiap prospek layak diperlakukan seperti closing.",
+  "Integritas lebih mahal dari komisi tertinggi sekalipun.",
+  "Peta lokasi memberitahu di mana, tim yang hebat memberitahu mengapa.",
+  "Hasil besar adalah akumulasi dari tindakan kecil yang tepat.",
+  "Menang hari ini dimulai dari persiapan tadi malam.",
+  "Kalau bukan sekarang, kapan lagi? Kalau bukan kita, siapa lagi?"
+];
+
+function dailyQuote(){
+  const d = new Date();
+  const seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  return HOME_QUOTES[seed % HOME_QUOTES.length];
+}
+
+function renderHome(){
+  if(!currentUser || !currentProyek) return;
+  // Foto / inisial user
+  const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+  const avatar = document.getElementById('home-avatar');
+  avatar.innerHTML = currentUser.foto ? `<img src="${currentUser.foto}" alt="">` : initial;
+  // Info
+  document.getElementById('home-username').textContent = currentUser.nama || currentUser.username;
+  document.getElementById('home-user-jabatan').textContent = currentUser.jabatan || roleLabel(currentUser.role || 'sales');
+  document.getElementById('home-proyek-name').textContent = currentProyek.nama;
+  document.getElementById('home-proyek-area').textContent = `${currentProyek.area} · ${currentProyek.tipe}`;
+  document.getElementById('home-stat-kompetitor').textContent = perumahan.length;
+  document.getElementById('home-stat-tp').textContent = targetPasar.length;
+  document.getElementById('home-quote').textContent = '"' + dailyQuote() + '"';
+}
+
+// ════════════════════════════════════════════════
+// MENU GRID
+// ════════════════════════════════════════════════
+const MENU_DIVISI = [
+  { id:'analisa', icon:'📍', name:'Analisa', sub:'Peta & Scoring', ready:true },
+  { id:'strategi', icon:'🎯', name:'Strategi', sub:'Target Pasar', ready:true },
+  { id:'sales', icon:'📊', name:'Sales', sub:'Segera hadir', ready:false },
+  { id:'konstruksi', icon:'🏗️', name:'Konstruksi', sub:'Segera hadir', ready:false },
+  { id:'legal', icon:'📋', name:'Legal', sub:'Segera hadir', ready:false },
+  { id:'finance', icon:'💰', name:'Finance', sub:'Segera hadir', ready:false }
+];
+
+function renderMenuGrid(){
+  const grid = document.getElementById('menu-divisi-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const akses = currentUser?.akses || [];
+  MENU_DIVISI.forEach(d => {
+    // Filter berdasarkan akses user
+    if(currentUser && !akses.includes(d.id)) return;
+    const card = document.createElement('div');
+    card.className = 'menu-card' + (d.ready ? '' : ' soon');
+    card.innerHTML = `
+      ${!d.ready ? '<div class="menu-card-badge">SOON</div>' : ''}
+      <div class="menu-card-icon ${d.id}">${d.icon}</div>
+      <div class="menu-card-name">${d.name}</div>
+      <div class="menu-card-sub">${d.sub}</div>
+    `;
+    card.onclick = () => goto(d.id);
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════
+// GALERI (sama seperti desktop v11, disesuaikan mobile)
+// ════════════════════════════════════════════════
+let gmodalCurrentQuoteIdx = -1;
+
+function randomQuote(exclude){
+  let idx;
+  do { idx = Math.floor(Math.random() * HOME_QUOTES.length); }
+  while(idx === exclude && HOME_QUOTES.length > 1);
+  return { idx, text: HOME_QUOTES[idx] };
+}
+
+function renderGaleriM(){
+  const grid = document.getElementById('galeri-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  document.getElementById('galeri-daily-text').textContent = '"' + dailyQuote() + '"';
+
+  accounts.forEach((a, idx) => {
+    const card = document.createElement('div');
+    card.className = 'galeri-card';
+    const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+    const role = a.role || 'sales';
+    const photoInner = a.foto
+      ? `<img src="${a.foto}" alt="">`
+      : `<div class="galeri-card-initial">${initial}</div>`;
+    const bioHtml = a.bio
+      ? `<div class="galeri-card-bio">"${escapeHtml(a.bio)}"</div>`
+      : `<div class="galeri-card-bio empty">— Belum ada kata motivasi —</div>`;
+    card.innerHTML = `
+      <div class="galeri-card-photo ${role}">
+        ${photoInner}
+        <div class="galeri-card-badge ${role}">${roleLabel(role)}</div>
+      </div>
+      <div class="galeri-card-body">
+        <div class="galeri-card-name">${escapeHtml(a.nama || a.username)}</div>
+        <div class="galeri-card-jabatan">${escapeHtml(a.jabatan || '-')}</div>
+        <div class="galeri-card-divider"></div>
+        ${bioHtml}
+      </div>
+    `;
+    card.onclick = () => openGmodal(a.username);
+    grid.appendChild(card);
+    setTimeout(() => card.classList.add('show'), 50 * idx);
+  });
+}
+
+function openGmodal(username){
+  const a = findAccount(username); if(!a) return;
+  const role = a.role || 'sales';
+  const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+  const photoEl = document.getElementById('gmodal-photo');
+  photoEl.className = 'gmodal-photo ' + role;
+  const photoInner = a.foto ? `<img src="${a.foto}" alt="">` : `<div class="gmodal-photo-initial">${initial}</div>`;
+  photoEl.innerHTML = photoInner + '<button class="gmodal-close" onclick="closeGmodal()">✕</button>';
+  document.getElementById('gmodal-name').textContent = a.nama || a.username;
+  document.getElementById('gmodal-jabatan').textContent = a.jabatan || '-';
+  const q = randomQuote(-1);
+  gmodalCurrentQuoteIdx = q.idx;
+  document.getElementById('gmodal-quote').textContent = q.text;
+  const bioEl = document.getElementById('gmodal-bio');
+  if(a.bio){ bioEl.className = 'gmodal-bio'; bioEl.textContent = '— ' + a.bio; }
+  else { bioEl.className = 'gmodal-bio empty'; bioEl.textContent = ''; }
+  document.getElementById('gmodal-backdrop').classList.add('show');
+}
+
+function refreshGmodalQuote(){
+  const q = randomQuote(gmodalCurrentQuoteIdx);
+  gmodalCurrentQuoteIdx = q.idx;
+  const el = document.getElementById('gmodal-quote');
+  el.style.opacity = '0';
+  setTimeout(() => { el.textContent = q.text; el.style.opacity = '1'; }, 150);
+}
+
+function closeGmodal(e){
+  if(e && e.target && !e.target.classList.contains('gmodal-backdrop')) return;
+  document.getElementById('gmodal-backdrop').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════
+// TIM BM4 (khusus Branch Manager)
+// ════════════════════════════════════════════════
+let timTab = 'list';
+let timLogs = [];
+
+function switchTimTab(tab){
+  timTab = tab;
+  document.getElementById('tim-tab-list').classList.toggle('active', tab==='list');
+  document.getElementById('tim-tab-log').classList.toggle('active', tab==='log');
+  document.getElementById('tim-content-list').style.display = tab==='list' ? 'block' : 'none';
+  document.getElementById('tim-content-log').style.display = tab==='log' ? 'block' : 'none';
+  if(tab === 'log') loadLogsM();
+}
+
+function renderTimM(){
+  document.getElementById('tim-count').textContent = accounts.length + ' anggota';
+  const list = document.getElementById('tim-list-m');
+  list.innerHTML = '';
+  accounts.forEach(a => {
+    const initial = (a.nama || a.username || '?').charAt(0).toUpperCase();
+    const avatarHtml = a.foto ? `<img src="${a.foto}" alt="">` : initial;
+    const role = a.role || 'sales';
+    const card = document.createElement('div');
+    card.className = 'tim-card';
+    card.innerHTML = `
+      <div class="tim-card-avatar">${avatarHtml}</div>
+      <div class="tim-card-info">
+        <div class="tim-card-name">${escapeHtml(a.nama || a.username)}</div>
+        <div class="tim-card-meta">
+          <span class="tim-card-role role-${role}">${roleLabel(role)}</span>
+        </div>
+        <div class="tim-card-jabatan">${escapeHtml(a.jabatan || '-')}</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function loadLogsM(){
+  const box = document.getElementById('tim-log-m');
+  box.innerHTML = '<div style="text-align:center;padding:30px;color:#9B9A96;font-size:12px;">Memuat log...</div>';
+  try {
+    const res = await fetch(GAS_URL + '?action=getLogs').then(r=>r.json());
+    if(res && res.success && Array.isArray(res.data)){
+      timLogs = res.data.slice().reverse();
+      renderLogListM();
+    } else {
+      box.innerHTML = '<div style="text-align:center;padding:30px;color:#9B9A96;font-size:12px;">Belum ada log aktivitas</div>';
+    }
+  } catch(e){
+    box.innerHTML = '<div style="text-align:center;padding:30px;color:#DC2626;font-size:12px;">Gagal memuat log</div>';
+  }
+}
+
+function renderLogListM(){
+  const box = document.getElementById('tim-log-m');
+  if(!timLogs.length){ box.innerHTML = '<div style="text-align:center;padding:30px;color:#9B9A96;font-size:12px;">Belum ada log aktivitas</div>'; return; }
+  box.innerHTML = '';
+  timLogs.slice(0, 50).forEach(log => {
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    const d = new Date(log.timestamp);
+    const timeStr = isNaN(d) ? log.timestamp : d.toLocaleString('id',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    item.innerHTML = `
+      <div class="log-head">
+        <div class="log-user">${escapeHtml(log.username || '-')}</div>
+        <div class="log-time">${escapeHtml(timeStr)}</div>
+      </div>
+      <div class="log-action badge-${escapeHtml(log.action || 'edit')}">${escapeHtml(log.action || '-')}</div>
+      <div class="log-detail">${escapeHtml(log.detail || '')}</div>
+    `;
+    box.appendChild(item);
+  });
+}
+
+// ════════════════════════════════════════════════
+// ANALISA MAP (mobile version)
+// ════════════════════════════════════════════════
+function initAnalisaMapM(){
+  if(analisaMap){
+    // Map sudah ada, tinggal invalidate supaya resize
+    setTimeout(()=> analisaMap.invalidateSize(), 100);
+    return;
+  }
+  const ctr = currentProyek ? [currentProyek.lat, currentProyek.lng] : [-6.557, 107.813];
+  analisaMap = L.map('analisa-map-m', { zoomControl:true, attributionControl:false }).setView(ctr, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(analisaMap);
+
+  // Marker proyek utama
+  if(currentProyek){
+    L.marker([currentProyek.lat, currentProyek.lng], {
+      icon: L.divIcon({
+        className:'proyek-marker',
+        html:`<div style="background:#1C2B4A;color:white;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #60A5FA;">📍 ${escapeHtml(currentProyek.nama)}</div>`,
+        iconSize:[null,null]
+      })
+    }).addTo(analisaMap);
+  }
+
+  refreshAnalisaMarkers();
+  buildRankingM('overall');
+  setTimeout(()=> analisaMap.invalidateSize(), 150);
+}
+
+function refreshAnalisaMarkers(){
+  if(!analisaMap) return;
+  // Hapus marker lama
+  Object.values(analisaMarkers).forEach(m => analisaMap.removeLayer(m));
+  analisaMarkers = {};
+  Object.values(poiMarkers).forEach(m => analisaMap.removeLayer(m));
+  poiMarkers = {};
+
+  perumahan.forEach(p => {
+    if(currentFilter !== 'all' && p.tipe !== currentFilter) return;
+    const grade = scoreGrade(p.score || 0);
+    const marker = L.marker([p.lat, p.lng], {
+      icon: L.divIcon({
+        className:'perumahan-marker',
+        html:`<div style="background:${grade.c};color:white;width:36px;height:36px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.3);">${p.score || '?'}</div>`,
+        iconSize:[36,36],
+        iconAnchor:[18,18]
+      })
+    }).addTo(analisaMap);
+    marker.on('click', () => selectPerumahanM(p.id));
+    analisaMarkers[p.id] = marker;
+  });
+
+  poi.forEach((x,i) => {
+    if(!activePoiKats.has(x.kat)) return;
+    const color = {rs:'#DC2626',kampus:'#059669',mall:'#7C3AED',tol:'#475569',pemda:'#1D4ED8',industri:'#92400E',publik:'#0891B2'}[x.kat] || '#888';
+    const marker = L.marker([x.lat, x.lng], {
+      icon: L.divIcon({
+        className:'poi-marker',
+        html:`<div style="background:white;border:2px solid ${color};width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;">${x.emoji || '•'}</div>`,
+        iconSize:[24,24],
+        iconAnchor:[12,12]
+      })
+    }).addTo(analisaMap);
+    marker.bindPopup(`<b>${escapeHtml(x.nama)}</b><br><span style="color:#888;font-size:10px;">${escapeHtml(x.label||x.kat)}</span>`);
+    poiMarkers[x.kat + '_' + i] = marker;
+  });
+}
+
+function openFilter(){
+  document.getElementById('filter-panel').classList.add('open');
+}
+function closeFilter(){
+  document.getElementById('filter-panel').classList.remove('open');
+}
+
+function setFilterM(f, el){
+  currentFilter = f;
+  document.querySelectorAll('.fp-chip[data-filter]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  refreshAnalisaMarkers();
+}
+
+function togglePoiM(kat, el){
+  if(activePoiKats.has(kat)){ activePoiKats.delete(kat); el.classList.remove('active'); }
+  else { activePoiKats.add(kat); el.classList.add('active'); }
+  refreshAnalisaMarkers();
+}
+
+function toggleHeatmapM(el){
+  showToast('Heatmap — fitur menyusul');
+  if(el) el.classList.toggle('active');
+}
+
+function locateMe(){
+  if(!navigator.geolocation){ showToast('Lokasi tidak didukung'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    if(analisaMap) analisaMap.setView([pos.coords.latitude, pos.coords.longitude], 14);
+    showToast('📍 Lokasi ditemukan');
+  }, () => showToast('Tidak bisa akses lokasi'));
+}
+
+function buildRankingM(cat){
+  const list = document.getElementById('rank-list-m');
+  if(!list) return;
+  list.innerHTML = '';
+  const sorted = perumahan.slice().sort((a,b) => {
+    if(cat === 'overall') return (b.score || 0) - (a.score || 0);
+    const aD = a._scoreDetail?.near?.[cat]?.dist ?? Infinity;
+    const bD = b._scoreDetail?.near?.[cat]?.dist ?? Infinity;
+    return aD - bD;
+  });
+  sorted.forEach((p, idx) => {
+    const grade = scoreGrade(p.score || 0);
+    let val, barPct;
+    if(cat === 'overall'){ val = p.score || 0; barPct = val; }
+    else {
+      const d = p._scoreDetail?.near?.[cat]?.dist;
+      val = d != null ? d.toFixed(1) + ' km' : '—';
+      barPct = d != null ? Math.max(0, 100 - d*8) : 0;
+    }
+    const item = document.createElement('div');
+    item.className = 'fp-rank-item';
+    item.innerHTML = `
+      <div class="fp-rank-num">${idx+1}</div>
+      <div class="fp-rank-info">
+        <div class="fp-rank-name">${escapeHtml(p.nama)}</div>
+        <div class="fp-rank-bar"><div class="fp-rank-fill" style="width:${barPct}%;background:${grade.c};"></div></div>
+      </div>
+      <div class="fp-rank-val" style="color:${grade.c};">${val}</div>
+    `;
+    item.onclick = () => { selectPerumahanM(p.id); closeFilter(); };
+    list.appendChild(item);
+  });
+}
+
+// ════════════════════════════════════════════════
+// BOTTOM SHEET — detail perumahan
+// ════════════════════════════════════════════════
+function selectPerumahanM(id){
+  const p = perumahan.find(x => x.id === id);
+  if(!p) return;
+  selectedPerumahanId = id;
+  if(analisaMap) analisaMap.setView([p.lat, p.lng], 14);
+  renderBsheet(p);
+  document.getElementById('bsheet').classList.add('open');
+  document.getElementById('bsheet').classList.remove('collapsed');
+}
+
+function renderBsheet(p){
+  const d = p._scoreDetail || calcScoreFull(p);
+  const grade = scoreGrade(p.score || 0);
+  document.getElementById('bs-name').textContent = p.nama;
+  document.getElementById('bs-meta').textContent = `${p.tipe === 'mix' ? 'Mix-use' : 'Subsidi'} · ${p.area || '-'}`;
+  document.getElementById('bs-score').textContent = p.score || 0;
+  document.getElementById('bs-score').style.color = grade.c;
+  document.getElementById('bs-grade').textContent = grade.g.toUpperCase();
+  document.getElementById('bs-grade').style.color = grade.c;
+
+  // Overview
+  document.getElementById('bp-overview').innerHTML = `
+    <div class="bs-row"><span class="bs-row-lbl">Developer</span><span class="bs-row-val">${escapeHtml(p.developer || '-')}</span></div>
+    <div class="bs-row"><span class="bs-row-lbl">Tahun Mulai</span><span class="bs-row-val">${p.tahun || '-'}</span></div>
+    <div class="bs-row"><span class="bs-row-lbl">Total Unit</span><span class="bs-row-val">${fmt(p.unit)} unit</span></div>
+    <div class="bs-row"><span class="bs-row-lbl">Realisasi</span><span class="bs-row-val">${fmt(p.realisasi)} unit</span></div>
+    <div style="height:14px;"></div>
+    <div style="font-size:11px;color:#5F5E5A;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Breakdown Skor</div>
+    <div class="bs-factor">
+      <div class="bs-factor-head"><span class="bs-factor-name">Aksesibilitas</span><span class="bs-factor-val" style="color:${scoreGrade(d.aks).c};">${d.aks}</span></div>
+      <div class="bs-factor-bar"><div class="bs-factor-fill" style="width:${d.aks}%;background:${scoreGrade(d.aks).c};"></div></div>
+    </div>
+    <div class="bs-factor">
+      <div class="bs-factor-head"><span class="bs-factor-name">Fasilitas</span><span class="bs-factor-val" style="color:${scoreGrade(d.fas).c};">${d.fas}</span></div>
+      <div class="bs-factor-bar"><div class="bs-factor-fill" style="width:${d.fas}%;background:${scoreGrade(d.fas).c};"></div></div>
+    </div>
+    <div class="bs-factor">
+      <div class="bs-factor-head"><span class="bs-factor-name">Fisik</span><span class="bs-factor-val" style="color:${scoreGrade(d.fisik).c};">${d.fisik}</span></div>
+      <div class="bs-factor-bar"><div class="bs-factor-fill" style="width:${d.fisik}%;background:${scoreGrade(d.fisik).c};"></div></div>
+    </div>
+  `;
+
+  // vs Kita — perbandingan dengan proyek kita
+  if(currentProyek){
+    // Hitung skor untuk proyek kita (pakai scoring engine yang sama)
+    const kitaData = {
+      nama: currentProyek.nama,
+      lat: currentProyek.lat, lng: currentProyek.lng,
+      tipe: currentProyek.tipe === 'Mix-use' ? 'mix' : 'subsidi',
+      unit: currentProyek.unit, realisasi: 0, tahun: 2023
+    };
+    const kitaScore = calcScoreFull(kitaData);
+    const jarakKitaKeKompetitor = haversine(currentProyek.lat, currentProyek.lng, p.lat, p.lng);
+    const selisihSkor = (p.score || 0) - (kitaScore.overall || 0);
+    const selisihUnit = (p.unit || 0) - (currentProyek.unit || 0);
+    const pRealisasiPct = p.unit > 0 ? Math.round((p.realisasi / p.unit) * 100) : 0;
+
+    // Fungsi renderBar supaya bar vs tidak ditulis ulang
+    const cmpRow = (label, kitaVal, lawanVal, unit, isLawanBetter) => {
+      const kitaC = isLawanBetter === false ? '#15803D' : (isLawanBetter === true ? '#DC2626' : '#5F5E5A');
+      const lawanC = isLawanBetter === true ? '#15803D' : (isLawanBetter === false ? '#DC2626' : '#5F5E5A');
+      return `
+        <div style="padding:10px 0;border-bottom:0.5px solid rgba(0,0,0,0.06);">
+          <div style="font-size:10px;color:#9B9A96;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;text-transform:uppercase;">${label}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:9px;color:#9B9A96;margin-bottom:2px;">🏠 KITA</div>
+              <div style="font-size:13px;font-weight:700;color:${kitaC};font-family:'DM Mono',monospace;">${kitaVal}${unit||''}</div>
+            </div>
+            <div style="color:#d4d3ce;font-size:16px;">→</div>
+            <div style="flex:1;min-width:0;text-align:right;">
+              <div style="font-size:9px;color:#9B9A96;margin-bottom:2px;">⚔️ LAWAN</div>
+              <div style="font-size:13px;font-weight:700;color:${lawanC};font-family:'DM Mono',monospace;">${lawanVal}${unit||''}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    // Tipe badge helper
+    const tipeBadge = (tipe, isMine) => {
+      const t = tipe === 'mix' || tipe === 'Mix-use' ? 'Mix-use' : 'Subsidi';
+      const c = t === 'Mix-use' ? '#B45309' : '#65A30D';
+      return `<span style="background:${c}22;color:${c};font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;">${t}</span>`;
+    };
+
+    // Kesimpulan untuk user
+    let verdict = '', verdictColor = '#5F5E5A', verdictIcon = '⚖️';
+    if(selisihSkor >= 10){ verdict = `Lawan lebih unggul ${Math.abs(selisihSkor)} poin. Lokasi kompetitor lebih strategis.`; verdictColor = '#DC2626'; verdictIcon = '⚠️'; }
+    else if(selisihSkor >= 3){ verdict = `Lawan sedikit unggul ${Math.abs(selisihSkor)} poin. Perlu diwaspadai.`; verdictColor = '#D97706'; verdictIcon = '👀'; }
+    else if(selisihSkor <= -10){ verdict = `Kita unggul ${Math.abs(selisihSkor)} poin. Kompetitor di bawah kita.`; verdictColor = '#15803D'; verdictIcon = '✨'; }
+    else if(selisihSkor <= -3){ verdict = `Kita sedikit unggul ${Math.abs(selisihSkor)} poin.`; verdictColor = '#15803D'; verdictIcon = '✅'; }
+    else { verdict = 'Skor hampir setara. Differensiasi dari fasilitas atau harga.'; verdictColor = '#5F5E5A'; verdictIcon = '⚖️'; }
+
+    const kitaGrade = scoreGrade(kitaScore.overall);
+    const lawanGrade = scoreGrade(p.score || 0);
+
+    document.getElementById('bp-vskita').innerHTML = `
+      <div style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;padding:14px 16px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:11px;color:#92400E;font-weight:600;letter-spacing:0.8px;margin-bottom:6px;text-transform:uppercase;">📏 Jarak Antar Proyek</div>
+        <div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:#92400E;line-height:1;">${jarakKitaKeKompetitor.toFixed(1)} <span style="font-size:14px;">km</span></div>
+        <div style="font-size:10px;color:#92400E;margin-top:4px;opacity:0.75;">± ${travelMin(jarakKitaKeKompetitor)} menit berkendara</div>
+      </div>
+
+      <div style="background:${verdictColor}15;border:1px solid ${verdictColor}33;border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
+        <div style="font-size:18px;flex-shrink:0;">${verdictIcon}</div>
+        <div style="flex:1;font-size:12px;color:${verdictColor};line-height:1.4;font-weight:500;">${verdict}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:9px;color:#0369A1;font-weight:600;letter-spacing:0.5px;margin-bottom:3px;">🏠 PROYEK KITA</div>
+          <div style="font-size:11px;font-weight:700;color:#1C1C1A;margin-bottom:2px;line-height:1.2;">${escapeHtml(currentProyek.nama)}</div>
+          <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${kitaGrade.c};line-height:1;margin-top:4px;">${kitaScore.overall}</div>
+          <div style="font-size:8px;color:${kitaGrade.c};font-weight:700;letter-spacing:0.5px;margin-top:2px;">${kitaGrade.g.toUpperCase()}</div>
+        </div>
+        <div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:9px;color:#B91C1C;font-weight:600;letter-spacing:0.5px;margin-bottom:3px;">⚔️ KOMPETITOR</div>
+          <div style="font-size:11px;font-weight:700;color:#1C1C1A;margin-bottom:2px;line-height:1.2;">${escapeHtml(p.nama)}</div>
+          <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${lawanGrade.c};line-height:1;margin-top:4px;">${p.score || 0}</div>
+          <div style="font-size:8px;color:${lawanGrade.c};font-weight:700;letter-spacing:0.5px;margin-top:2px;">${lawanGrade.g.toUpperCase()}</div>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:#5F5E5A;font-weight:700;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;">📊 Rincian Perbandingan</div>
+
+      ${cmpRow('Skor Keseluruhan', kitaScore.overall, p.score || 0, '', selisihSkor > 0)}
+      ${cmpRow('Tipe Proyek', tipeBadge(kitaData.tipe, true), tipeBadge(p.tipe, false), '', null)}
+      ${cmpRow('Tahun Mulai', 2023, p.tahun || '?', '', null)}
+      ${cmpRow('Total Unit', fmt(currentProyek.unit || 0), fmt(p.unit || 0), '', null)}
+      ${cmpRow('Realisasi Penjualan', '—', `${fmt(p.realisasi||0)} <span style="font-size:10px;color:#9B9A96;">(${pRealisasiPct}%)</span>`, '', null)}
+
+      <div style="margin-top:16px;padding:12px;background:#F8FAFC;border-radius:10px;">
+        <div style="font-size:10px;color:#5F5E5A;font-weight:700;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">💡 Insight Strategis</div>
+        <div style="font-size:11.5px;color:#475569;line-height:1.5;">
+          ${getKompetitorInsight(currentProyek, p, selisihSkor, jarakKitaKeKompetitor, pRealisasiPct)}
+        </div>
+      </div>
+    `;
+  } else {
+    document.getElementById('bp-vskita').innerHTML = '<div style="text-align:center;padding:30px;color:#9B9A96;font-size:12px;">Pilih proyek dulu untuk melihat perbandingan</div>';
+  }
+
+  // Fasilitas detail
+  const facHtml = [
+    ['🏥 RS/Klinik', d.rs, '#DC2626'],
+    ['🎓 Kampus', d.kampus, '#059669'],
+    ['🏬 Mall', d.mall, '#7C3AED'],
+    ['🛣️ Tol', d.tol, '#475569'],
+    ['🏛️ Pemda', d.pemda, '#1D4ED8'],
+    ['💼 Industri', d.industri, '#92400E'],
+    ['🌳 Publik', d.publik, '#0891B2']
+  ].map(([lbl, val, c]) => `
+    <div class="bs-factor">
+      <div class="bs-factor-head"><span class="bs-factor-name">${lbl}</span><span class="bs-factor-val" style="color:${c};">${val}</span></div>
+      <div class="bs-factor-bar"><div class="bs-factor-fill" style="width:${val}%;background:${c};"></div></div>
+    </div>
+  `).join('');
+  document.getElementById('bp-fasilitas').innerHTML = facHtml;
+
+  // Nearby POI
+  const nearHtml = Object.entries(d.near || {}).map(([kat, x]) => {
+    const c = {rs:'#DC2626',kampus:'#059669',mall:'#7C3AED',tol:'#475569',pemda:'#1D4ED8',industri:'#92400E',publik:'#0891B2'}[kat] || '#888';
+    const lblMap = {rs:'RS',kampus:'Kampus',mall:'Mall',tol:'Tol',pemda:'Pemda',industri:'Industri',publik:'Publik'};
+    return `
+      <div class="bs-near-item">
+        <div class="bs-near-icon" style="background:${c}22;color:${c};">${x.emoji || '•'}</div>
+        <div class="bs-near-info">
+          <div class="bs-near-name">${escapeHtml(x.nama)}</div>
+          <div class="bs-near-meta">${lblMap[kat] || kat}</div>
+        </div>
+        <div class="bs-near-dist">${x.dist.toFixed(1)} km</div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('bp-nearby').innerHTML = nearHtml || '<div style="text-align:center;padding:20px;color:#9B9A96;font-size:12px;">Belum ada POI terdekat</div>';
+}
+
+function getKompetitorInsight(kita, lawan, selisihSkor, jarak, realisasiPct){
+  const pros = [];
+  const cautions = [];
+
+  // Analisis jarak
+  if(jarak < 3) pros.push('Lokasi sangat dekat — kemungkinan target market overlap tinggi');
+  else if(jarak > 10) pros.push('Jarak cukup jauh — kemungkinan pasar berbeda');
+  else cautions.push('Jarak moderat — perlu pantau apakah menyasar segmen yang sama');
+
+  // Analisis skor
+  if(selisihSkor >= 5) cautions.push('Skor lokasi mereka lebih tinggi — pelajari apa kelebihan lokasinya');
+  else if(selisihSkor <= -5) pros.push('Skor lokasi kita lebih unggul — gunakan sebagai keunggulan kompetitif');
+
+  // Analisis tipe
+  const kitaT = (kita.tipe || '').toLowerCase();
+  const lawanT = (lawan.tipe || '').toLowerCase();
+  if((kitaT.includes('mix') && lawanT.includes('mix')) || (kitaT.includes('subsidi') && lawanT.includes('subsidi'))){
+    cautions.push('Tipe proyek sama — kompetitor langsung');
+  } else {
+    pros.push('Tipe proyek berbeda — segmen berbeda, bukan kompetitor langsung');
+  }
+
+  // Analisis realisasi
+  if(realisasiPct >= 80) cautions.push(`Realisasi ${realisasiPct}% — proyek mereka sudah mature dan laku`);
+  else if(realisasiPct > 0 && realisasiPct < 30) pros.push(`Realisasi baru ${realisasiPct}% — ruang serap pasar masih ada`);
+
+  const prosText = pros.length ? pros.map(p => `✓ ${p}`).join('<br>') : '';
+  const cautionsText = cautions.length ? cautions.map(c => `⚠ ${c}`).join('<br>') : '';
+
+  const parts = [];
+  if(prosText) parts.push(`<div style="color:#15803D;margin-bottom:6px;">${prosText}</div>`);
+  if(cautionsText) parts.push(`<div style="color:#B45309;">${cautionsText}</div>`);
+
+  return parts.length ? parts.join('') : 'Profil kompetitor netral. Fokus pada diferensiasi produk dan pelayanan.';
+}
+
+function toggleBsheet(){
+  const bs = document.getElementById('bsheet');
+  bs.classList.toggle('collapsed');
+}
+
+function closeBsheet(){
+  const bs = document.getElementById('bsheet');
+  bs.classList.remove('open','collapsed');
+  selectedPerumahanId = null;
+}
+
+function switchBs(bp, el){
+  document.querySelectorAll('.bsheet-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.bsheet-bp').forEach(b => b.classList.remove('active'));
+  document.getElementById('bp-' + bp).classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// TARGET PASAR / STRATEGI
+// ════════════════════════════════════════════════
+function updateTpCount(){
+  const el = document.getElementById('tp-count-m');
+  if(el) el.textContent = targetPasar.length;
+}
+
+function renderTpListM(filter){
+  const list = document.getElementById('tp-list-m-body');
+  if(!list) return;
+  tpFilter = filter || 'semua';
+  const filtered = targetPasar.filter(t => tpFilter === 'semua' || t.jenis === tpFilter);
+  list.innerHTML = '';
+  if(!filtered.length){
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9B9A96;font-size:12px;">Belum ada target pasar<br>Ketuk + Tambah untuk mulai</div>';
+    return;
+  }
+  filtered.forEach(t => {
+    const iconMap = {pabrik:'🏭', perusahaan:'🏢', kawasan:'🏗️'};
+    const iconBgMap = {pabrik:'#FEE2E2', perusahaan:'#FEF3C7', kawasan:'#DCFCE7'};
+    const icon = iconMap[t.jenis] || '🏢';
+    const iconBg = iconBgMap[t.jenis] || '#FEF3C7';
+    const st = getStatusInfo(t.status);
+    const jarak = currentProyek ? haversine(currentProyek.lat, currentProyek.lng, t.lat, t.lng).toFixed(1) : '—';
+    const potensi = calcPotensiUnit(t.karyawan);
+
+    const card = document.createElement('div');
+    card.className = 'tp-card-m';
+    card.innerHTML = `
+      <div class="tp-card-top">
+        <div class="tp-card-status-badge" style="background:${st.color.bg};color:${st.color.fg};">
+          <span>${st.icon}</span>
+          <span>${st.label.toUpperCase()}</span>
+        </div>
+        <button class="tp-card-edit-btn" onclick="event.stopPropagation();openTpModalM(${t.id})">✎ Edit</button>
+      </div>
+      <div class="tp-card-body">
+        <div class="tp-card-icon-m" style="background:${iconBg};">${icon}</div>
+        <div class="tp-card-info">
+          <div class="tp-card-name-m">${escapeHtml(t.nama)}</div>
+          <div class="tp-card-meta-m">${fmt(t.karyawan)} karyawan · ${jarak} km · ${fmt(potensi)} unit potensi</div>
+        </div>
+      </div>
+    `;
+    card.onclick = () => openTpDetailM(t.id);
+    list.appendChild(card);
+  });
+}
+
+function filterTpM(jenis, el){
+  document.querySelectorAll('.tp-chip-m').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTpListM(jenis);
+}
+
+function switchTpMode(mode){
+  document.getElementById('tp-mode-list').classList.toggle('active', mode==='list');
+  document.getElementById('tp-mode-map').classList.toggle('active', mode==='map');
+  document.getElementById('tp-list-container').style.display = mode==='list' ? 'block' : 'none';
+  document.getElementById('tp-map-container').style.display = mode==='map' ? 'block' : 'none';
+  if(mode === 'map'){
+    initStratMapM();
+  }
+}
+
+function initStratMapM(){
+  if(stratMap){ setTimeout(()=> stratMap.invalidateSize(), 100); return; }
+  const ctr = currentProyek ? [currentProyek.lat, currentProyek.lng] : [-6.557, 107.813];
+  stratMap = L.map('strat-map-m', { zoomControl:true, attributionControl:false }).setView(ctr, 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(stratMap);
+  if(currentProyek){
+    L.marker([currentProyek.lat, currentProyek.lng], {
+      icon: L.divIcon({
+        className:'', html:`<div style="background:#1C2B4A;color:white;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #60A5FA;">📍 ${escapeHtml(currentProyek.nama)}</div>`,
+      })
+    }).addTo(stratMap);
+  }
+  renderTpMarkersM();
+  setTimeout(()=> stratMap.invalidateSize(), 150);
+}
+
+function renderTpMarkersM(){
+  if(!stratMap) return;
+  Object.values(tpMarkers).forEach(m => stratMap.removeLayer(m));
+  tpMarkers = {};
+  targetPasar.forEach(t => {
+    const iconMap = {pabrik:'🏭', perusahaan:'🏢', kawasan:'🏗️'};
+    const icon = iconMap[t.jenis] || '🏢';
+    const m = L.marker([t.lat, t.lng], {
+      icon: L.divIcon({
+        className:'',
+        html:`<div style="background:#D97706;color:white;width:34px;height:34px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.3);">${icon}</div>`,
+        iconSize:[34,34], iconAnchor:[17,17]
+      })
+    }).addTo(stratMap);
+    m.on('click', () => openTpDetailM(t.id));
+    tpMarkers[t.id] = m;
+  });
+}
+
+function openTpDetailM(id){
+  const t = targetPasar.find(x => x.id === id);
+  if(!t) return;
+  selectedTpId = id;
+  const iconMap = {pabrik:'🏭', perusahaan:'🏢', kawasan:'🏗️'};
+  const iconBgMap = {pabrik:'#FEE2E2', perusahaan:'#FEF3C7', kawasan:'#DCFCE7'};
+  const jenisLabel = {pabrik:'Pabrik', perusahaan:'Perusahaan', kawasan:'Kawasan'};
+  const jarak = currentProyek ? haversine(currentProyek.lat, currentProyek.lng, t.lat, t.lng).toFixed(1) : '—';
+  const st = getStatusInfo(t.status);
+  const potensi = calcPotensiUnit(t.karyawan);
+
+  const html = `
+    <div class="tp-modal-header">
+      <div class="tp-modal-title">Detail Target</div>
+      <button class="tp-modal-close" onclick="closeTpDetailM()">✕</button>
+    </div>
+
+    <div class="tp-modal-body">
+      <!-- Status Box Hero -->
+      <div class="tp-status-hero" style="background:${st.color.bg};">
+        <div class="tp-status-icon" style="color:${st.color.fg};">${st.icon}</div>
+        <div class="tp-status-label">STATUS SAAT INI</div>
+        <div class="tp-status-value" style="color:${st.color.fg};">${st.label}</div>
+      </div>
+
+      <!-- Nama + Jenis -->
+      <div class="tp-namebox">
+        <div class="tp-name-big">${escapeHtml(t.nama)}</div>
+        <div class="tp-jenis">
+          <span style="display:inline-flex;align-items:center;gap:5px;">
+            <span style="background:${iconBgMap[t.jenis]||'#FEF3C7'};width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;">${iconMap[t.jenis]||'🏢'}</span>
+            <span>${jenisLabel[t.jenis]||t.jenis||'-'}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Info Rows -->
+      <div class="tp-info-rows">
+        <div class="tp-info-row tp-jump-to-map" onclick="jumpTpToMap(${id})">
+          <span class="tp-info-lbl">📍 Jarak dari Proyek</span>
+          <span class="tp-info-val">${jarak} km <span style="font-size:9px;color:#D97706;font-weight:700;padding:2px 6px;background:#FEF3C7;border-radius:8px;margin-left:4px;vertical-align:middle;">TAP</span></span>
+        </div>
+        <div class="tp-info-row">
+          <span class="tp-info-lbl">👥 Est. Karyawan</span>
+          <span class="tp-info-val">${fmt(t.karyawan)}</span>
+        </div>
+        <div class="tp-info-row">
+          <span class="tp-info-lbl">🏠 Potensi Unit</span>
+          <span class="tp-info-val" style="color:#1D4ED8;">${fmt(potensi)}</span>
+        </div>
+        <div class="tp-info-row">
+          <span class="tp-info-lbl">📞 PIC / Kontak</span>
+          <span class="tp-info-val">${escapeHtml(t.pic||'—')}</span>
+        </div>
+        <div class="tp-info-row">
+          <span class="tp-info-lbl">📅 Terakhir Kontak</span>
+          <span class="tp-info-val">${formatTanggalID(t.lastcontact)}</span>
+        </div>
+      </div>
+
+      ${t.catatan ? `
+      <div class="tp-catatan-box">
+        <div class="tp-catatan-label">CATATAN</div>
+        <div class="tp-catatan-text">${escapeHtml(t.catatan)}</div>
+      </div>
+      ` : ''}
+    </div>
+
+    <!-- Action buttons -->
+    <div class="tp-modal-actions">
+      <button class="tp-action-btn tp-action-hapus" onclick="deleteTpM(${id})">Hapus</button>
+      <button class="tp-action-btn tp-action-edit" onclick="openTpModalM(${id})">Edit</button>
+    </div>
+  `;
+  document.getElementById('tp-detail-content').innerHTML = html;
+  document.getElementById('tp-detail-m').classList.add('show');
+}
+
+function closeTpDetailM(e){
+  if(e && e.target && !e.target.classList.contains('tp-detail-m')) return;
+  document.getElementById('tp-detail-m').classList.remove('show');
+}
+
+let tpJumpLine = null;
+let tpJumpPulse = null;
+
+async function jumpTpToMap(id){
+  const t = targetPasar.find(x => x.id === id);
+  if(!t) { showToast('Target tidak ditemukan'); return; }
+
+  // 1. Tutup modal detail
+  closeTpDetailM();
+
+  // 2. Pindah ke mode peta
+  switchTpMode('map');
+
+  showToast('🗺️ Menghitung rute jalan...');
+
+  // 3. Tunggu peta siap
+  setTimeout(async () => {
+    if(!stratMap) return;
+
+    // Bersihkan jalur lama kalau ada
+    if(tpJumpLine){ stratMap.removeLayer(tpJumpLine); tpJumpLine = null; }
+    if(tpJumpPulse){ stratMap.removeLayer(tpJumpPulse); tpJumpPulse = null; }
+
+    if(!currentProyek){
+      stratMap.setView([t.lat, t.lng], 14);
+      return;
+    }
+
+    // Panggil OSRM
+    const route = await getRouteDistance(currentProyek.lat, currentProyek.lng, t.lat, t.lng);
+
+    // Gambar polyline — kalau viaRoad = pakai rute jalan, kalau tidak = garis lurus
+    const lineStyle = route.viaRoad
+      ? { color:'#D97706', weight:4, opacity:0.8 }
+      : { color:'#D97706', weight:3, opacity:0.7, dashArray:'8,6' };
+    tpJumpLine = L.polyline(route.coords, lineStyle).addTo(stratMap);
+
+    // Pulsing circle di target
+    tpJumpPulse = L.circleMarker([t.lat, t.lng], {
+      radius: 28, color:'#D97706', fillColor:'#FBBF24',
+      fillOpacity:0.35, weight:3
+    }).addTo(stratMap);
+    let opacity = 0.35;
+    const pulseInterval = setInterval(() => {
+      opacity -= 0.02;
+      if(opacity <= 0){
+        clearInterval(pulseInterval);
+        if(tpJumpPulse){ stratMap.removeLayer(tpJumpPulse); tpJumpPulse = null; }
+      } else if(tpJumpPulse){
+        tpJumpPulse.setStyle({ fillOpacity:opacity, opacity:Math.min(1, opacity*2) });
+      }
+    }, 60);
+
+    // Fit bounds
+    stratMap.fitBounds(tpJumpLine.getBounds(), { padding:[60, 60], maxZoom: 14, animate:true });
+
+    // Popup di marker target
+    const iconMap = {pabrik:'🏭', perusahaan:'🏢', kawasan:'🏗️'};
+    const tpM = tpMarkers[t.id];
+    if(tpM){
+      const jarakLabel = route.viaRoad
+        ? `<b>${route.km.toFixed(1)} km</b> via jalan (${route.menit} menit)`
+        : `<b>${route.km.toFixed(1)} km</b> jarak udara <span style="color:#B45309;font-size:9px;">(rute jalan gagal)</span>`;
+      tpM.bindPopup(`
+        <div style="padding:2px 4px;min-width:180px;">
+          <div style="font-size:12px;font-weight:700;color:#1C1C1A;margin-bottom:2px;">${iconMap[t.jenis]||'🏢'} ${escapeHtml(t.nama)}</div>
+          <div style="font-size:10px;color:#666;margin-bottom:6px;">${fmt(t.karyawan)} karyawan</div>
+          <div style="background:#FEF3C7;padding:6px 8px;border-radius:6px;font-size:11px;color:#92400E;margin-bottom:6px;">${jarakLabel}</div>
+          <div style="font-size:10px;color:#666;">dari ${escapeHtml(currentProyek.nama)}</div>
+        </div>
+      `, { closeButton:true, autoClose:false }).openPopup();
+    }
+
+    showToast(route.viaRoad ? `✓ Rute: ${route.km.toFixed(1)} km (${route.menit} menit)` : `⚠ OSRM gagal, pakai jarak udara`);
+  }, 300);
+}
+
+function updateTpProgress(id){
+  const t = targetPasar.find(x => x.id === id);
+  if(!t) return;
+  t.status = (t.status || 0) + 1;
+  if(t.status > 5) t.status = 0;
+  t.lastcontact = new Date().toISOString().split('T')[0];
+  saveLocalData();
+  saveTpToSheets();
+  logActivity(currentUser?.username, 'edit', `Update progres target: ${t.nama} → status ${t.status}`);
+  showToast('✓ Progres diupdate');
+  openTpDetailM(id);
+  renderTpListM(tpFilter);
+}
+
+function deleteTpM(id){
+  const t = targetPasar.find(x => x.id === id);
+  if(!t) return;
+  showConfirm('Hapus Target', `Yakin hapus "${t.nama}"?`, () => {
+    targetPasar = targetPasar.filter(x => x.id !== id);
+    saveLocalData();
+    saveTpToSheets();
+    logActivity(currentUser?.username, 'hapus', `Hapus target: ${t.nama}`);
+    closeTpDetailM();
+    renderTpListM(tpFilter);
+    updateTpCount();
+    if(stratMap) renderTpMarkersM();
+    showToast('🗑️ Target dihapus');
+  });
+}
+
+function openTpModalM(id){
+  const isNew = id === -1 || id === undefined;
+  const t = isNew ? {
+    id: 0, nama:'', jenis:'perusahaan',
+    lat: currentProyek ? currentProyek.lat : -6.557,
+    lng: currentProyek ? currentProyek.lng : 107.813,
+    karyawan: 0, pic:'', lastcontact: todayISO(),
+    status: 0, catatan:''
+  } : targetPasar.find(x => x.id === id);
+  if(!t) return;
+
+  // Tutup modal detail kalau terbuka
+  document.getElementById('tp-detail-m').classList.remove('show');
+
+  const stateId = isNew ? 'new' : t.id;
+
+  const html = `
+    <div class="tp-modal-header">
+      <div class="tp-modal-title">${isNew ? 'Tambah Target' : 'Edit Target'}</div>
+      <button class="tp-modal-close" onclick="closeTpEditM()">✕</button>
+    </div>
+    <div class="tp-modal-body">
+      <div class="tp-edit-field">
+        <label>Nama Target *</label>
+        <input type="text" id="edit-nama" value="${escapeHtml(t.nama)}" placeholder="cth: PT Taifa Industrial Estate">
+      </div>
+      <div class="tp-edit-field">
+        <label>Jenis</label>
+        <div class="tp-edit-segment">
+          <button type="button" class="tp-edit-seg ${t.jenis==='pabrik'?'active':''}" onclick="pickJenis(this,'pabrik')">🏭 Pabrik</button>
+          <button type="button" class="tp-edit-seg ${t.jenis==='perusahaan'?'active':''}" onclick="pickJenis(this,'perusahaan')">🏢 Perusahaan</button>
+          <button type="button" class="tp-edit-seg ${t.jenis==='kawasan'?'active':''}" onclick="pickJenis(this,'kawasan')">🏗️ Kawasan</button>
+        </div>
+        <input type="hidden" id="edit-jenis" value="${t.jenis}">
+      </div>
+      <div class="tp-edit-field">
+        <label>Status Saat Ini</label>
+        <div class="tp-edit-status-pick" id="edit-status-pick">
+          ${[0,1,2,3,4].map(i => {
+            const s = getStatusInfo(i);
+            const isActive = (t.status||0) === i;
+            return `<button type="button" class="tp-edit-status-btn ${isActive?'active':''}" data-status="${i}" onclick="pickStatus(this,${i})" style="${isActive?`background:${s.color.bg};color:${s.color.fg};border-color:${s.color.solid};`:''}">${s.icon} ${s.label}</button>`;
+          }).join('')}
+        </div>
+        <input type="hidden" id="edit-status" value="${t.status||0}">
+      </div>
+      <div class="tp-edit-grid-2">
+        <div class="tp-edit-field">
+          <label>Est. Karyawan</label>
+          <input type="number" id="edit-karyawan" value="${t.karyawan||0}" min="0" step="1">
+        </div>
+        <div class="tp-edit-field">
+          <label>Potensi Unit</label>
+          <input type="text" id="edit-potensi-preview" value="${fmt(calcPotensiUnit(t.karyawan))}" disabled style="color:#1D4ED8;font-weight:600;">
+        </div>
+      </div>
+      <div class="tp-edit-hint">💡 Potensi Unit = Karyawan × ${POTENSI_PCT}% (otomatis). Ubah formula di <b>Pengaturan</b>.</div>
+      <div class="tp-edit-field">
+        <label>PIC / Kontak</label>
+        <input type="text" id="edit-pic" value="${escapeHtml(t.pic||'')}" placeholder="cth: Bagian Marketing - 0811-xxxx">
+      </div>
+      <div class="tp-edit-field">
+        <label>Terakhir Kontak</label>
+        <input type="date" id="edit-lastcontact" value="${(t.lastcontact||'').substring(0,10)}">
+      </div>
+      <div class="tp-edit-field">
+        <label>Lokasi (Koordinat)</label>
+        <div class="tp-edit-grid-2">
+          <input type="number" id="edit-lat" value="${t.lat||''}" step="0.0000001" placeholder="Latitude">
+          <input type="number" id="edit-lng" value="${t.lng||''}" step="0.0000001" placeholder="Longitude">
+        </div>
+        <div class="tp-edit-hint" style="margin-top:6px;">Dapat dari Google Maps: klik kanan lokasi → copy koordinat</div>
+      </div>
+      <div class="tp-edit-field">
+        <label>Catatan</label>
+        <textarea id="edit-catatan" rows="3" placeholder="Catatan penting tentang prospek ini...">${escapeHtml(t.catatan||'')}</textarea>
+      </div>
+    </div>
+    <div class="tp-modal-actions">
+      <button class="tp-action-btn tp-action-hapus" onclick="closeTpEditM()">Batal</button>
+      <button class="tp-action-btn tp-action-edit" onclick="saveTpEditM(${isNew?-1:t.id})">${isNew?'Tambah':'Simpan'}</button>
+    </div>
+  `;
+
+  document.getElementById('tp-edit-content').innerHTML = html;
+  document.getElementById('tp-edit-m').classList.add('show');
+
+  // Auto-update potensi preview saat karyawan diubah
+  const kar = document.getElementById('edit-karyawan');
+  if(kar){
+    kar.addEventListener('input', () => {
+      const v = parseInt(kar.value) || 0;
+      const prev = document.getElementById('edit-potensi-preview');
+      if(prev) prev.value = fmt(calcPotensiUnit(v));
+    });
+  }
+}
+
+function pickJenis(btn, jenis){
+  btn.parentElement.querySelectorAll('.tp-edit-seg').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('edit-jenis').value = jenis;
+}
+
+function pickStatus(btn, idx){
+  const container = document.getElementById('edit-status-pick');
+  container.querySelectorAll('.tp-edit-status-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderColor = '';
+  });
+  btn.classList.add('active');
+  const s = getStatusInfo(idx);
+  btn.style.background = s.color.bg;
+  btn.style.color = s.color.fg;
+  btn.style.borderColor = s.color.solid;
+  document.getElementById('edit-status').value = idx;
+}
+
+function closeTpEditM(){
+  document.getElementById('tp-edit-m').classList.remove('show');
+}
+
+function saveTpEditM(id){
+  const nama = document.getElementById('edit-nama').value.trim();
+  if(!nama){ showToast('Nama target wajib diisi'); return; }
+  const jenis = document.getElementById('edit-jenis').value;
+  const status = parseInt(document.getElementById('edit-status').value) || 0;
+  const karyawan = parseInt(document.getElementById('edit-karyawan').value) || 0;
+  const pic = document.getElementById('edit-pic').value.trim();
+  const lastcontact = document.getElementById('edit-lastcontact').value || todayISO();
+  const lat = parseFloat(document.getElementById('edit-lat').value);
+  const lng = parseFloat(document.getElementById('edit-lng').value);
+  const catatan = document.getElementById('edit-catatan').value.trim();
+
+  if(isNaN(lat) || isNaN(lng)){ showToast('Koordinat tidak valid'); return; }
+
+  const isNew = id === -1;
+  let targetId;
+
+  if(isNew){
+    targetId = Math.max(0, ...targetPasar.map(x => x.id)) + 1;
+    targetPasar.push({
+      id: targetId, nama, jenis, lat, lng,
+      karyawan, pic, lastcontact, status, catatan
+    });
+    logActivity(currentUser?.username, 'tambah', `Tambah target: ${nama}`);
+    showToast('✓ Target ditambahkan');
+  } else {
+    const t = targetPasar.find(x => x.id === id);
+    if(!t){ showToast('Target tidak ditemukan'); return; }
+    t.nama = nama; t.jenis = jenis; t.lat = lat; t.lng = lng;
+    t.karyawan = karyawan; t.pic = pic; t.lastcontact = lastcontact;
+    t.status = status; t.catatan = catatan;
+    targetId = id;
+    logActivity(currentUser?.username, 'edit', `Edit target: ${nama}`);
+    showToast('✓ Target diperbarui');
+  }
+
+  saveLocalData();
+  saveTpToSheets();
+  updateTpCount();
+  renderTpListM(tpFilter);
+  if(stratMap) renderTpMarkersM();
+  closeTpEditM();
+}
+
+// ════════════════════════════════════════════════
+// PENGATURAN AKUN
+// ════════════════════════════════════════════════
+function renderSettingsM(){
+  if(!currentUser) return;
+  const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+  const av = document.getElementById('set-avatar-m');
+  av.innerHTML = currentUser.foto ? `<img src="${currentUser.foto}" alt="">` : initial;
+  document.getElementById('set-name-m').textContent = currentUser.nama || currentUser.username;
+  document.getElementById('set-role-m').textContent = roleLabel(currentUser.role) + ' · ' + (currentUser.jabatan || '-');
+  document.getElementById('set-bio-m').value = currentUser.bio || '';
+  updateBioCounterM();
+  // Formula Potensi section hanya untuk BM
+  const formulaSection = document.getElementById('set-formula-section');
+  if(formulaSection){
+    formulaSection.style.display = (currentUser.role === 'bm') ? 'block' : 'none';
+    if(currentUser.role === 'bm'){
+      document.getElementById('set-formula-pct').value = POTENSI_PCT;
+      document.getElementById('formula-pct-display').textContent = POTENSI_PCT;
+      document.getElementById('formula-pct-display-2').textContent = POTENSI_PCT;
+      document.getElementById('formula-sample').textContent = fmt(calcPotensiUnit(5000));
+    }
+  }
+}
+
+function previewFormula(){
+  const v = parseFloat(document.getElementById('set-formula-pct').value) || 0;
+  document.getElementById('formula-pct-display').textContent = v;
+  document.getElementById('formula-pct-display-2').textContent = v;
+  document.getElementById('formula-sample').textContent = fmt(Math.round(5000 * v / 100));
+}
+
+function saveFormulaPotensi(){
+  const v = parseFloat(document.getElementById('set-formula-pct').value);
+  if(isNaN(v) || v <= 0 || v > 100){ showToast('Persentase harus 1-100'); return; }
+  savePotensiFormula(v);
+  // Sync ke sheet lewat logActivity agar tim lain bisa fetch nanti (menggunakan sheet AccountLogs)
+  // Untuk sharing antar user, kita simpan di bio BM4 admin sheet atau pakai sheet setting khusus.
+  // Shortcut: pakai sheet settings via Accounts — set akan sync via saveAccounts (gak perlu dulu)
+  logActivity(currentUser?.username, 'edit', `Ubah formula potensi unit: ${v}%`);
+  showToast(`✓ Formula disimpan: ${v}%`);
+  // Refresh list target kalau sedang di-display
+  renderTpListM(tpFilter);
+}
+
+function updateBioCounterM(){
+  const val = document.getElementById('set-bio-m').value || '';
+  document.getElementById('set-bio-count-m').textContent = val.length;
+}
+
+function saveBioM(){
+  if(!currentUser) return;
+  const bio = document.getElementById('set-bio-m').value.trim();
+  currentUser.bio = bio;
+  const acc = findAccount(currentUser.username);
+  if(acc) acc.bio = bio;
+  saveAccountsLocal();
+  syncAccountsToSheets();
+  logActivity(currentUser.username, 'bio', 'Update bio');
+  showToast('✓ Bio tersimpan');
+}
+
+function uploadAvatarM(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 500000){ showToast('File terlalu besar (max 500KB)'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    currentUser.foto = dataUrl;
+    const acc = findAccount(currentUser.username);
+    if(acc) acc.foto = dataUrl;
+    saveAccountsLocal();
+    syncAccountsToSheets();
+    logActivity(currentUser.username, 'foto', 'Update foto profil');
+    showToast('✓ Foto diupdate');
+    renderSettingsM();
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePasswordM(){
+  if(!currentUser) return;
+  const oldPw = document.getElementById('set-pw-old-m').value;
+  const newPw = document.getElementById('set-pw-new-m').value;
+  const newPw2 = document.getElementById('set-pw-new2-m').value;
+  if(!oldPw || !newPw || !newPw2){ showToast('Isi semua field'); return; }
+  if(oldPw !== currentUser.password){ showToast('Password lama salah'); return; }
+  if(newPw !== newPw2){ showToast('Password baru tidak sama'); return; }
+  if(newPw.length < 4){ showToast('Password minimal 4 karakter'); return; }
+  currentUser.password = newPw;
+  const acc = findAccount(currentUser.username);
+  if(acc) acc.password = newPw;
+  saveAccountsLocal();
+  syncAccountsToSheets();
+  logActivity(currentUser.username, 'password', 'Ubah password');
+  document.getElementById('set-pw-old-m').value = '';
+  document.getElementById('set-pw-new-m').value = '';
+  document.getElementById('set-pw-new2-m').value = '';
+  showToast('✓ Password diupdate');
+}
+
+// ════════════════════════════════════════════════
+// PLACEHOLDER (Segera Hadir)
+// ════════════════════════════════════════════════
+const SOON_CONTENT = {
+  sales: { icon:'📊', bg:'#DCFCE7', title:'Divisi Sales', desc:'Modul lengkap untuk tim Marketing, Support KPR, dan Akad. Tracking prospek dari pertama masuk hingga closing.', feats:['📋 Tracking Prospek','💳 Pipeline KPR','📅 Jadwal Follow-up','🎯 Target vs Realisasi'] },
+  konstruksi: { icon:'🏗️', bg:'#FFEDD5', title:'Divisi Konstruksi', desc:'Monitor progres pembangunan per unit, tracking tim lapangan, dan laporan material.', feats:['📐 Progres Unit','👷 Tim Lapangan','🧱 Material','📸 Foto Progres'] },
+  legal: { icon:'📋', bg:'#CFFAFE', title:'Divisi Legal', desc:'Kelola dokumen legal, sertifikat, perizinan, dan tracking PKS.', feats:['📄 Sertifikat','📜 Perizinan','🤝 PKS Tracking','⚖️ Status Hukum'] },
+  finance: { icon:'💰', bg:'#D1FAE5', title:'Divisi Finance', desc:'Monitor cashflow, pembayaran cicilan, tagihan, dan laporan keuangan.', feats:['💵 Cashflow','🧾 Tagihan','📊 Laporan','🏦 Rekonsiliasi Bank'] }
+};
+
+function renderSoon(div){
+  const d = SOON_CONTENT[div] || SOON_CONTENT.sales;
+  document.getElementById('soon-icon').textContent = d.icon;
+  document.getElementById('soon-icon').style.background = d.bg;
+  document.getElementById('soon-title').textContent = d.title;
+  document.getElementById('soon-desc').textContent = d.desc;
+  document.getElementById('soon-features').innerHTML = d.feats.map(f => `<div class="soon-feat">${f}</div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// STARTUP
+// ════════════════════════════════════════════════
+(function init(){
+  // Load formula potensi unit dari localStorage
+  loadPotensiFormula();
+
+  // Load data dari localStorage dulu
+  loadAccounts();
+  loadLocalData();
+  recalcAll();
+
+  // Dari Sheets (async)
+  if(USE_SHEETS){
+    loadAccountsFromSheets().then(loaded => {
+      const savedUser = sessionStorage.getItem(CURRENT_USER_KEY);
+      if(savedUser){
+        currentUser = findAccount(savedUser);
+        if(currentUser) applyUserAccess();
+      }
+    });
+    loadFromSheets();
+  }
+
+  // Cek session
+  if(sessionStorage.getItem(SESSION_KEY) === 'ok'){
+    const savedUser = sessionStorage.getItem(CURRENT_USER_KEY);
+    if(savedUser){
+      currentUser = findAccount(savedUser);
+    }
+    if(!currentUser){
+      currentUser = accounts.find(a => a.role === 'bm') || accounts[0];
+      if(currentUser) sessionStorage.setItem(CURRENT_USER_KEY, currentUser.username);
+    }
+    if(currentUser){
+      applyUserAccess();
+      goToProyek();
+    }
+  } else {
+    setTimeout(() => {
+      const u = document.getElementById('login-username');
+      if(u) u.focus();
+    }, 100);
+  }
+
+  // Enter di password = login
+  document.getElementById('login-password')?.addEventListener('keydown', e => {
+    if(e.key === 'Enter') doLoginNew();
+  });
+
+  // Tekan ESC di modal
+  document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    const modals = [
+      ['gmodal-backdrop', closeGmodal],
+      ['cm-backdrop', closeCM],
+      ['tp-detail-m', closeTpDetailM]
+    ];
+    for(const [id, fn] of modals){
+      if(document.getElementById(id)?.classList.contains('show')){ fn(); return; }
+    }
+  });
+})();
+
+</script>
+
+</body>
+</html>
