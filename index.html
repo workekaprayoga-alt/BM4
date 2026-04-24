@@ -1451,6 +1451,115 @@ function setSyncStatus(state, detail){
   el.textContent = labels[state] || state;
   if(detail) el.title = detail;
 }
+
+// ============================================================
+// [v12.4 STATE PERSISTENCE] Save/restore halaman aktif
+// Supaya setelah refresh, user kembali ke tab/perumahan/filter terakhir
+// ============================================================
+const APP_STATE_KEY = 'bm4_app_state';
+
+function saveAppState(){
+  if(!currentUser) return; // jangan simpan kalau belum login
+  try {
+    const state = {
+      v: 1, // version, untuk migrasi nanti
+      user: currentUser?.username || null,
+      proyek: typeof currentProyek !== 'undefined' ? currentProyek : null,
+      divisi: document.querySelector('.divisi-tab.active')?.dataset?.div || null,
+      filterTipe: typeof currentFilter !== 'undefined' ? currentFilter : null,
+      filterPerumahan: document.getElementById('filter-perumahan')?.value || '',
+      selectedPerumahan: typeof selectedId !== 'undefined' ? selectedId : null,
+      tabAtab: document.querySelector('.tab.active')?.dataset?.atab || null,
+      pdlOpen: !!document.getElementById('pdl-overlay')?.classList?.contains('open'),
+      pdlPerumId: window.__currentPdlPerumId || null,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+  } catch(e){ console.warn('saveAppState failed:', e); }
+}
+
+function loadAppState(){
+  try {
+    const raw = localStorage.getItem(APP_STATE_KEY);
+    if(!raw) return null;
+    const state = JSON.parse(raw);
+    // Validasi: hanya restore kalau user sama dengan yg sekarang & state < 24 jam
+    if(!currentUser || state.user !== currentUser.username) return null;
+    if(Date.now() - (state.timestamp||0) > 24*60*60*1000) return null;
+    return state;
+  } catch(e){
+    console.warn('loadAppState failed:', e);
+    return null;
+  }
+}
+
+function clearAppState(){
+  try { localStorage.removeItem(APP_STATE_KEY); } catch(e){}
+}
+
+// Helper: trigger save state (debounced supaya tidak terlalu sering)
+let _saveStateTimer = null;
+function triggerSaveAppState(){
+  if(_saveStateTimer) clearTimeout(_saveStateTimer);
+  _saveStateTimer = setTimeout(saveAppState, 300);
+}
+
+// Restore app state setelah aplikasi siap (data perumahan loaded)
+async function restoreAppState(){
+  const state = loadAppState();
+  if(!state) return false;
+  try {
+    // 1. Restore proyek (kalau ada & valid)
+    if(state.proyek && typeof PROYEK !== 'undefined' && PROYEK[state.proyek]){
+      selectProyek(state.proyek);
+    }
+    // 2. Restore divisi/tab
+    if(state.divisi){
+      const tab = document.querySelector(`[data-div="${state.divisi}"]`);
+      if(tab && !tab.classList.contains('active')){
+        // Cek akses dulu
+        const akses = currentUser?.akses || [];
+        const allowedAlways = ['dashboard','tim','galeri','proyek'];
+        if(allowedAlways.includes(state.divisi) || akses.includes(state.divisi)){
+          switchDiv(state.divisi, tab);
+        }
+      }
+    }
+    // 3. Restore filter perumahan dropdown (kalau di Analisa)
+    if(state.divisi === 'analisa' && state.filterPerumahan){
+      setTimeout(()=>{
+        const sel = document.getElementById('filter-perumahan');
+        if(sel && sel.querySelector(`option[value="${state.filterPerumahan}"]`)){
+          sel.value = state.filterPerumahan;
+          sel.dispatchEvent(new Event('change'));
+        }
+      }, 300);
+    }
+    // 4. Restore tab dalam Analisa (Info/Fasilitas/Vs Anchor/Radar/Sekitar)
+    if(state.divisi === 'analisa' && state.tabAtab){
+      setTimeout(()=>{
+        const tabEl = document.querySelector(`[data-atab="${state.tabAtab}"]`);
+        if(tabEl && typeof switchTab === 'function') switchTab(state.tabAtab, tabEl);
+      }, 400);
+    }
+    // 5. Restore selected perumahan
+    if(state.selectedPerumahan && typeof selectPerumahan === 'function'){
+      setTimeout(()=>{
+        try { selectPerumahan(state.selectedPerumahan); } catch(e){}
+      }, 500);
+    }
+    // 6. Restore modal Detail Lengkap kalau lagi terbuka
+    if(state.pdlOpen && state.pdlPerumId && typeof openPdlModal === 'function'){
+      setTimeout(()=>{
+        try { openPdlModal(state.pdlPerumId); } catch(e){}
+      }, 700);
+    }
+    return true;
+  } catch(e){
+    console.warn('restoreAppState failed:', e);
+    return false;
+  }
+}
 const USE_SHEETS = true;
 // [v9 SECURITY] Master password TIDAK hardcoded lagi.
 // Kalau belum diset, fungsi return null → login lewat master password diblokir,
@@ -2176,6 +2285,8 @@ function selectPerumahan(id){
   // [TAHAP 4] Reset pembanding tambahan saat pindah ke perumahan berbeda
   if(selectedId !== id) _resetCompareExtrasOnSelect();
   selectedId=id;
+  // [v12.4 STATE PERSISTENCE] Save state setiap kali pilih perumahan
+  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
   buildRanking(document.getElementById('rank-cat-select').value);
   const p=perumahan.find(x=>x.id===id);if(!p)return;
   document.getElementById('detail-empty').style.display='none';
@@ -4655,13 +4766,19 @@ function vsaEditFinalVerdictRevert(perumId){
 let _pdlCurrentId = null;
 function openPdlModal(perumId){
   _pdlCurrentId = perumId;
+  window.__currentPdlPerumId = perumId;
   _renderPdlSelector();
   _renderPdlBody(perumId);
   document.getElementById('pdl-overlay').classList.add('open');
+  // [v12.4 STATE PERSISTENCE] Save state agar setelah refresh modal masih terbuka
+  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
 }
 function closePdlModal(){
   document.getElementById('pdl-overlay').classList.remove('open');
   _pdlCurrentId = null;
+  window.__currentPdlPerumId = null;
+  // [v12.4 STATE PERSISTENCE] Update state setelah modal ditutup
+  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
 }
 function switchPdlPerum(perumId){
   const id = parseInt(perumId);
@@ -5767,6 +5884,8 @@ function switchTab(t,el){
   document.querySelectorAll('.tab-pane').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('tab-'+t).classList.add('active');
+  // [v12.4 STATE PERSISTENCE]
+  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
   if(t==='radar'&&selectedId){
     const p=perumahan.find(x=>x.id===selectedId);
     const anchor=perumahan.find(x=>x.id===ANCHOR_ID);
@@ -6986,72 +7105,76 @@ async function syncEditorNow(){
   const statusEl=document.getElementById('editor-sync-status');
   if(btn){btn.disabled=true;btn.textContent='⏳ Syncing...';}
   if(statusEl){statusEl.className='sync-status';statusEl.textContent='Mengirim...';}
-  try{
-    // Simpan lokal dulu (redundan tapi aman)
-    try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}
 
-    // [v12.1 FIX] Pakai legacy save (pattern no-cors) yang server-nya sudah upsert internal.
-    // Track yang dihapus (ada di snapshot tapi nggak ada di state sekarang)
-    const snapshot = editorState.snapshot || {perumahan:[],poi:[]};
-    const snapIdsP = new Set((snapshot.perumahan||[]).map(p=>String(p.id)));
-    const snapNamesPoi = new Set((snapshot.poi||[]).map(p=>String(p.nama)));
-    const nowIdsP = new Set(perumahan.map(p=>String(p.id)));
-    const nowNamesPoi = new Set(poi.map(p=>String(p.nama)));
-    const deletedP = [...snapIdsP].filter(id=>!nowIdsP.has(id));
-    const deletedPoi = [...snapNamesPoi].filter(n=>!nowNamesPoi.has(n));
+  // [v12.3 OPTIMISTIC UI] Asumsi sync sukses — update UI duluan, sync di background
+  // Ini bikin user nggak perlu nunggu 5-15 detik fetch ke Apps Script
+  // Simpan lokal (redundan tapi aman, kalau tab ditutup data tetap ada)
+  try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}
 
-    // Bulk upsert — pakai pattern no-cors (yang udah terbukti sukses di saveAccounts/logActivity)
-    await fetch(GAS_URL, {
-      method:'POST',
-      mode:'no-cors',
+  // Hitung yang dihapus (snapshot vs now)
+  const snapshot = editorState.snapshot || {perumahan:[],poi:[]};
+  const snapIdsP = new Set((snapshot.perumahan||[]).map(p=>String(p.id)));
+  const snapNamesPoi = new Set((snapshot.poi||[]).map(p=>String(p.nama)));
+  const nowIdsP = new Set(perumahan.map(p=>String(p.id)));
+  const nowNamesPoi = new Set(poi.map(p=>String(p.nama)));
+  const deletedP = [...snapIdsP].filter(id=>!nowIdsP.has(id));
+  const deletedPoi = [...snapNamesPoi].filter(n=>!nowNamesPoi.has(n));
+  const totalDel = deletedP.length + deletedPoi.length;
+
+  // [OPTIMISTIC] Update UI segera — anggap sukses
+  editorState.snapshot=_snapshotData();
+  setEditorDirty(false);
+  const delInfo=totalDel?` (−${totalDel} dihapus)`:'';
+  if(statusEl){statusEl.className='sync-status ok';statusEl.textContent=`✓ Sync ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;}
+  setSyncStatus('synced',`Tersinkron: ${perumahan.length} perumahan, ${poi.length} POI${delInfo}`);
+  showToast(`✅ Tersinkron (${perumahan.length} perumahan, ${poi.length} POI${delInfo})`);
+  if(btn){btn.textContent='💾 Sync ke Sheets';btn.disabled=true;}
+  editorState.syncing=false;
+
+  // [PARALLEL BACKGROUND] Kirim request ke Sheets paralel — user nggak perlu nunggu
+  // Kalau gagal, kasih notifikasi (jarang terjadi)
+  const requests = [
+    fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body: gasPost({action:'savePerumahan', rows:perumahan})
-    });
-    await fetch(GAS_URL, {
-      method:'POST',
-      mode:'no-cors',
+    }),
+    fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body: gasPost({action:'savePoi', rows:poi})
-    });
-    // Soft delete per ID yang dihapus user
-    for(const id of deletedP){
-      try{
-        await fetch(GAS_URL, {
-          method:'POST',
-          mode:'no-cors',
-          headers:{'Content-Type':'text/plain'},
-          body: gasPost({action:'deletePerumahan', id:id})
-        });
-      }catch(e){console.warn('del perumahan gagal',e);}
-    }
-    for(const nama of deletedPoi){
-      try{
-        await fetch(GAS_URL, {
-          method:'POST',
-          mode:'no-cors',
-          headers:{'Content-Type':'text/plain'},
-          body: gasPost({action:'deletePoi', nama:nama})
-        });
-      }catch(e){console.warn('del poi gagal',e);}
-    }
-
-    // Di mode no-cors kita tidak bisa baca response. Asumsikan sukses kalau fetch tidak throw.
-    editorState.snapshot=_snapshotData();
-    setEditorDirty(false);
-    const delInfo=(deletedP.length||deletedPoi.length)?` (−${deletedP.length+deletedPoi.length} dihapus)`:'';
-    if(statusEl){statusEl.className='sync-status ok';statusEl.textContent=`✓ Sync ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;}
-    setSyncStatus('synced',`Tersinkron: ${perumahan.length} perumahan, ${poi.length} POI${delInfo}`);
-    showToast(`✅ Tersinkron (${perumahan.length} perumahan, ${poi.length} POI${delInfo})`);
-    try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`${perumahan.length}P+${poi.length}POI, del ${deletedP.length}P+${deletedPoi.length}POI`);}catch(e){}
-  } catch(e){
-    if(statusEl){statusEl.className='sync-status error';statusEl.textContent='⚠ Error jaringan';}
-    setSyncStatus('offline','Error jaringan');
-    showToast('⚠️ Gagal sync ke Sheets — periksa koneksi');
-    console.error('Gagal sync:',e);
-  } finally {
-    editorState.syncing=false;
-    if(btn){btn.textContent='💾 Sync ke Sheets';btn.disabled=!editorState.dirty;}
+    })
+  ];
+  // Tambahkan delete requests (parallel juga)
+  for(const id of deletedP){
+    requests.push(fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: gasPost({action:'deletePerumahan', id:id})
+    }));
   }
+  for(const nama of deletedPoi){
+    requests.push(fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: gasPost({action:'deletePoi', nama:nama})
+    }));
+  }
+
+  // Track all parallel — kalau ada yang gagal, beri notifikasi
+  Promise.allSettled(requests).then(results => {
+    const failed = results.filter(r=>r.status==='rejected').length;
+    if(failed > 0){
+      console.warn('[syncEditorNow] '+failed+' background requests gagal:', results);
+      setSyncStatus('offline', `${failed} request gagal, klik sync lagi`);
+      showToast(`⚠️ ${failed} sync gagal — klik Sync ke Sheets lagi`);
+      // Re-mark dirty supaya user bisa retry
+      setEditorDirty(true);
+    } else {
+      // All good — log activity
+      try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`${perumahan.length}P+${poi.length}POI, del ${deletedP.length}P+${deletedPoi.length}POI`);}catch(e){}
+    }
+  });
 }
 
 // ── Discard (revert ke snapshot) ───────────────────────────
@@ -7359,6 +7482,13 @@ function selectProyek(id){
   tpMapInit=false;tpMap=null;tpMarkers={};
   showScreen('s-app');
   switchDiv('dashboard',document.querySelector('[data-div="dashboard"]'));
+  // [v12.4 STATE PERSISTENCE] Coba restore state terakhir setelah app loaded
+  // Delay 100ms supaya DOM ready, lalu restore (kalau ada saved state)
+  setTimeout(()=>{
+    try {
+      if(typeof restoreAppState === 'function') restoreAppState();
+    } catch(e){ console.warn('restoreAppState err:', e); }
+  }, 100);
 }
 function backToProyek(){
   analisaMapInit=false;analisaMap=null;markers={};poiMarkers={};
@@ -7368,6 +7498,8 @@ function backToProyek(){
 function doLogout(){
   sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem('bm4_session_start');
+  // [v12.4 STATE PERSISTENCE] Clear saved state on logout
+  try { if(typeof clearAppState === 'function') clearAppState(); } catch(e){}
   showScreen('s-login');
   setTimeout(()=>document.getElementById('login-input').focus(),100);
 }
@@ -9410,6 +9542,8 @@ function updateMobileMenuBtn(){
 
 // Hook yang dipanggil dari dalam switchDiv asli — tidak mengubah behavior asli, hanya menambah
 function switchDivHook(div, el){
+  // [v12.4 STATE PERSISTENCE] Save state setiap kali ganti tab
+  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
   // Cek akses — blokir jika tidak boleh (kecuali dashboard, tim, galeri, proyek yg diatur terpisah)
   if(currentUser && div !== 'dashboard' && div !== 'tim' && div !== 'galeri' && div !== 'proyek'){
     const akses = currentUser.akses || [];
@@ -9598,7 +9732,19 @@ window.doLogout = function(){
       if(currentUser) sessionStorage.setItem(CURRENT_USER_KEY, currentUser.username);
     }
     if(currentUser) applyUserAccess();
-    showScreen('s-proyek');
+    // [v12.4 STATE PERSISTENCE] Coba auto-pilih proyek terakhir agar tidak balik ke screen pemilih
+    let restoredProyek = false;
+    try {
+      const saved = loadAppState();
+      if(saved && saved.proyek && typeof PROYEK !== 'undefined' && PROYEK[saved.proyek]){
+        // Auto-select proyek dan masuk ke s-app
+        selectProyek(saved.proyek);
+        restoredProyek = true;
+      }
+    } catch(e){ console.warn('auto restore proyek failed:', e); }
+    if(!restoredProyek){
+      showScreen('s-proyek');
+    }
   } else {
     setTimeout(()=>{
       const u = document.getElementById('login-username');
