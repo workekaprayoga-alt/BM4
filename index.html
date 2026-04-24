@@ -1505,22 +1505,22 @@ function triggerSaveAppState(){
 }
 
 // Restore app state setelah aplikasi siap (data perumahan loaded)
+// PENTING: function ini dipanggil DARI selectProyek() — jadi jangan panggil selectProyek lagi (infinite loop)
 async function restoreAppState(){
   const state = loadAppState();
   if(!state) return false;
   try {
-    // 1. Restore proyek (kalau ada & valid)
-    if(state.proyek && typeof PROYEK !== 'undefined' && PROYEK[state.proyek]){
-      selectProyek(state.proyek);
-    }
+    // NOTE: Restore proyek DI-SKIP di sini — selectProyek sudah dipanggil di startup
+    // (lihat startup logic dan selectProyek hook). Restore proyek di sini akan infinite loop.
     // 2. Restore divisi/tab
     if(state.divisi){
       const tab = document.querySelector(`[data-div="${state.divisi}"]`);
       if(tab && !tab.classList.contains('active')){
-        // Cek akses dulu
+        // [v12.5] BM selalu boleh, lainnya cek akses
+        const isBM = currentUser?.role === 'bm';
         const akses = currentUser?.akses || [];
         const allowedAlways = ['dashboard','tim','galeri','proyek'];
-        if(allowedAlways.includes(state.divisi) || akses.includes(state.divisi)){
+        if(isBM || allowedAlways.includes(state.divisi) || akses.includes(state.divisi)){
           switchDiv(state.divisi, tab);
         }
       }
@@ -9542,10 +9542,10 @@ function updateMobileMenuBtn(){
 
 // Hook yang dipanggil dari dalam switchDiv asli — tidak mengubah behavior asli, hanya menambah
 function switchDivHook(div, el){
-  // [v12.4 STATE PERSISTENCE] Save state setiap kali ganti tab
-  if(typeof triggerSaveAppState === 'function') triggerSaveAppState();
+  // [v12.5 SAFETY] BM selalu punya akses ke semua menu — bypass check
+  const isBM = currentUser?.role === 'bm';
   // Cek akses — blokir jika tidak boleh (kecuali dashboard, tim, galeri, proyek yg diatur terpisah)
-  if(currentUser && div !== 'dashboard' && div !== 'tim' && div !== 'galeri' && div !== 'proyek'){
+  if(!isBM && currentUser && div !== 'dashboard' && div !== 'tim' && div !== 'galeri' && div !== 'proyek'){
     const akses = currentUser.akses || [];
     if(!akses.includes(div)){
       showToast('⚠ Anda tidak memiliki akses ke menu ini');
@@ -9556,6 +9556,10 @@ function switchDivHook(div, el){
       }, 50);
       return;
     }
+  }
+  // [v12.4 STATE PERSISTENCE] Save state setiap kali ganti tab — DI AKHIR supaya tidak block navigation
+  if(typeof triggerSaveAppState === 'function') {
+    try { triggerSaveAppState(); } catch(e){ console.warn('save state err:', e); }
   }
   if(div === 'tim'){
     if(currentUser?.role !== 'bm'){
