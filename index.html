@@ -5801,7 +5801,14 @@ function saveTpData(){
   updateTpDashCount();
 }
 async function saveTpToSheets(){
-  try{await fetch(GAS_URL,{method:'POST',body:gasPost({action:'saveTargetPasar',rows:tpTargets})});}catch(e){console.warn('Gagal sync TP:',e);}
+  try{
+    await fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: gasPost({action:'saveTargetPasar', rows:tpTargets})
+    });
+  }catch(e){console.warn('Gagal sync TP:',e);}
 }
 async function loadTpFromSheets(){
   if(!USE_SHEETS)return false;
@@ -5998,11 +6005,15 @@ function deleteTP(id){
   if(!confirm('Hapus target ini?'))return;
   tpTargets=tpTargets.filter(t=>t.id!==id);
   saveTpData();
-  // [v12 UPSERT] Explicit soft delete di Sheets
+  // [v12.1 FIX] Explicit soft delete di Sheets (pakai no-cors)
   if(USE_SHEETS){
     try{
-      fetch(GAS_URL,{method:'POST',body:gasPost({action:'deleteTargetPasar',id:id})})
-        .catch(e=>console.warn('Gagal soft-delete TP:',e));
+      fetch(GAS_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body: gasPost({action:'deleteTargetPasar', id:id})
+      }).catch(e=>console.warn('Gagal soft-delete TP:',e));
     }catch(e){}
   }
   closeTpDetail();renderTPList(tpFilter);renderTPMarkers();showToast('🗑️ Target dihapus');
@@ -6979,54 +6990,59 @@ async function syncEditorNow(){
     // Simpan lokal dulu (redundan tapi aman)
     try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}
 
-    // [v12 UPSERT] Kirim per-row pakai upsert — tidak clearContents
-    // Track yang dikirim vs yang di-delete (snapshot vs now)
+    // [v12.1 FIX] Pakai legacy save (pattern no-cors) yang server-nya sudah upsert internal.
+    // Track yang dihapus (ada di snapshot tapi nggak ada di state sekarang)
     const snapshot = editorState.snapshot || {perumahan:[],poi:[]};
     const snapIdsP = new Set((snapshot.perumahan||[]).map(p=>String(p.id)));
     const snapNamesPoi = new Set((snapshot.poi||[]).map(p=>String(p.nama)));
     const nowIdsP = new Set(perumahan.map(p=>String(p.id)));
     const nowNamesPoi = new Set(poi.map(p=>String(p.nama)));
-    // Deteksi yang dihapus (ada di snapshot tapi nggak ada di state sekarang)
     const deletedP = [...snapIdsP].filter(id=>!nowIdsP.has(id));
     const deletedPoi = [...snapNamesPoi].filter(n=>!nowNamesPoi.has(n));
 
-    // Upsert semua perumahan
-    let okP=0, errP=0;
-    for(const r of perumahan){
-      try{
-        const res = await fetch(GAS_URL,{method:'POST',body:gasPost({action:'upsertPerumahan',row:r})}).then(x=>x.json());
-        if(res.success) okP++; else errP++;
-      }catch(e){errP++;}
-    }
-    // Upsert semua POI
-    let okPoi=0, errPoi=0;
-    for(const r of poi){
-      try{
-        const res = await fetch(GAS_URL,{method:'POST',body:gasPost({action:'upsertPoi',row:r})}).then(x=>x.json());
-        if(res.success) okPoi++; else errPoi++;
-      }catch(e){errPoi++;}
-    }
-    // Delete perumahan yang user hapus
+    // Bulk upsert — pakai pattern no-cors (yang udah terbukti sukses di saveAccounts/logActivity)
+    await fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: gasPost({action:'savePerumahan', rows:perumahan})
+    });
+    await fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: gasPost({action:'savePoi', rows:poi})
+    });
+    // Soft delete per ID yang dihapus user
     for(const id of deletedP){
-      try{await fetch(GAS_URL,{method:'POST',body:gasPost({action:'deletePerumahan',id:id})});}catch(e){}
+      try{
+        await fetch(GAS_URL, {
+          method:'POST',
+          mode:'no-cors',
+          headers:{'Content-Type':'text/plain'},
+          body: gasPost({action:'deletePerumahan', id:id})
+        });
+      }catch(e){console.warn('del perumahan gagal',e);}
     }
     for(const nama of deletedPoi){
-      try{await fetch(GAS_URL,{method:'POST',body:gasPost({action:'deletePoi',nama:nama})});}catch(e){}
+      try{
+        await fetch(GAS_URL, {
+          method:'POST',
+          mode:'no-cors',
+          headers:{'Content-Type':'text/plain'},
+          body: gasPost({action:'deletePoi', nama:nama})
+        });
+      }catch(e){console.warn('del poi gagal',e);}
     }
 
-    if(errP===0 && errPoi===0){
-      editorState.snapshot=_snapshotData(); // snapshot baru = state tersinkron
-      setEditorDirty(false);
-      const delInfo=(deletedP.length||deletedPoi.length)?` (−${deletedP.length+deletedPoi.length} dihapus)`:'';
-      if(statusEl){statusEl.className='sync-status ok';statusEl.textContent=`✓ Sync ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;}
-      setSyncStatus('synced',`Tersinkron: ${okP} perumahan, ${okPoi} POI${delInfo}`);
-      showToast(`✅ Tersinkron (${okP} perumahan, ${okPoi} POI${delInfo})`);
-      try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`upsert ${okP}P+${okPoi}POI, del ${deletedP.length}P+${deletedPoi.length}POI`);}catch(e){}
-    } else {
-      if(statusEl){statusEl.className='sync-status error';statusEl.textContent=`⚠ ${errP+errPoi} row gagal`;}
-      setSyncStatus('offline',`Sebagian gagal: ${errP+errPoi} row`);
-      showToast(`⚠️ Sync sebagian gagal (${errP} perumahan, ${errPoi} POI)`);
-    }
+    // Di mode no-cors kita tidak bisa baca response. Asumsikan sukses kalau fetch tidak throw.
+    editorState.snapshot=_snapshotData();
+    setEditorDirty(false);
+    const delInfo=(deletedP.length||deletedPoi.length)?` (−${deletedP.length+deletedPoi.length} dihapus)`:'';
+    if(statusEl){statusEl.className='sync-status ok';statusEl.textContent=`✓ Sync ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;}
+    setSyncStatus('synced',`Tersinkron: ${perumahan.length} perumahan, ${poi.length} POI${delInfo}`);
+    showToast(`✅ Tersinkron (${perumahan.length} perumahan, ${poi.length} POI${delInfo})`);
+    try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`${perumahan.length}P+${poi.length}POI, del ${deletedP.length}P+${deletedPoi.length}POI`);}catch(e){}
   } catch(e){
     if(statusEl){statusEl.className='sync-status error';statusEl.textContent='⚠ Error jaringan';}
     setSyncStatus('offline','Error jaringan');
@@ -8864,12 +8880,16 @@ function deleteAccount(username){
   accounts.splice(idx, 1);
   logActivity(currentUser?.username || 'system', 'hapus akun', `Akun dihapus: ${username}`);
   saveAccountsLocal();
-  // [v12 UPSERT] Sync ke Sheets + explicit soft delete
+  // [v12.1 FIX] Sync ke Sheets + explicit soft delete (pakai no-cors)
   syncAccountsToSheets();
   if(USE_SHEETS){
     try{
-      fetch(GAS_URL,{method:'POST',body:gasPost({action:'deleteAccount',username:username})})
-        .catch(e=>console.warn('Gagal soft-delete account:',e));
+      fetch(GAS_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body: gasPost({action:'deleteAccount', username:username})
+      }).catch(e=>console.warn('Gagal soft-delete account:',e));
     }catch(e){}
   }
   renderTim();
@@ -9229,9 +9249,9 @@ async function performRestore(payload){
     if(USE_SHEETS){
       try {
         await Promise.all([
-          fetch(GAS_URL, {method:'POST', body:gasPost({action:'savePerumahan', rows:perumahan})}),
-          fetch(GAS_URL, {method:'POST', body:gasPost({action:'savePoi', rows:poi})}),
-          fetch(GAS_URL, {method:'POST', body:gasPost({action:'saveTargetPasar', rows:tpTargets})}),
+          fetch(GAS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:gasPost({action:'savePerumahan', rows:perumahan})}),
+          fetch(GAS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:gasPost({action:'savePoi', rows:poi})}),
+          fetch(GAS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:gasPost({action:'saveTargetPasar', rows:tpTargets})}),
           syncAccountsToSheets(),
         ]);
       } catch(e){
