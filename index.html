@@ -5997,7 +5997,15 @@ function closeTpDetail(){document.getElementById('tp-detail').classList.remove('
 function deleteTP(id){
   if(!confirm('Hapus target ini?'))return;
   tpTargets=tpTargets.filter(t=>t.id!==id);
-  saveTpData();closeTpDetail();renderTPList(tpFilter);renderTPMarkers();showToast('🗑️ Target dihapus');
+  saveTpData();
+  // [v12 UPSERT] Explicit soft delete di Sheets
+  if(USE_SHEETS){
+    try{
+      fetch(GAS_URL,{method:'POST',body:gasPost({action:'deleteTargetPasar',id:id})})
+        .catch(e=>console.warn('Gagal soft-delete TP:',e));
+    }catch(e){}
+  }
+  closeTpDetail();renderTPList(tpFilter);renderTPMarkers();showToast('🗑️ Target dihapus');
 }
 function openTpModal(id){
   editingTpId=id;
@@ -6970,23 +6978,54 @@ async function syncEditorNow(){
   try{
     // Simpan lokal dulu (redundan tapi aman)
     try{localStorage.setItem('bm4_data',JSON.stringify({perumahan,poi}));}catch(e){}
-    const [r1,r2]=await Promise.all([
-      fetch(GAS_URL,{method:'POST',body:gasPost({action:'savePerumahan',rows:perumahan})}).then(r=>r.json()),
-      fetch(GAS_URL,{method:'POST',body:gasPost({action:'savePoi',rows:poi})}).then(r=>r.json())
-    ]);
-    if(r1.success && r2.success){
+
+    // [v12 UPSERT] Kirim per-row pakai upsert — tidak clearContents
+    // Track yang dikirim vs yang di-delete (snapshot vs now)
+    const snapshot = editorState.snapshot || {perumahan:[],poi:[]};
+    const snapIdsP = new Set((snapshot.perumahan||[]).map(p=>String(p.id)));
+    const snapNamesPoi = new Set((snapshot.poi||[]).map(p=>String(p.nama)));
+    const nowIdsP = new Set(perumahan.map(p=>String(p.id)));
+    const nowNamesPoi = new Set(poi.map(p=>String(p.nama)));
+    // Deteksi yang dihapus (ada di snapshot tapi nggak ada di state sekarang)
+    const deletedP = [...snapIdsP].filter(id=>!nowIdsP.has(id));
+    const deletedPoi = [...snapNamesPoi].filter(n=>!nowNamesPoi.has(n));
+
+    // Upsert semua perumahan
+    let okP=0, errP=0;
+    for(const r of perumahan){
+      try{
+        const res = await fetch(GAS_URL,{method:'POST',body:gasPost({action:'upsertPerumahan',row:r})}).then(x=>x.json());
+        if(res.success) okP++; else errP++;
+      }catch(e){errP++;}
+    }
+    // Upsert semua POI
+    let okPoi=0, errPoi=0;
+    for(const r of poi){
+      try{
+        const res = await fetch(GAS_URL,{method:'POST',body:gasPost({action:'upsertPoi',row:r})}).then(x=>x.json());
+        if(res.success) okPoi++; else errPoi++;
+      }catch(e){errPoi++;}
+    }
+    // Delete perumahan yang user hapus
+    for(const id of deletedP){
+      try{await fetch(GAS_URL,{method:'POST',body:gasPost({action:'deletePerumahan',id:id})});}catch(e){}
+    }
+    for(const nama of deletedPoi){
+      try{await fetch(GAS_URL,{method:'POST',body:gasPost({action:'deletePoi',nama:nama})});}catch(e){}
+    }
+
+    if(errP===0 && errPoi===0){
       editorState.snapshot=_snapshotData(); // snapshot baru = state tersinkron
       setEditorDirty(false);
+      const delInfo=(deletedP.length||deletedPoi.length)?` (−${deletedP.length+deletedPoi.length} dihapus)`:'';
       if(statusEl){statusEl.className='sync-status ok';statusEl.textContent=`✓ Sync ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;}
-      setSyncStatus('synced',`Tersinkron: ${r1.saved} perumahan, ${r2.saved} POI`);
-      showToast(`✅ Tersinkron (${r1.saved} perumahan, ${r2.saved} POI)`);
-      try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`${r1.saved} perumahan, ${r2.saved} POI`);}catch(e){}
+      setSyncStatus('synced',`Tersinkron: ${okP} perumahan, ${okPoi} POI${delInfo}`);
+      showToast(`✅ Tersinkron (${okP} perumahan, ${okPoi} POI${delInfo})`);
+      try{if(typeof logActivity==='function' && currentUser) logActivity(currentUser.username,'editor_sync',`upsert ${okP}P+${okPoi}POI, del ${deletedP.length}P+${deletedPoi.length}POI`);}catch(e){}
     } else {
-      const err=r1.error||r2.error||'unknown';
-      if(statusEl){statusEl.className='sync-status error';statusEl.textContent='⚠ Gagal: '+err;}
-      setSyncStatus('offline','Gagal sync: '+err);
-      showToast('⚠️ Gagal sync: '+err);
-      console.error('Sync error:',r1,r2);
+      if(statusEl){statusEl.className='sync-status error';statusEl.textContent=`⚠ ${errP+errPoi} row gagal`;}
+      setSyncStatus('offline',`Sebagian gagal: ${errP+errPoi} row`);
+      showToast(`⚠️ Sync sebagian gagal (${errP} perumahan, ${errPoi} POI)`);
     }
   } catch(e){
     if(statusEl){statusEl.className='sync-status error';statusEl.textContent='⚠ Error jaringan';}
@@ -7939,6 +7978,56 @@ function _compressPryFoto(file){
   });
 }
 
+// [v11.6 AVATAR COMPRESS] Khusus foto avatar user — crop square + resize 256px + JPEG 0.78
+// Target output: ~15-25 KB (aman untuk Google Sheets 50k char limit)
+// Crop ke square (1:1) supaya avatar nggak gepeng/terdistorsi
+function _compressAvatar(file){
+  return new Promise((resolve, reject) => {
+    if(!file || !file.type || !file.type.startsWith('image/')){
+      return reject(new Error('File bukan gambar'));
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const SIZE = 256; // target 256x256 pixel — cukup sharp untuk avatar
+          const srcW = img.naturalWidth, srcH = img.naturalHeight;
+          // Crop tengah jadi square
+          const minDim = Math.min(srcW, srcH);
+          const sx = (srcW - minDim) / 2;
+          const sy = (srcH - minDim) / 2;
+          const canvas = document.createElement('canvas');
+          canvas.width = SIZE; canvas.height = SIZE;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, SIZE, SIZE);
+          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, SIZE, SIZE);
+          // Coba quality 0.78, kalau masih kegedean coba 0.6, lalu 0.45
+          let dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+          if(dataUrl.length > 45000) dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          if(dataUrl.length > 45000) dataUrl = canvas.toDataURL('image/jpeg', 0.45);
+          if(dataUrl.length > 45000){
+            // Last resort: resize 128px
+            const c2 = document.createElement('canvas');
+            c2.width = 128; c2.height = 128;
+            const ctx2 = c2.getContext('2d');
+            ctx2.fillStyle = '#FFFFFF';
+            ctx2.fillRect(0, 0, 128, 128);
+            ctx2.drawImage(img, sx, sy, minDim, minDim, 0, 0, 128, 128);
+            dataUrl = c2.toDataURL('image/jpeg', 0.7);
+          }
+          resolve(dataUrl);
+        } catch(err){ reject(err); }
+      };
+      img.onerror = () => reject(new Error('Gambar tidak bisa dimuat'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Gagal baca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 // Mini-map controller (lazy init, sekali)
 let pryMiniMap = null;
 function _initPryMiniMapOnce(){
@@ -8139,11 +8228,11 @@ function bmEditPhoto(username){
     if(!file.type || !file.type.startsWith('image/')){
       showToast('⚠ File harus berupa gambar'); return;
     }
-    if(file.size > 500000){ showToast('⚠ Ukuran foto maksimal 500KB'); return; }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
+    if(file.size > 10 * 1024 * 1024){ showToast('⚠ Ukuran foto maksimal 10MB'); return; }
+    showToast('⚙️ Memproses foto...');
+    _compressAvatar(file).then(dataUrl => {
       if(!dataUrl.startsWith('data:image/')){ showToast('⚠ File tidak valid'); return; }
+      const sizeKB = Math.round((dataUrl.length * 0.75) / 1024);
       const idx = accounts.findIndex(a => a.username === username);
       if(idx >= 0){
         accounts[idx].foto = dataUrl;
@@ -8153,12 +8242,14 @@ function bmEditPhoto(username){
         }
         saveAccountsLocal();
         syncAccountsToSheets();
-        logActivity(currentUser.username, 'ganti foto', `BM mengubah foto akun: ${username}`);
+        logActivity(currentUser.username, 'ganti foto', `BM mengubah foto akun: ${username} (${sizeKB}KB)`);
         renderTim();
-        showToast(`✓ Foto ${username} diperbarui`);
+        showToast(`✓ Foto ${username} diperbarui (${sizeKB}KB)`);
       }
-    };
-    reader.readAsDataURL(file);
+    }).catch(err => {
+      console.error('Compress avatar error:', err);
+      showToast('⚠️ Gagal memproses foto: ' + err.message);
+    });
   };
   input.click();
 }
@@ -8773,7 +8864,14 @@ function deleteAccount(username){
   accounts.splice(idx, 1);
   logActivity(currentUser?.username || 'system', 'hapus akun', `Akun dihapus: ${username}`);
   saveAccountsLocal();
+  // [v12 UPSERT] Sync ke Sheets + explicit soft delete
   syncAccountsToSheets();
+  if(USE_SHEETS){
+    try{
+      fetch(GAS_URL,{method:'POST',body:gasPost({action:'deleteAccount',username:username})})
+        .catch(e=>console.warn('Gagal soft-delete account:',e));
+    }catch(e){}
+  }
   renderTim();
   showToast('🗑 Akun dihapus');
 }
@@ -9189,18 +9287,18 @@ function uploadAvatar(event){
     showToast('⚠ File harus berupa gambar (JPG/PNG/WebP)');
     return;
   }
-  if(file.size > 500000){ // batas ~500KB
-    showToast('⚠ Ukuran foto maksimal 500KB');
+  if(file.size > 10 * 1024 * 1024){ // batas 10MB — nanti auto-compress
+    showToast('⚠ Ukuran foto maksimal 10MB');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
+  showToast('⚙️ Memproses foto...');
+  _compressAvatar(file).then(dataUrl => {
     // [v9 SECURITY] Double-check: pastikan hasil base64 benar-benar image
     if(!dataUrl.startsWith('data:image/')){
       showToast('⚠ File tidak valid');
       return;
     }
+    const sizeKB = Math.round((dataUrl.length * 0.75) / 1024);
     // Simpan ke current user
     const idx = accounts.findIndex(a => a.username === currentUser.username);
     if(idx >= 0){
@@ -9208,13 +9306,15 @@ function uploadAvatar(event){
       currentUser.foto = dataUrl;
       saveAccountsLocal();
       syncAccountsToSheets();
-      logActivity(currentUser.username, 'ganti foto', 'User mengubah foto profil');
+      logActivity(currentUser.username, 'ganti foto', `User mengubah foto profil (${sizeKB}KB)`);
       document.getElementById('settings-avatar').innerHTML = `<img src="${dataUrl}" alt="">`;
       document.getElementById('tb-profile-avatar').innerHTML = `<img src="${dataUrl}" alt="">`;
-      showToast('✓ Foto profil diperbarui');
+      showToast(`✓ Foto profil diperbarui (${sizeKB}KB)`);
     }
-  };
-  reader.readAsDataURL(file);
+  }).catch(err => {
+    console.error('Compress avatar error:', err);
+    showToast('⚠️ Gagal memproses foto: ' + err.message);
+  });
 }
 
 async function savePasswordChange(){
