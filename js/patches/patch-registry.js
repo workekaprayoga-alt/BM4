@@ -9,7 +9,7 @@ window.BM4_PATCHES = [
     id: 'patch-001-secure-session',
     name: 'Secure Session Adapter',
     version: '1.0.0',
-    enabled: false,
+    enabled: true,
     file: 'js/patches/patch-001-secure-session.js',
     css: null,
     dependsOn: []
@@ -18,7 +18,7 @@ window.BM4_PATCHES = [
     id: 'patch-002-security-center',
     name: 'Security Center + Audit + Backup',
     version: '1.0.0',
-    enabled: false,
+    enabled: true,
     file: 'js/patches/patch-002-security-center.js',
     css: 'css/patches/patch-002-security-center.css',
     dependsOn: ['patch-001-secure-session']
