@@ -1,0 +1,23 @@
+/* BM4 patch-003 Stability Guard */
+.bm4-stability-topbtn{background:rgba(74,222,128,0.12)!important;border-color:rgba(74,222,128,0.25)!important;color:#BBF7D0!important;}
+.bm4-stability-topbtn:hover{background:rgba(74,222,128,0.22)!important;color:white!important;}
+.bm4-stab-panel{position:fixed;right:14px;top:64px;width:390px;max-width:calc(100vw - 28px);max-height:calc(100vh - 86px);background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.24);z-index:10050;display:none;overflow:hidden;font-family:'DM Sans',sans-serif;}
+.bm4-stab-panel.open{display:flex;flex-direction:column;}
+.bm4-stab-head{padding:12px 14px;background:#1C2B4A;color:white;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.bm4-stab-head b{font-size:13px;display:block;margin-bottom:2px;}
+.bm4-stab-head span{font-size:10px;color:#94A3B8;display:block;}
+.bm4-stab-head button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:white;border-radius:6px;font-size:18px;line-height:1;padding:1px 8px;cursor:pointer;}
+.bm4-stab-actions{padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid rgba(0,0,0,.08);background:#FAFAF8;}
+.bm4-stab-actions button,.bm4-stab-row button{border:1px solid rgba(0,0,0,.1);background:white;border-radius:7px;padding:7px 8px;font-size:10px;font-weight:700;color:#2563EB;cursor:pointer;font-family:inherit;}
+.bm4-stab-actions button:hover,.bm4-stab-row button:hover{background:#EFF6FF;border-color:#2563EB;}
+.bm4-stab-body{overflow:auto;padding:10px 12px;}
+.bm4-stab-section{margin-bottom:14px;}
+.bm4-stab-title{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9B9A96;font-weight:800;margin:2px 0 7px;}
+.bm4-stab-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,.07);}
+.bm4-stab-row b,.bm4-stab-error b{display:block;font-size:11px;color:#1C1C1A;margin-bottom:2px;}
+.bm4-stab-row span,.bm4-stab-error span{display:block;font-size:10px;color:#5F5E5A;line-height:1.45;}
+.bm4-stab-error{padding:8px 10px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA;margin-bottom:7px;}
+.bm4-stab-error b{color:#991B1B;}
+.bm4-stab-error span{color:#7F1D1D;word-break:break-word;}
+.bm4-stab-empty{padding:12px;text-align:center;font-size:11px;color:#9B9A96;background:#FAFAF8;border-radius:8px;}
+@media(max-width:640px){.bm4-stab-panel{left:10px;right:10px;top:56px;width:auto;}.bm4-stab-actions{grid-template-columns:1fr;}}

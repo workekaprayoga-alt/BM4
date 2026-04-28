@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://router.project-osrm.org https://routing.openstreetmap.de https://tile.openstreetmap.org https://*.tile.openstreetmap.org; manifest-src 'self' data:;">
+
+<script src="js/00-mobile-redirect.js?v=rc11"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BM4">
+<meta name="theme-color" content="#1C2B4A">
+<link rel="manifest" href="manifest.json?v=rc11">
+<title>BM4 — Property Intelligence</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css?v=rc11">
+<link rel="stylesheet" href="css/patches.css?v=rc11">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">BM4 <span>·</span> Property Intelligence</div>
+    <div class="login-sub">Sistem Internal — Akses Terbatas</div>
+    <div class="login-label">Username</div>
+    <input type="text" class="login-input" id="login-username" placeholder="Masukkan username..." autocomplete="off">
+    <div class="login-label">Password</div>
+    <div class="login-error" id="login-error">Username atau password salah. Coba lagi.</div>
+    <input type="password" class="login-input" id="login-input" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Masuk →</button>
+    <div class="login-footer">BM4 Property Intelligence · Internal Use Only</div>
+  </div>
+</div>
+
+<!-- PILIH PROYEK -->
+<div id="s-proyek" class="screen">
+  <div class="proyek-header">
+    <h1>BM4 <span>·</span> Property Intelligence</h1>
+    <p>Pilih proyek yang ingin dikelola</p>
+  </div>
+  <div class="proyek-cards" id="proyek-cards">
+    <!-- [v14 PROYEK] Card di-render dinamis oleh renderProyekCards() dari PROYEK_LIST -->
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="s-app" class="screen">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-brand">BM4 <span>·</span> Property Intelligence</div>
+      <div class="tb-proyek" id="tb-proyek-name" onclick="backToProyek()">← Ganti Proyek</div>
+    </div>
+    <div class="tb-right">
+      <span class="tb-sync state-local" id="tb-sync">● Lokal</span>
+      <button class="tb-btn-edit analisa-only" id="btn-editor" onclick="toggleEditor()">✏️ Edit Data</button>
+      <div class="tb-profile" id="tb-profile" onclick="openSettings()">
+        <div class="tb-profile-avatar" id="tb-profile-avatar">?</div>
+        <div class="tb-profile-info">
+          <div class="tb-profile-name" id="tb-profile-name">—</div>
+          <div class="tb-profile-role" id="tb-profile-role">—</div>
+        </div>
+      </div>
+      <button class="tb-btn" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+
+  <!-- Divisi Nav -->
+  <div class="divisi-nav">
+    <button class="divisi-tab active" data-div="dashboard" onclick="switchDiv('dashboard',this)">🏠 Dashboard</button>
+    <button class="divisi-tab" data-div="analisa" onclick="switchDiv('analisa',this)">📍 Analisa Lokasi</button>
+    <button class="divisi-tab" data-div="strategi" onclick="switchDiv('strategi',this)">🎯 Strategi & Promo</button>
+    <button class="divisi-tab" data-div="sales" onclick="switchDiv('sales',this)">📊 Sales</button>
+    <button class="divisi-tab" data-div="konstruksi" onclick="switchDiv('konstruksi',this)">🏗️ Konstruksi</button>
+    <button class="divisi-tab" data-div="legal" onclick="switchDiv('legal',this)">⚖️ Legal & Landbank</button>
+    <button class="divisi-tab" data-div="finance" onclick="switchDiv('finance',this)">💰 Finance</button>
+    <button class="divisi-tab" data-div="galeri" onclick="switchDiv('galeri',this)">✨ Galeri Tim</button>
+    <button class="divisi-tab" data-div="tim" onclick="switchDiv('tim',this)" id="tab-tim" style="display:none;">👥 Tim BM4</button>
+    <button class="divisi-tab" data-div="proyek" onclick="switchDiv('proyek',this)" id="tab-proyek" style="display:none;">🏗️ Proyek</button>
+    <button class="divisi-tab" data-div="security" onclick="switchDiv('security',this)" id="tab-security" style="display:none;">🛡️ Security</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content-area">
+
+    <!-- DASHBOARD -->
+    <div class="divisi-pane active" id="pane-dashboard">
+      <div class="dash-wrap">
+        <div class="dash-proyek-head" id="dash-proyek-head">
+          <div>
+            <div class="dash-proyek-title" id="dash-proyek-title">—</div>
+            <div class="dash-proyek-sub" id="dash-proyek-sub">—</div>
+          </div>
+          <div class="dash-stats">
+            <div class="dash-stat">
+              <div class="dash-stat-val" id="dash-unit">—</div>
+              <div class="dash-stat-lbl">Total Unit</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-val" id="dash-real">—</div>
+              <div class="dash-stat-lbl">Terjual</div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-section-title">Ringkasan Divisi</div>
+        <div class="dash-grid">
+          <div class="dash-card" onclick="switchDiv('analisa',document.querySelector('[data-div=analisa]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#EFF6FF;">📍</div>
+              <div><div class="dash-card-title">Analisa Lokasi</div><div class="dash-card-sub">Kompetitor & Skor Strategis</div></div>
+            </div>
+            <div class="dash-card-metrics">
+              <div class="dash-metric"><div class="dash-metric-val" style="color:var(--accent);" id="d-kompetitor">17</div><div class="dash-metric-lbl">Kompetitor</div></div>
+              <div class="dash-metric"><div class="dash-metric-val" style="color:#059669;" id="d-anchor-score">—</div><div class="dash-metric-lbl">Skor Proyek</div></div>
+            </div>
+          </div>
+          <div class="dash-card" onclick="switchDiv('strategi',document.querySelector('[data-div=strategi]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#FEF3C7;">🎯</div>
+              <div><div class="dash-card-title">Strategi & Promo</div><div class="dash-card-sub">Monitoring Target Pasar</div></div>
+            </div>
+            <div class="dash-card-metrics">
+              <div class="dash-metric"><div class="dash-metric-val" style="color:#D97706;" id="d-target">8</div><div class="dash-metric-lbl">Target Aktif</div></div>
+              <div class="dash-metric"><div class="dash-metric-val" style="color:#059669;" id="d-deal">0</div><div class="dash-metric-lbl">Deal Closing</div></div>
+            </div>
+          </div>
+          <div class="dash-card" onclick="switchDiv('sales',document.querySelector('[data-div=sales]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#ECFDF5;">📊</div>
+              <div><div class="dash-card-title">Sales</div><div class="dash-card-sub">Marketing + KPR & Akad</div></div>
+            </div>
+            <div class="dash-coming">🚧 Segera hadir — modul tracking prospek & pipeline KPR</div>
+          </div>
+          <div class="dash-card" onclick="switchDiv('konstruksi',document.querySelector('[data-div=konstruksi]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#FEF3C7;">🏗️</div>
+              <div><div class="dash-card-title">Konstruksi</div><div class="dash-card-sub">Progress Pembangunan</div></div>
+            </div>
+            <div class="dash-coming">🚧 Segera hadir — tracking progress per blok & unit</div>
+          </div>
+          <div class="dash-card" onclick="switchDiv('legal',document.querySelector('[data-div=legal]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#F5F3FF;">⚖️</div>
+              <div><div class="dash-card-title">Legal & Landbank</div><div class="dash-card-sub">Perizinan & Lahan</div></div>
+            </div>
+            <div class="dash-coming">🚧 Segera hadir — tracking dokumen & status perizinan</div>
+          </div>
+          <div class="dash-card" onclick="switchDiv('finance',document.querySelector('[data-div=finance]'))">
+            <div class="dash-card-top">
+              <div class="dash-card-icon" style="background:#ECFDF5;">💰</div>
+              <div><div class="dash-card-title">Finance</div><div class="dash-card-sub">Cashflow & Budget</div></div>
+            </div>
+            <div class="dash-coming">🚧 Segera hadir — monitoring cashflow & realisasi anggaran</div>
+          </div>
+        </div>
+
+        <!-- [DASHBOARD RANKING] Ranking perumahan berdasarkan skor per-section -->
+        <div class="dash-section-title">🏆 Ranking Perumahan</div>
+        <div class="drnk-controls">
+          <div class="drnk-filter-group">
+            <span class="drnk-filter-lbl">Ranking berdasarkan:</span>
+            <select class="drnk-filter-select" id="drnk-sort-by" onchange="drnkSetSortBy(this.value)">
+              <option value="avg" selected>Rata² 6 Dimensi</option>
+              <option value="place">📍 Place saja</option>
+              <option value="product">🏠 Product saja</option>
+              <option value="price">💰 Price saja</option>
+              <option value="promotion">📢 Promotion saja</option>
+              <option value="performance">📈 Performance saja</option>
+              <option value="gtm">👔 GTM saja</option>
+            </select>
+          </div>
+          <div class="drnk-filter-group">
+            <span class="drnk-filter-lbl">Tampilan:</span>
+            <select class="drnk-filter-select" id="drnk-limit" onchange="drnkSetLimit(this.value)">
+              <option value="10" selected>Top 10</option>
+              <option value="20">Top 20</option>
+              <option value="0">Semua</option>
+            </select>
+          </div>
+          <button class="drnk-filter-select" onclick="printDashboardRanking()" style="margin-left:auto;padding:5px 12px;background:#2563EB;color:white;border-color:#2563EB;cursor:pointer;font-weight:600;" title="Cetak / Simpan sebagai PDF">🖨️ PDF</button>
+        </div>
+        <div class="drnk-grid" id="drnk-cards"></div>
+
+        <div class="dash-quote-card">
+          <div class="dash-quote-icon">✦</div>
+          <div class="dash-quote-body">
+            <div class="dash-quote-label">Kata Hari Ini</div>
+            <div class="dash-quote-text" id="dash-quote-text">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALISA LOKASI -->
+    <div class="divisi-pane" id="pane-analisa">
+      <div class="analisa-wrap" style="position:relative;">
+        <!-- Sidebar kiri -->
+        <div class="sb">
+          <div class="sb-sec">
+            <div class="sb-lbl">Pilih Perumahan</div>
+            <select id="perumahan-select"><option value="">— Semua Perumahan —</option></select>
+          </div>
+          <div class="sb-sec">
+            <div class="sb-lbl">Filter Tipe</div>
+            <div class="chip-row">
+              <button class="chip active" data-filter="all" onclick="setFilter('all',this)">Semua</button>
+              <button class="chip" data-filter="subsidi" onclick="setFilter('subsidi',this)">Subsidi</button>
+              <button class="chip" data-filter="mix" onclick="setFilter('mix',this)">Mix-use</button>
+            </div>
+          </div>
+          <div class="sb-sec">
+            <div class="sb-lbl">Toggle POI</div>
+            <div class="poi-grid">
+              <button class="poi-chip active" data-kat="rs" onclick="togglePoi('rs',this)"><span class="dot" style="background:var(--rs)"></span>RS/Klinik</button>
+              <button class="poi-chip active" data-kat="kampus" onclick="togglePoi('kampus',this)"><span class="dot" style="background:var(--kampus)"></span>Kampus</button>
+              <button class="poi-chip active" data-kat="mall" onclick="togglePoi('mall',this)"><span class="dot" style="background:var(--mall)"></span>Belanja</button>
+              <button class="poi-chip active" data-kat="tol" onclick="togglePoi('tol',this)"><span class="dot" style="background:var(--tol)"></span>Transportasi</button>
+              <button class="poi-chip active" data-kat="pemda" onclick="togglePoi('pemda',this)"><span class="dot" style="background:var(--pemda)"></span>Pemerintah</button>
+              <button class="poi-chip active" data-kat="industri" onclick="togglePoi('industri',this)"><span class="dot" style="background:var(--industri)"></span>Industri</button>
+              <button class="poi-chip active" data-kat="publik" onclick="togglePoi('publik',this)"><span class="dot" style="background:var(--publik)"></span>Ruang Publik</button>
+            </div>
+          </div>
+          <div class="sb-sec">
+            <div class="sb-lbl">Ranking</div>
+            <select id="rank-cat-select" onchange="buildRanking(this.value)">
+              <option value="overall">🏆 Skor Keseluruhan</option>
+              <option value="rs">🏥 Jarak RS/Klinik</option>
+              <option value="kampus">🎓 Jarak Kampus</option>
+              <option value="mall">🏬 Jarak Mall</option>
+              <option value="tol">🛣️ Jarak Tol</option>
+              <option value="pemda">🏛️ Jarak Pemerintah</option>
+              <option value="industri">💼 Jarak Industri</option>
+              <option value="publik">🌳 Jarak Publik</option>
+            </select>
+          </div>
+          <div class="rank-list" id="ranking-list"></div>
+        </div>
+        <!-- Peta -->
+        <div class="map-wrap">
+          <div id="analisa-map"></div>
+          <div class="map-fabs">
+            <button class="fab" id="focus-data-fab" onclick="toggleFocusData()" title="Perbesar panel data — peta mengecil">📊 Fokus Data</button>
+            <button class="fab" id="heatmap-fab" onclick="toggleHeatmap()">🌡️ Heatmap</button>
+            <button class="fab" id="chart-fab" onclick="toggleChart()">📊 Chart</button>
+          </div>
+          <div class="chart-panel" id="chart-panel">
+            <div class="chart-title">📊 Progress Realisasi per Perumahan</div>
+            <div class="chart-bars" id="chart-bars"></div>
+          </div>
+        </div>
+        <!-- Detail sidebar kanan — LENGKAP 5 TAB -->
+        <div class="detail-sb" id="detail-sb">
+          <button class="detail-close-mobile" id="detail-close-mobile" onclick="closeDetailMobile()" style="display:none;">✕</button>
+          <div class="detail-empty" id="detail-empty"><div style="font-size:36px;margin-bottom:10px;">📍</div>Pilih perumahan dari<br>peta atau daftar ranking<br>untuk melihat analisa lengkap</div>
+          <div class="detail-content" id="detail-content">
+            <div class="tab-bar">
+              <div class="tab active" data-atab="overview" onclick="switchTab('overview',this)">📋 Info</div>
+              <div class="tab" data-atab="fasilitas" onclick="switchTab('fasilitas',this)">📍 Fasilitas</div>
+              <div class="tab" data-atab="compare" onclick="switchTab('compare',this)">⚖️ Vs Anchor</div>
+              <div class="tab" data-atab="radar" onclick="switchTab('radar',this)">📊 Radar</div>
+              <div class="tab" data-atab="nearby" onclick="switchTab('nearby',this)">🏘️ Sekitar</div>
+            </div>
+            <div class="tab-body">
+              <div class="tab-pane active" id="tab-overview"></div>
+              <div class="tab-pane" id="tab-fasilitas"></div>
+              <div class="tab-pane" id="tab-compare"></div>
+              <div class="tab-pane" id="tab-radar"></div>
+              <div class="tab-pane" id="tab-nearby"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Editor Data overlay [v12 EDITOR] header & toolbar diperbarui -->
+      <div class="editor-overlay" id="editor-overlay">
+        <div class="editor-inner">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="font-size:15px;font-weight:700;">✏️ Editor Data Perumahan & POI</div>
+              <span id="editor-dirty-badge" class="dirty-badge clean"><span class="dot"></span><span id="editor-dirty-text">Tersinkron</span></span>
+              <span id="editor-sync-status" class="sync-status"></span>
+            </div>
+            <div class="editor-head-actions">
+              <button class="btn-sm-secondary" id="btn-discard" onclick="discardEditorChanges()" disabled>↶ Batalkan Perubahan</button>
+              <button class="btn-sm-secondary" onclick="resetEditorData()">↩ Reset Default</button>
+              <button class="btn-sm-primary" id="btn-sync-now" onclick="syncEditorNow()" disabled>💾 Sync ke Sheets</button>
+              <button class="btn-sm-primary" onclick="applyEditorToPeta()">✓ Terapkan ke Peta</button>
+            </div>
+          </div>
+          <div class="editor-tabs">
+            <button class="etab active" onclick="switchEtab('perumahan',this)">🏘️ Perumahan <span id="ecnt-p"></span></button>
+            <button class="etab" onclick="switchEtab('poi',this)">📍 POI <span id="ecnt-poi"></span></button>
+            <button class="etab" onclick="switchEtab('tapera',this)">📊 Tapera <span id="ecnt-tapera"></span></button>
+            <button class="etab" onclick="switchEtab('sikumbang',this)">🏘️ Sikumbang <span id="ecnt-sikumbang"></span></button>
+          </div>
+          <div id="etab-perumahan">
+            <div class="editor-split">
+              <div>
+              <div class="ecard">
+              <div class="ecard-head"><div><div class="ecard-title">Daftar Perumahan Kompetitor</div><div class="ecard-sub">Edit langsung di tabel. Perubahan disimpan lokal otomatis, klik Sync untuk kirim ke Sheets.</div></div></div>
+              <div class="editor-toolbar">
+                <div class="editor-search">
+                  <input type="text" id="search-perumahan" placeholder="Cari nama, area, atau developer..." oninput="onSearchPerumahan(this.value)">
+                  <button class="editor-search-clear" id="clear-search-p" onclick="clearSearchPerumahan()">✕</button>
+                </div>
+                <span class="editor-filter-info" id="filter-info-p"></span>
+              </div>
+              <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th class="sortable" onclick="sortPerumahan('nama')" data-sort="nama">Nama</th><th class="sortable" onclick="sortPerumahan('area')" data-sort="area">Area</th><th class="sortable" onclick="sortPerumahan('tipe')" data-sort="tipe">Tipe</th><th>Lat</th><th>Lng</th><th class="sortable" onclick="sortPerumahan('developer')" data-sort="developer">Developer</th><th class="sortable" onclick="sortPerumahan('unit')" data-sort="unit">Unit</th><th class="sortable" onclick="sortPerumahan('realisasi')" data-sort="realisasi">Realisasi</th><th class="sortable" onclick="sortPerumahan('tahun')" data-sort="tahun">Tahun</th><th></th></tr></thead><tbody id="etbody-p"></tbody></table></div>
+              <!-- [v13 SMART-INPUT] Form tambah perumahan dengan paste link Maps -->
+              <div style="padding:12px 14px 14px;background:#FAFAF8;border-top:1px solid var(--border);">
+                <div class="smart-input-box">
+                  <div class="smart-input-head">
+                    <span class="smart-input-title">📍 Ambil dari Google Maps</span>
+                    <button type="button" class="smart-input-help-btn" id="smi-p-helpbtn">❓ Cara pakai</button>
+                  </div>
+                  <div class="smart-input-row">
+                    <input type="text" id="smi-p-input" placeholder="Paste link Maps atau koordinat (contoh: -6.5578, 107.8131)">
+                    <button type="button" class="smart-input-btn" id="smi-p-btn">🔍 Ambil</button>
+                  </div>
+                  <div class="smart-input-fb" id="smi-p-fb"></div>
+                  <div class="smart-input-help" id="smi-p-help">
+                    <b>Cara termudah (HP & desktop):</b>
+                    <ol>
+                      <li>Buka Google Maps, cari lokasi yang dimaksud</li>
+                      <li>Tekan lama (HP) / klik kanan (PC) tepat di titik tempatnya</li>
+                      <li>Muncul angka seperti <code>-6.5578, 107.8131</code> — klik/tap angka itu untuk copy</li>
+                      <li>Kembali ke sini, paste di kotak atas, lalu klik "Ambil"</li>
+                      <li>Lat/Lng terisi otomatis + pin di mini-map sebelah</li>
+                    </ol>
+                    <b>Shortlink <code>maps.app.goo.gl/xxx</code> tidak bisa otomatis</b> — klik "Buka Link" yang muncul, lalu copy URL lengkap dari tab baru.
+                  </div>
+                </div>
+                <div class="add-row-e">
+                <div class="ef"><label>Nama</label><input type="text" id="enp-nama" placeholder="Nama Perumahan" style="min-width:150px;"></div>
+                <div class="ef"><label>Area</label><input type="text" id="enp-area" placeholder="Kecamatan" style="min-width:90px;"></div>
+                <div class="ef"><label>Tipe</label><select id="enp-tipe" style="min-width:80px;"><option value="subsidi">Subsidi</option><option value="mix">Mix-use</option></select></div>
+                <div class="ef"><label>Lat</label><input type="number" id="enp-lat" placeholder="-6.55" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Lng</label><input type="number" id="enp-lng" placeholder="107.81" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Developer</label><input type="text" id="enp-dev" placeholder="PT ..." style="min-width:120px;"></div>
+                <div class="ef"><label>Unit</label><input type="number" id="enp-unit" placeholder="80" style="min-width:55px;"></div>
+                <div class="ef"><label>Realisasi</label><input type="number" id="enp-real" placeholder="0" style="min-width:65px;"></div>
+                <div class="ef"><label>Tahun</label><input type="number" id="enp-tahun" placeholder="2024" style="min-width:60px;"></div>
+                <div class="ef"><label>&nbsp;</label><button class="btn-sm-primary" onclick="addEPerumahan()">+ Tambah</button></div>
+              </div>
+              </div>
+              </div>
+              </div>
+              <!-- Mini-map side panel -->
+              <div class="editor-minimap-card">
+                <div class="editor-minimap-head">
+                  <b>🗺️ Mini-map</b>
+                  <span class="editor-minimap-tip">Klik = isi Lat/Lng · Scroll = zoom</span>
+                </div>
+                <div id="editor-minimap" class="editor-minimap"></div>
+              </div>
+            </div>
+          </div>
+          <div id="etab-poi" style="display:none;">
+            <div class="editor-split">
+              <div>
+              <div class="ecard">
+              <div class="ecard-head"><div><div class="ecard-title">Daftar POI</div><div class="ecard-sub">Fasilitas yang dipakai dalam kalkulasi skor lokasi.</div></div></div>
+              <div class="editor-toolbar">
+                <div class="editor-search">
+                  <input type="text" id="search-poi" placeholder="Cari nama atau kategori POI..." oninput="onSearchPoi(this.value)">
+                  <button class="editor-search-clear" id="clear-search-poi" onclick="clearSearchPoi()">✕</button>
+                </div>
+                <span class="editor-filter-info" id="filter-info-poi"></span>
+              </div>
+              <div class="etbl-wrap"><table class="etbl"><thead><tr><th>#</th><th class="sortable" onclick="sortPoi('nama')" data-sort="nama">Nama</th><th class="sortable" onclick="sortPoi('kat')" data-sort="kat">Kategori</th><th>Lat</th><th>Lng</th><th></th></tr></thead><tbody id="etbody-poi"></tbody></table></div>
+              <!-- [v13 SMART-INPUT] Form tambah POI -->
+              <div style="padding:12px 14px 14px;background:#FAFAF8;border-top:1px solid var(--border);">
+                <div class="smart-input-box">
+                  <div class="smart-input-head">
+                    <span class="smart-input-title">📍 Ambil dari Google Maps</span>
+                    <button type="button" class="smart-input-help-btn" id="smi-poi-helpbtn">❓ Cara pakai</button>
+                  </div>
+                  <div class="smart-input-row">
+                    <input type="text" id="smi-poi-input" placeholder="Paste link Maps atau koordinat (contoh: -6.5578, 107.8131)">
+                    <button type="button" class="smart-input-btn" id="smi-poi-btn">🔍 Ambil</button>
+                  </div>
+                  <div class="smart-input-fb" id="smi-poi-fb"></div>
+                  <div class="smart-input-help" id="smi-poi-help">
+                    Klik kanan di Google Maps → klik angka koordinat → paste di sini → klik "Ambil".
+                    Lat/Lng terisi otomatis + pin muncul di mini-map.
+                  </div>
+                </div>
+                <div class="add-row-e">
+                <div class="ef"><label>Nama</label><input type="text" id="epoi-nama" placeholder="Nama POI" style="min-width:170px;"></div>
+                <div class="ef"><label>Kategori</label><select id="epoi-kat" style="min-width:110px;"><option value="rs">RS/Klinik</option><option value="kampus">Kampus</option><option value="mall">Mall/Belanja</option><option value="tol">Transportasi</option><option value="pemda">Pemerintah</option><option value="industri">Industri</option><option value="publik">Ruang Publik</option></select></div>
+                <div class="ef"><label>Lat</label><input type="number" id="epoi-lat" placeholder="-6.55" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>Lng</label><input type="number" id="epoi-lng" placeholder="107.81" step="0.0000001" style="min-width:85px;"></div>
+                <div class="ef"><label>&nbsp;</label><button class="btn-sm-primary" onclick="addEPoi()">+ Tambah</button></div>
+              </div>
+              </div>
+              </div>
+              </div>
+              <!-- Mini-map di POI pakai shared instance (editor-minimap akan di-reused) -->
+              <div class="editor-minimap-card">
+                <div class="editor-minimap-head">
+                  <b>🗺️ Mini-map</b>
+                  <span class="editor-minimap-tip">Klik = isi Lat/Lng POI · Scroll = zoom</span>
+                </div>
+                <div id="editor-minimap-poi" class="editor-minimap"></div>
+              </div>
+            </div>
+          </div>
+          <!-- [P0 TAPERA v3] Tab editor data Tapera — 6 section FM (Place/Product/Price/Promotion/Performance/GTM) -->
+          <div id="etab-tapera" style="display:none;">
+            <div class="ecard" style="padding:14px;">
+
+              <!-- Header bar -->
+              <div class="tpr2-topbar">
+                <div class="tpr2-topbar-left">
+                  <div class="tpr2-title">📊 Data Tapera per Perumahan</div>
+                  <div class="tpr2-subtitle">Setup awal dari PDF Dashboard Tapera + lengkapi 6 section marketing mix (Place/Product/Price/Promotion/Performance/GTM)</div>
+                </div>
+                <div class="tpr2-topbar-right">
+                  <div class="tpr2-mode-toggle" role="tablist" aria-label="Pilih mode tampilan editor">
+                    <button type="button" id="tpr2-mode-btn-card" class="tpr2-mode-btn active" onclick="tpr2SwitchMode('card')" title="Mode default: 6 card section">📋 Mode Card</button>
+                    <button type="button" id="tpr2-mode-btn-wizard" class="tpr2-mode-btn" onclick="tpr2SwitchMode('wizard')" title="Mode wizard: input bertahap dengan live preview">🪄 Mode Wizard</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selector perumahan -->
+              <div class="tpr2-selector-row">
+                <label class="tpr2-selector-lbl">Pilih perumahan:</label>
+                <select id="tpr-select" onchange="loadTaperaForm(this.value)" class="tpr2-selector"></select>
+                <span id="tpr-status" class="tpr2-status-badge"></span>
+              </div>
+
+              <div id="tpr-form" style="display:none;">
+
+                <!-- Progress bar kelengkapan section -->
+                <div class="tpr2-progress-row">
+                  <span class="tpr2-progress-lbl">Kelengkapan data:</span>
+                  <div class="tpr2-progress-track">
+                    <div class="tpr2-progress-fill" id="tpr2-progress-fill" style="width:0%;"></div>
+                  </div>
+                  <span class="tpr2-progress-text" id="tpr2-progress-text">0 dari 6 section</span>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     MODE 1 — CARD (default) — 6 section sesuai FM
+                     ═══════════════════════════════════════════════════════════════ -->
+                <div id="tpr2-mode-card" class="tpr2-mode-pane active">
+
+                  <!-- Card 0: 🆔 Identitas & Sumber Tapera -->
+                  <div class="tpr2-card" data-tpr-card="identitas">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('identitas')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#E6F1FB;color:#0C447C;">🆔</div>
+                        <div>
+                          <div class="tpr2-card-title">Identitas &amp; Sumber Tapera</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-identitas">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">
+                        Mirror data realisasi dari <b>tapera.go.id/realisasi</b>. Setelah filter perumahan di sana, gunakan tombol <b>"Tempel dari Tapera"</b> untuk auto-isi field di card lain (Performance, Price, dll).
+                      </div>
+
+                      <!-- Action: Paste from Tapera -->
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                        <button type="button" class="btn-sm-primary" onclick="tprPasteFromClipboard()">📋 Tempel dari Tapera</button>
+                        <button type="button" class="btn-sm" onclick="tprShowPasteHelp()">❓ Cara pakai</button>
+                      </div>
+
+                      <!-- Identitas fields -->
+                      <div class="tpr2-grid-3">
+                        <div class="ef" style="grid-column:span 2;">
+                          <label>🏘️ Nama Perumahan</label>
+                          <input type="text" id="tpr-nama-perumahan" readonly placeholder="auto dari profil perumahan" style="background:var(--bg);color:var(--muted);">
+                          <div class="ef-hint">Otomatis dari nama perumahan yang dipilih</div>
+                        </div>
+                        <div class="ef">
+                          <label>📅 Tahun Realisasi</label>
+                          <input type="number" id="tpr-tahun-realisasi" min="2020" max="2035" placeholder="2026" oninput="tpr2OnFieldInput()">
+                        </div>
+                        <div class="ef" style="grid-column:span 2;">
+                          <label>📍 Kabupaten/Kota</label>
+                          <input type="text" id="tpr-kab-kota" placeholder="KAB SUBANG" oninput="tpr2OnFieldInput()" style="text-transform:uppercase;">
+                          <div class="ef-hint">Sesuai format Tapera (huruf kapital). Contoh: KAB SUBANG, KOTA BANDUNG</div>
+                        </div>
+                      </div>
+
+                      <!-- Link tombol ke Tapera -->
+                      <div class="tpr-tapera-link-wrap" style="margin-top:12px;">
+                        <a href="https://www.tapera.go.id/realisasi/" target="_blank" rel="noopener noreferrer" class="tpr-tapera-link-btn">
+                          <span style="font-size:18px;">🔗</span>
+                          <div class="tpr-tapera-link-text">
+                            <div class="tpr-tapera-link-title">Buka Realisasi FLPP resmi di Tapera</div>
+                            <div class="tpr-tapera-link-url">tapera.go.id/realisasi</div>
+                          </div>
+                          <span style="font-size:14px;">↗</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Card 1: 📍 Place -->
+                  <div class="tpr2-card" data-tpr-card="place">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('place')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#FAEEDA;color:#854F0B;">📍</div>
+                        <div>
+                          <div class="tpr2-card-title">Place</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-place">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">Field lokasi & lingkungan. Jarak ke anchor dihitung otomatis dari koordinat.</div>
+                      <div id="tpr-section-fields-place" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Card 2: 🏠 Product -->
+                  <div class="tpr2-card" data-tpr-card="product">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('product')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#E1F5EE;color:#0F6E56;">🏠</div>
+                        <div>
+                          <div class="tpr2-card-title">Product</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-product">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">Spesifikasi unit dan bangunan.</div>
+                      <div class="tpr2-grid-2">
+                        <div class="ef"><label>📐 Luas Tanah</label><input type="text" id="tpr-lt" placeholder="60-90 m²" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>📐 Luas Bangunan</label><input type="text" id="tpr-lb" placeholder="26-31 m²" oninput="tpr2OnFieldInput()"></div>
+                      </div>
+                      <div id="tpr-section-fields-product" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Card 3: 💰 Price -->
+                  <div class="tpr2-card" data-tpr-card="price">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('price')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#FBEAF0;color:#993556;">💰</div>
+                        <div>
+                          <div class="tpr2-card-title">Price</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-price">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">Harga, KPR, bank dominan, nominal FLPP.</div>
+                      <div class="tpr2-grid-3">
+                        <div class="ef"><label>💰 Harga Range</label><input type="text" id="tpr-harga" placeholder="150-175 Jt" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>📅 Tenor Dominan</label><input type="text" id="tpr-tenor" placeholder="15-20 Tahun" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>💳 Uang Muka Range</label><input type="text" id="tpr-um" placeholder="2-3%" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>🏦 Bank Dominan</label><input type="text" id="tpr-bank" placeholder="BTN" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>💵 Nominal FLPP (Miliar Rp)</label><input type="number" id="tpr-nominal" placeholder="122.9" step="0.1" min="0" oninput="tpr2OnFieldInput()"></div>
+                      </div>
+                      <div id="tpr-section-fields-price" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Card 4: 📢 Promotion -->
+                  <div class="tpr2-card" data-tpr-card="promotion">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('promotion')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#FBEAF0;color:#993556;">📢</div>
+                        <div>
+                          <div class="tpr2-card-title">Promotion</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-promotion">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">Aktivitas promo & marketing yang sedang berjalan. Kosongkan kalau tidak tahu.</div>
+                      <div class="tpr2-grid-2">
+                        <div class="ef"><label>🎁 Promo Aktif</label><input type="text" id="tpr-promo-aktif" placeholder="Free AJB, DP 1%" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>📅 Periode Promo</label><input type="text" id="tpr-promo-periode" placeholder="1 Feb - 31 Mei" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>🎉 Bonus Pembelian</label><input type="text" id="tpr-promo-bonus" placeholder="Kanopi, AC" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>📱 Iklan di Platform</label><input type="text" id="tpr-promo-iklan" placeholder="Rumah123, FB Ads" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef" style="grid-column:span 2;"><label>📢 Billboard/Spanduk</label><input type="text" id="tpr-promo-bb" placeholder="Ya (2 titik) / Tidak" oninput="tpr2OnFieldInput()"></div>
+                      </div>
+                      <div id="tpr-section-fields-promotion" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Card 5: 📈 Performance (gabungan: Total + Bulanan + Profil Pembeli) -->
+                  <div class="tpr2-card" data-tpr-card="performance">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('performance')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#E6F1FB;color:#185FA5;">📈</div>
+                        <div>
+                          <div class="tpr2-card-title">Performance</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-performance">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+
+                      <!-- Sub-section: Ringkasan total -->
+                      <div class="tpr2-subsection">
+                        <div class="tpr2-subsection-title">📊 Ringkasan realisasi</div>
+                        <div class="tpr2-grid-2">
+                          <div class="ef"><label>Total Realisasi (unit)</label><input type="number" id="tpr-total" placeholder="1058" min="0" oninput="tpr2OnFieldInput()"></div>
+                          <div class="ef"><label>Periode data sampai</label><input type="month" id="tpr-periode" oninput="tpr2OnFieldInput()"></div>
+                        </div>
+                      </div>
+
+                      <!-- Sub-section: Realisasi bulanan -->
+                      <div class="tpr2-subsection">
+                        <div class="tpr2-subsection-title">📅 Realisasi bulanan</div>
+                        <div class="tpr2-bulanan-chart-wrap" id="tpr2-bulanan-chart-wrap" style="display:none;">
+                          <div class="tpr2-bulanan-bars" id="tpr2-bulanan-bars"></div>
+                          <div class="tpr2-bulanan-axis" id="tpr2-bulanan-axis"></div>
+                        </div>
+                        <div class="tpr2-bulanan-mode-toggle">
+                          <button type="button" id="tpr2-bul-mode-picker" class="tpr2-bul-mode-btn active" onclick="tpr2BulananSwitchMode('picker')">📅 Picker</button>
+                          <button type="button" id="tpr2-bul-mode-raw" class="tpr2-bul-mode-btn" onclick="tpr2BulananSwitchMode('raw')">📋 Raw text</button>
+                        </div>
+                        <div id="tpr2-bul-picker" class="tpr2-bul-mode-pane active">
+                          <div class="tpr2-bul-add-row">
+                            <input type="month" id="tpr2-bul-input-month" class="tpr2-bul-input-month">
+                            <input type="number" id="tpr2-bul-input-unit" placeholder="unit" min="0" class="tpr2-bul-input-unit">
+                            <button type="button" class="btn-sm-primary" onclick="tpr2BulananAdd()">+ Tambah bulan</button>
+                          </div>
+                          <div class="tpr2-bul-chips" id="tpr2-bul-chips"></div>
+                        </div>
+                        <div id="tpr2-bul-raw" class="tpr2-bul-mode-pane">
+                          <div class="tpr2-bul-raw-help">Format: <code>YYYY-MM:unit, YYYY-MM:unit, ...</code></div>
+                          <textarea id="tpr-bulanan" rows="3" class="tpr2-bul-raw-textarea" placeholder="2024-01:7, 2024-02:8, ..." oninput="tpr2OnRawBulananInput()"></textarea>
+                        </div>
+                      </div>
+
+                      <!-- Sub-section: Profil pembeli -->
+                      <div class="tpr2-subsection">
+                        <div class="tpr2-subsection-title">👥 Profil pembeli</div>
+                        <div class="tpr2-bulanan-mode-toggle">
+                          <button type="button" id="tpr2-prof-mode-visual" class="tpr2-bul-mode-btn active" onclick="tpr2ProfilSwitchMode('visual')">📊 Visual</button>
+                          <button type="button" id="tpr2-prof-mode-raw" class="tpr2-bul-mode-btn" onclick="tpr2ProfilSwitchMode('raw')">📋 Raw text</button>
+                        </div>
+                        <div id="tpr2-prof-visual" class="tpr2-bul-mode-pane active">
+                          <div class="tpr2-grid-2">
+                            <div class="tpr2-prof-block" data-prof-key="pekerjaan">
+                              <div class="tpr2-prof-head">
+                                <span class="tpr2-prof-lbl">💼 Pekerjaan</span>
+                                <span class="tpr2-prof-total" id="tpr2-prof-total-pekerjaan">total 0%</span>
+                              </div>
+                              <div class="tpr2-prof-bars" id="tpr2-prof-bars-pekerjaan"></div>
+                              <div class="tpr2-prof-add">
+                                <input type="text" placeholder="kategori (mis. swasta)" id="tpr2-prof-newkey-pekerjaan">
+                                <input type="number" placeholder="%" min="0" max="100" id="tpr2-prof-newval-pekerjaan">
+                                <button type="button" class="btn-sm-secondary" onclick="tpr2ProfilAddCat('pekerjaan')">+ kategori</button>
+                              </div>
+                            </div>
+                            <div class="tpr2-prof-block" data-prof-key="usia">
+                              <div class="tpr2-prof-head">
+                                <span class="tpr2-prof-lbl">🎂 Usia</span>
+                                <span class="tpr2-prof-total" id="tpr2-prof-total-usia">total 0%</span>
+                              </div>
+                              <div class="tpr2-prof-bars" id="tpr2-prof-bars-usia"></div>
+                              <div class="tpr2-prof-add">
+                                <input type="text" placeholder="rentang (mis. 19-25)" id="tpr2-prof-newkey-usia">
+                                <input type="number" placeholder="%" min="0" max="100" id="tpr2-prof-newval-usia">
+                                <button type="button" class="btn-sm-secondary" onclick="tpr2ProfilAddCat('usia')">+ kategori</button>
+                              </div>
+                            </div>
+                            <div class="tpr2-prof-block" data-prof-key="penghasilan">
+                              <div class="tpr2-prof-head">
+                                <span class="tpr2-prof-lbl">💴 Penghasilan</span>
+                                <span class="tpr2-prof-total" id="tpr2-prof-total-penghasilan">total 0%</span>
+                              </div>
+                              <div class="tpr2-prof-bars" id="tpr2-prof-bars-penghasilan"></div>
+                              <div class="tpr2-prof-add">
+                                <input type="text" placeholder="rentang (mis. 3-4Jt)" id="tpr2-prof-newkey-penghasilan">
+                                <input type="number" placeholder="%" min="0" max="100" id="tpr2-prof-newval-penghasilan">
+                                <button type="button" class="btn-sm-secondary" onclick="tpr2ProfilAddCat('penghasilan')">+ kategori</button>
+                              </div>
+                            </div>
+                            <div class="tpr2-prof-block" data-prof-key="gender">
+                              <div class="tpr2-prof-head">
+                                <span class="tpr2-prof-lbl">🚻 Gender</span>
+                                <span class="tpr2-prof-total" id="tpr2-prof-total-gender">total 0%</span>
+                              </div>
+                              <div class="tpr2-prof-bars" id="tpr2-prof-bars-gender"></div>
+                              <div class="tpr2-prof-add">
+                                <input type="text" placeholder="label (mis. L)" id="tpr2-prof-newkey-gender">
+                                <input type="number" placeholder="%" min="0" max="100" id="tpr2-prof-newval-gender">
+                                <button type="button" class="btn-sm-secondary" onclick="tpr2ProfilAddCat('gender')">+ kategori</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div id="tpr2-prof-raw" class="tpr2-bul-mode-pane">
+                          <div class="tpr2-bul-raw-help">Format per dimensi: <code>Label:persen, Label:persen</code></div>
+                          <div class="tpr2-grid-2">
+                            <div class="ef"><label>Pekerjaan</label><input type="text" id="tpr-pekerjaan" placeholder="swasta:89, wiraswasta:8, other:3" oninput="tpr2OnRawProfilInput('pekerjaan',this.value)"></div>
+                            <div class="ef"><label>Usia</label><input type="text" id="tpr-usia" placeholder="19-25:42, 26-30:28" oninput="tpr2OnRawProfilInput('usia',this.value)"></div>
+                            <div class="ef"><label>Penghasilan</label><input type="text" id="tpr-penghasilan" placeholder="3-4Jt:30, 4-5Jt:40" oninput="tpr2OnRawProfilInput('penghasilan',this.value)"></div>
+                            <div class="ef"><label>Gender</label><input type="text" id="tpr-gender" placeholder="L:58, P:42" oninput="tpr2OnRawProfilInput('gender',this.value)"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Custom fields Performance -->
+                      <div id="tpr-section-fields-performance" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Card 6: 👔 Go-to-Market -->
+                  <div class="tpr2-card" data-tpr-card="gtm">
+                    <div class="tpr2-card-head" onclick="tpr2ToggleCard('gtm')">
+                      <div class="tpr2-card-head-left">
+                        <div class="tpr2-card-icon" style="background:#EEEDFE;color:#3C3489;">👔</div>
+                        <div>
+                          <div class="tpr2-card-title">Go-to-Market</div>
+                          <div class="tpr2-card-summary" id="tpr2-sum-gtm">— belum diisi</div>
+                        </div>
+                      </div>
+                      <span class="tpr2-card-chevron">▾</span>
+                    </div>
+                    <div class="tpr2-card-body">
+                      <div class="tpr2-card-hint">Data tim jualan kompetitor. Didapat dari site visit, ngobrol dengan sales, atau intel lapangan.</div>
+                      <div class="tpr2-grid-3">
+                        <div class="ef"><label>👥 Marketing In-house</label><input type="number" id="tpr-gtm-mkt" placeholder="2" min="0" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>🏢 Struktur Kanal</label><input type="text" id="tpr-gtm-kanal" placeholder="In-house + Agent" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>🤝 Jumlah Agent</label><input type="number" id="tpr-gtm-agent" placeholder="12" min="0" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>💵 Fee Marketing</label><input type="text" id="tpr-gtm-fee-mkt" placeholder="1.5% / 500rb/unit" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>💵 Fee Agent</label><input type="text" id="tpr-gtm-fee-agt" placeholder="1%" oninput="tpr2OnFieldInput()"></div>
+                        <div class="ef"><label>🏪 Brand Developer</label><input type="text" id="tpr-gtm-dev" placeholder="PT Sejahtera" oninput="tpr2OnFieldInput()"></div>
+                      </div>
+                      <div id="tpr-section-fields-gtm" class="tpr2-section-fields"></div>
+                    </div>
+                  </div>
+
+                  <!-- Action bar -->
+                  <div class="tpr2-actions-row">
+                    <button class="btn-sm-primary" onclick="saveTaperaForm()">💾 Simpan Data Tapera</button>
+                    <button class="btn-sm-secondary" onclick="loadTaperaForm(document.getElementById('tpr-select').value)">↺ Reset Form</button>
+                    <button class="btn-sm-danger" onclick="clearTaperaData()" style="margin-left:auto;">🗑 Hapus Data</button>
+                  </div>
+
+                  <!-- Container kompat lama: tpr-custom-fields-container — tetap ada untuk backward compat,
+                       tapi tidak ditampilkan (custom fields sudah di-render per-section di atas) -->
+                  <div id="tpr-custom-fields-container" style="display:none;"></div>
+
+                </div><!-- /tpr2-mode-card -->
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     MODE 2 — WIZARD (urutan section sesuai FM)
+                     ═══════════════════════════════════════════════════════════════ -->
+                <div id="tpr2-mode-wizard" class="tpr2-mode-pane">
+                  <div class="tpr2-wiz-stepper" id="tpr2-wiz-stepper">
+                    <div class="tpr2-wiz-step active" data-wiz-step="1" onclick="tpr2WizGoStep(1)">
+                      <div class="tpr2-wiz-circle">1</div>
+                      <span class="tpr2-wiz-step-lbl">Place</span>
+                    </div>
+                    <div class="tpr2-wiz-line"></div>
+                    <div class="tpr2-wiz-step" data-wiz-step="2" onclick="tpr2WizGoStep(2)">
+                      <div class="tpr2-wiz-circle">2</div>
+                      <span class="tpr2-wiz-step-lbl">Product</span>
+                    </div>
+                    <div class="tpr2-wiz-line"></div>
+                    <div class="tpr2-wiz-step" data-wiz-step="3" onclick="tpr2WizGoStep(3)">
+                      <div class="tpr2-wiz-circle">3</div>
+                      <span class="tpr2-wiz-step-lbl">Price</span>
+                    </div>
+                    <div class="tpr2-wiz-line"></div>
+                    <div class="tpr2-wiz-step" data-wiz-step="4" onclick="tpr2WizGoStep(4)">
+                      <div class="tpr2-wiz-circle">4</div>
+                      <span class="tpr2-wiz-step-lbl">Promotion</span>
+                    </div>
+                    <div class="tpr2-wiz-line"></div>
+                    <div class="tpr2-wiz-step" data-wiz-step="5" onclick="tpr2WizGoStep(5)">
+                      <div class="tpr2-wiz-circle">5</div>
+                      <span class="tpr2-wiz-step-lbl">Performance</span>
+                    </div>
+                    <div class="tpr2-wiz-line"></div>
+                    <div class="tpr2-wiz-step" data-wiz-step="6" onclick="tpr2WizGoStep(6)">
+                      <div class="tpr2-wiz-circle">6</div>
+                      <span class="tpr2-wiz-step-lbl">GTM</span>
+                    </div>
+                  </div>
+                  <div class="tpr2-wiz-progress-row">
+                    <span class="tpr2-wiz-progress-lbl" id="tpr2-wiz-stepinfo">Step <strong>1 dari 6</strong> · Place</span>
+                    <div class="tpr2-wiz-progress-track">
+                      <div class="tpr2-wiz-progress-fill" id="tpr2-wiz-progress-fill" style="width:16%;"></div>
+                    </div>
+                    <span class="tpr2-wiz-progress-pct" id="tpr2-wiz-progress-pct">16%</span>
+                  </div>
+                  <div class="tpr2-wiz-split">
+                    <div class="tpr2-wiz-input-pane" id="tpr2-wiz-input"></div>
+                    <div class="tpr2-wiz-preview-pane" id="tpr2-wiz-preview"></div>
+                  </div>
+                  <div class="tpr2-wiz-nav">
+                    <span class="tpr2-wiz-nav-status" id="tpr2-wiz-status">Ada 0 perubahan belum disimpan</span>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" class="btn-sm-secondary" id="tpr2-wiz-prev" onclick="tpr2WizPrev()">← Sebelumnya</button>
+                      <button type="button" class="btn-sm-secondary" onclick="saveTaperaForm()">💾 Simpan</button>
+                      <button type="button" class="btn-sm-primary" id="tpr2-wiz-next" onclick="tpr2WizNext()">Berikutnya →</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /tpr-form -->
+
+              <!-- Market Context kabupaten -->
+              <div class="tpr2-mctx-section">
+                <div class="admin-section-title">🗺️ Market Context Kabupaten</div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Angka agregat kabupaten dari PDF Supply Tapera. Dipakai sebagai banner konteks di Analisa.</div>
+                <div class="tpr2-grid-3">
+                  <div class="ef"><label>Kabupaten</label><input type="text" id="mctx-kab" value="SUBANG"></div>
+                  <div class="ef"><label>Total Perumahan Terdaftar</label><input type="number" id="mctx-totperum" value="132" min="0"></div>
+                  <div class="ef"><label>Total Unit</label><input type="number" id="mctx-totunit" value="26647" min="0"></div>
+                  <div class="ef"><label>Terjual</label><input type="number" id="mctx-terjual" value="17513" min="0"></div>
+                  <div class="ef"><label>Kavling</label><input type="number" id="mctx-kavling" value="8665" min="0"></div>
+                  <div class="ef"><label>Ready Stock</label><input type="number" id="mctx-ready" value="295" min="0"></div>
+                  <div class="ef"><label>% Subsidi</label><input type="number" id="mctx-subsidi" value="91.86" step="0.01" min="0" max="100"></div>
+                  <div class="ef"><label>% Komersil</label><input type="number" id="mctx-komersil" value="8.14" step="0.01" min="0" max="100"></div>
+                </div>
+                <button class="btn-sm-primary" onclick="saveMarketCtxForm()" style="margin-top:8px;">💾 Simpan Market Context</button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- [SIKUMBANG v2] Tab editor data Sikumbang — full mirror dashboard sikumbang.tapera.go.id -->
+          <div id="etab-sikumbang" style="display:none;">
+            <div class="ecard" style="padding:14px;">
+
+              <!-- Header bar -->
+              <div class="tpr2-topbar">
+                <div class="tpr2-topbar-left">
+                  <div class="tpr2-title">🏘️ Data Sikumbang per Perumahan</div>
+                  <div class="tpr2-subtitle">Mirror dashboard sikumbang.tapera.go.id · 2 segmen (Komersil + Subsidi) × 5 status</div>
+                </div>
+                <div class="tpr2-topbar-right">
+                  <div class="tpr2-mode-toggle" role="tablist">
+                    <button type="button" id="skb-mode-btn-card" class="tpr2-mode-btn active" onclick="skbSwitchMode('card')">📋 Mode Card</button>
+                    <button type="button" id="skb-mode-btn-flat" class="tpr2-mode-btn" onclick="skbSwitchMode('flat')">📄 Mode Flat</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selector perumahan -->
+              <div class="tpr2-selector-row">
+                <label class="tpr2-selector-lbl">Pilih perumahan:</label>
+                <select id="skb-select" onchange="loadSikumbangForm(this.value)" class="tpr2-selector"></select>
+                <span id="skb-status" class="tpr2-status-badge"></span>
+              </div>
+
+              <div id="skb-form" style="display:none;">
+
+                <!-- Quick paste banner -->
+                <div class="skb-paste-banner">
+                  <div class="skb-paste-icon">📋</div>
+                  <div class="skb-paste-text">
+                    Cara cepat: copy teks dari halaman Sikumbang (klik kanan → Select All → Copy) → klik "Tempel dari Sikumbang", aku parse otomatis 10 angka stok + ID lokasi.
+                  </div>
+                  <button type="button" class="btn-sm-primary" onclick="skbPasteFromClipboard()">📋 Tempel dari Sikumbang</button>
+                </div>
+
+                <!-- Card 1: 🆔 Identitas Sikumbang (ID Lokasi + status + tahun) -->
+                <div class="tpr2-card" data-skb-card="identitas">
+                  <div class="tpr2-card-head" onclick="skbToggleCard('identitas')">
+                    <div class="tpr2-card-head-left">
+                      <div class="tpr2-card-icon" style="background:#E6F1FB;color:#185FA5;">🆔</div>
+                      <div>
+                        <div class="tpr2-card-title">Identitas Sikumbang</div>
+                        <div class="tpr2-card-summary" id="skb-sum-identitas">— belum diisi</div>
+                      </div>
+                    </div>
+                    <span class="tpr2-card-chevron">▾</span>
+                  </div>
+                  <div class="tpr2-card-body">
+                    <div class="tpr2-grid-3">
+                      <div class="ef" style="grid-column:span 2;">
+                        <label>🆔 ID Lokasi Sikumbang</label>
+                        <input type="text" id="skb-id-lokasi" placeholder="SNG1720082020T002" oninput="skbOnFieldInput()" style="font-family:'DM Mono',monospace;">
+                        <div class="ef-hint">Salin dari URL Sikumbang: <code style="font-size:10px;">.../lokasi-perumahan/<b>ID_INI</b>/siteplan</code></div>
+                      </div>
+                      <div class="ef">
+                        <label>Tahun mulai project</label>
+                        <input type="number" id="skb-tahun" min="2010" max="2035" placeholder="2022" oninput="skbOnFieldInput()">
+                      </div>
+                      <div class="ef">
+                        <label>Status proyek</label>
+                        <select id="skb-status-proj" onchange="skbOnFieldInput()">
+                          <option value="">— pilih —</option>
+                          <option value="aktif">🟢 Aktif</option>
+                          <option value="soldout">🔴 Sold out</option>
+                          <option value="launching">🟡 Segera launching</option>
+                        </select>
+                      </div>
+                      <div class="ef">
+                        <label>Jenis program (auto-detect)</label>
+                        <input type="text" id="skb-jenis" readonly placeholder="auto dari data stok di bawah" style="background:var(--bg);color:var(--muted);">
+                      </div>
+                    </div>
+
+                    <!-- Link siteplan resmi Sikumbang -->
+                    <div id="skb-siteplan-link-wrap" class="skb-siteplan-wrap" style="display:none;">
+                      <a id="skb-siteplan-link" href="#" target="_blank" rel="noopener noreferrer" class="skb-siteplan-btn">
+                        <span style="font-size:18px;">🗺️</span>
+                        <div class="skb-siteplan-text">
+                          <div class="skb-siteplan-title">Buka siteplan resmi di Sikumbang</div>
+                          <div class="skb-siteplan-url" id="skb-siteplan-url">—</div>
+                        </div>
+                        <span style="font-size:14px;">↗</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 1.5: 📐 Galeri Gambar Siteplan (Drive links) -->
+                <div class="tpr2-card collapsed" data-skb-card="galeri">
+                  <div class="tpr2-card-head" onclick="skbToggleCard('galeri')">
+                    <div class="tpr2-card-head-left">
+                      <div class="tpr2-card-icon" style="background:#FAEEDA;color:#854F0B;">📐</div>
+                      <div>
+                        <div class="tpr2-card-title">Galeri Gambar Siteplan</div>
+                        <div class="tpr2-card-summary" id="skb-sum-galeri">— belum ada gambar</div>
+                      </div>
+                    </div>
+                    <span class="tpr2-card-chevron">▾</span>
+                  </div>
+                  <div class="tpr2-card-body">
+                    <div class="tpr2-card-hint">
+                      Upload gambar ke <strong>Google Drive</strong> dengan sharing "Anyone with link" → paste link di sini. Resolusi penuh, tidak ada batasan ukuran. Cocok untuk: siteplan, master plan, denah tipe rumah, foto bangunan, dll.
+                    </div>
+
+                    <!-- Daftar gambar yang sudah ada -->
+                    <div id="skb-galeri-list" class="skb-galeri-list"></div>
+
+                    <!-- Form tambah gambar baru -->
+                    <div class="skb-galeri-add">
+                      <div class="skb-galeri-add-head">
+                        <span class="skb-galeri-add-title">+ Tambah gambar baru</span>
+                        <button type="button" class="skb-galeri-help-btn" onclick="skbToggleGaleriHelp()">❓ Cara pakai</button>
+                      </div>
+
+                      <div id="skb-galeri-help" class="skb-galeri-help" style="display:none;">
+                        <strong>Langkah-langkah upload via Google Drive:</strong>
+                        <ol>
+                          <li>Buka <a href="https://drive.google.com" target="_blank" rel="noopener">drive.google.com</a> → upload file gambar siteplan-mu</li>
+                          <li>Klik kanan file → "Share" / "Bagikan"</li>
+                          <li>Ubah ke "<strong>Anyone with the link</strong>" / "Siapa pun yg memiliki link" → permission "Viewer"</li>
+                          <li>Klik "Copy link" / "Salin link"</li>
+                          <li>Paste link di kotak URL di bawah</li>
+                          <li>Pilih label (siteplan / master plan / denah / dll), klik "+ Tambah"</li>
+                        </ol>
+                        <div style="margin-top:6px;padding:6px 8px;background:#FAEEDA;border-radius:4px;font-size:10px;color:#633806;">
+                          ⚠️ Kalau gambar tidak muncul setelah ditambah → kemungkinan sharing belum public. Buka kembali file di Drive, ulangi langkah 2-4.
+                        </div>
+                      </div>
+
+                      <div class="skb-galeri-add-row">
+                        <select id="skb-galeri-label" class="skb-galeri-label-input">
+                          <option value="Siteplan">📐 Siteplan</option>
+                          <option value="Master Plan">🗺️ Master Plan</option>
+                          <option value="Denah Tipe">🏠 Denah Tipe</option>
+                          <option value="Foto Bangunan">🏘️ Foto Bangunan</option>
+                          <option value="Brosur">📄 Brosur</option>
+                          <option value="Lainnya">📌 Lainnya</option>
+                        </select>
+                        <input type="text" id="skb-galeri-label-custom" class="skb-galeri-label-custom" placeholder="Label custom" style="display:none;">
+                        <input type="url" id="skb-galeri-url" class="skb-galeri-url-input" placeholder="https://drive.google.com/file/d/..../view?usp=sharing">
+                        <button type="button" class="btn-sm-primary" onclick="skbGaleriAdd()">+ Tambah</button>
+                      </div>
+                      <div id="skb-galeri-add-status" class="skb-galeri-add-status"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 2: 📊 Stok unit (mirror dashboard Sikumbang) -->
+                <div class="tpr2-card" data-skb-card="stok">
+                  <div class="tpr2-card-head" onclick="skbToggleCard('stok')">
+                    <div class="tpr2-card-head-left">
+                      <div class="tpr2-card-icon" style="background:#E1F5EE;color:#0F6E56;">📊</div>
+                      <div>
+                        <div class="tpr2-card-title">Stok unit (mirror Sikumbang dashboard)</div>
+                        <div class="tpr2-card-summary" id="skb-sum-stok">— belum diisi</div>
+                      </div>
+                    </div>
+                    <span class="tpr2-card-chevron">▾</span>
+                  </div>
+                  <div class="tpr2-card-body">
+
+                    <div class="skb-stok-grid">
+
+                      <div class="skb-segmen skb-segmen-komersil">
+                        <div class="skb-segmen-head">
+                          <div class="skb-segmen-title">⬜ KOMERSIL</div>
+                          <div class="skb-segmen-total">total <span id="skb-tot-komersil">0</span></div>
+                        </div>
+                        <div class="skb-segmen-rows">
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#888780;"></span>
+                            <span class="skb-stok-lbl">Kavling</span>
+                            <input type="number" id="skb-k-kavling" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#BA7517;"></span>
+                            <span class="skb-stok-lbl">Pembangunan</span>
+                            <input type="number" id="skb-k-pembangunan" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#1D9E75;"></span>
+                            <span class="skb-stok-lbl">Ready stock</span>
+                            <input type="number" id="skb-k-ready" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#534AB7;"></span>
+                            <span class="skb-stok-lbl">Dipesan</span>
+                            <input type="number" id="skb-k-dipesan" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#2C2C2A;"></span>
+                            <span class="skb-stok-lbl">Terjual</span>
+                            <input type="number" id="skb-k-terjual" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="skb-segmen skb-segmen-subsidi">
+                        <div class="skb-segmen-head">
+                          <div class="skb-segmen-title">🟡 SUBSIDI</div>
+                          <div class="skb-segmen-total">total <span id="skb-tot-subsidi">0</span></div>
+                        </div>
+                        <div class="skb-segmen-rows">
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#FAC775;"></span>
+                            <span class="skb-stok-lbl">Kavling</span>
+                            <input type="number" id="skb-s-kavling" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#EF9F27;"></span>
+                            <span class="skb-stok-lbl">Pembangunan</span>
+                            <input type="number" id="skb-s-pembangunan" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#1D9E75;"></span>
+                            <span class="skb-stok-lbl">Ready stock</span>
+                            <input type="number" id="skb-s-ready" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#378ADD;"></span>
+                            <span class="skb-stok-lbl">Proses bank</span>
+                            <input type="number" id="skb-s-proses" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                          <div class="skb-stok-row">
+                            <span class="skb-dot" style="background:#A32D2D;"></span>
+                            <span class="skb-stok-lbl">Terjual</span>
+                            <input type="number" id="skb-s-terjual" min="0" placeholder="0" oninput="skbOnFieldInput()">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Stack bar overall -->
+                    <div class="skb-overall-wrap" id="skb-overall-wrap" style="display:none;">
+                      <div class="skb-overall-head">
+                        <span class="skb-overall-lbl">Komposisi <span id="skb-overall-total">0</span> unit kapasitas:</span>
+                      </div>
+                      <div class="skb-overall-bar" id="skb-overall-bar"></div>
+                      <div class="skb-overall-legend" id="skb-overall-legend"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3: Cross-check vs Tapera FLPP -->
+                <div class="tpr2-card skb-cross-card" data-skb-card="crosscheck">
+                  <div class="tpr2-card-head" onclick="skbToggleCard('crosscheck')">
+                    <div class="tpr2-card-head-left">
+                      <div class="tpr2-card-icon" style="background:#E6F1FB;color:#185FA5;">🔍</div>
+                      <div>
+                        <div class="tpr2-card-title">Cross-check Sikumbang vs Tapera FLPP</div>
+                        <div class="tpr2-card-summary" id="skb-sum-cross">— isi data Sikumbang dulu</div>
+                      </div>
+                    </div>
+                    <span class="tpr2-card-chevron">▾</span>
+                  </div>
+                  <div class="tpr2-card-body">
+                    <div id="skb-crosscheck-content" class="skb-crosscheck-body">
+                      <div class="skb-cross-empty">Isi data Sikumbang + pastikan Tapera FLPP juga sudah diisi untuk perumahan ini, supaya cross-check otomatis muncul.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 4: Insight strategis -->
+                <div class="tpr2-card" data-skb-card="insight">
+                  <div class="tpr2-card-head" onclick="skbToggleCard('insight')">
+                    <div class="tpr2-card-head-left">
+                      <div class="tpr2-card-icon" style="background:#EEEDFE;color:#3C3489;">📈</div>
+                      <div>
+                        <div class="tpr2-card-title">Insight strategis</div>
+                        <div class="tpr2-card-summary" id="skb-sum-insight">— hitungan otomatis dari data stok</div>
+                      </div>
+                    </div>
+                    <span class="tpr2-card-chevron">▾</span>
+                  </div>
+                  <div class="tpr2-card-body">
+                    <div id="skb-insight-content" class="skb-insight-body">
+                      <div class="skb-cross-empty">Isi data stok di atas untuk melihat sell-through rate, sisa inventory, ratio subsidi/komersil, dan estimasi habis stok.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Last sync info -->
+                <div class="skb-sync-info">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="skb-sync-icon">🕒</div>
+                    <div>
+                      <div class="skb-sync-line1" id="skb-sync-line1">Belum pernah disinkron</div>
+                      <div class="skb-sync-line2" id="skb-sync-line2">isi data lalu klik Simpan untuk merekam waktu sync</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action bar -->
+                <div class="tpr2-actions-row">
+                  <button class="btn-sm-primary" onclick="saveSikumbangForm()">💾 Simpan Data Sikumbang</button>
+                  <button class="btn-sm-secondary" onclick="loadSikumbangForm(document.getElementById('skb-select').value)">↺ Reset Form</button>
+                  <button class="btn-sm-danger" onclick="clearSikumbangData()" style="margin-left:auto;">🗑 Hapus Data</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STRATEGI & PROMO -->
+    <div class="divisi-pane" id="pane-strategi">
+      <div class="strat-wrap">
+        <div class="tp-sidebar">
+          <div class="tp-sb-head">
+            <div class="tp-sb-title">🎯 Monitoring Target Pasar</div>
+            <div class="tp-sb-sub">Perusahaan & Pabrik — <span id="tp-total">0</span> target</div>
+          </div>
+          <div class="tp-filter">
+            <button class="tp-chip active" onclick="filterTP('semua',this)">Semua</button>
+            <button class="tp-chip" onclick="filterTP('pabrik',this)">🏭 Pabrik</button>
+            <button class="tp-chip" onclick="filterTP('perusahaan',this)">🏢 Perusahaan</button>
+            <button class="tp-chip" onclick="filterTP('kawasan',this)">🏗️ Kawasan</button>
+          </div>
+          <button class="tp-add-btn" onclick="openTpModal(-1)">+ Tambah Target Baru</button>
+          <div class="tp-list" id="tp-list"></div>
+        </div>
+        <div class="tp-map-wrap">
+          <div id="strat-map"></div>
+          <div class="tp-detail" id="tp-detail">
+            <div class="tp-detail-head">
+              <div>
+                <div id="tp-d-name" style="font-size:13px;font-weight:700;margin-bottom:1px;"></div>
+                <div id="tp-d-type" style="font-size:10px;color:#9B9A96;"></div>
+              </div>
+              <button class="tp-detail-close" onclick="closeTpDetail()">✕</button>
+            </div>
+            <div class="tp-detail-body">
+              <div id="tp-d-status-hero" class="tp-status-hero-v11"></div>
+              <div class="tp-info-row"><span class="tp-info-label">📍 Jarak dari Proyek</span><span class="tp-info-val" id="tp-d-jarak">—</span></div>
+              <div class="tp-info-row"><span class="tp-info-label">👥 Est. Karyawan</span><span class="tp-info-val" id="tp-d-karyawan">—</span></div>
+              <div class="tp-info-row"><span class="tp-info-label">🏠 Potensi Unit</span><span class="tp-info-val" id="tp-d-potensi">—</span></div>
+              <div class="tp-info-row"><span class="tp-info-label">📞 PIC / Kontak</span><span class="tp-info-val" id="tp-d-pic">—</span></div>
+              <div class="tp-info-row"><span class="tp-info-label">📅 Terakhir Kontak</span><span class="tp-info-val" id="tp-d-lastcontact">—</span></div>
+              <div class="tp-info-row"><span class="tp-info-label">📝 Catatan</span><span class="tp-info-val" id="tp-d-catatan" style="font-size:10px;font-weight:400;color:var(--muted);">—</span></div>
+              <div class="tp-progres-wrap">
+                <div class="tp-progres-title">Progres Pendekatan</div>
+                <div id="tp-d-progres"></div>
+              </div>
+              <button class="tp-edit-btn" id="tp-d-editbtn">✏️ Update Progres</button>
+              <button class="btn-danger" style="width:100%;margin-top:6px;" id="tp-d-deletebtn">🗑️ Hapus Target</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES (dummy) -->
+    <div class="divisi-pane" id="pane-sales">
+      <div class="dummy-wrap">
+        <div class="dummy-icon">📊</div>
+        <div class="coming-soon-badge">Segera Hadir</div>
+        <br>
+        <div class="dummy-title">Divisi Sales</div>
+        <div class="dummy-sub">Modul lengkap untuk tim Marketing, Support KPR, dan Akad. Tracking prospek dari pertama masuk hingga closing.</div>
+        <div class="dummy-features">
+          <div class="dummy-feature">📋 Tracking Prospek</div>
+          <div class="dummy-feature">💳 Pipeline KPR</div>
+          <div class="dummy-feature">📅 Jadwal Follow-up</div>
+          <div class="dummy-feature">🎯 Target vs Realisasi</div>
+          <div class="dummy-feature">📝 Catatan Akad</div>
+          <div class="dummy-feature">📈 Grafik Penjualan</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KONSTRUKSI (dummy) -->
+    <div class="divisi-pane" id="pane-konstruksi">
+      <div class="dummy-wrap">
+        <div class="dummy-icon">🏗️</div>
+        <div class="coming-soon-badge">Segera Hadir</div>
+        <br>
+        <div class="dummy-title">Divisi Konstruksi</div>
+        <div class="dummy-sub">Monitoring progress pembangunan per blok, per unit. Jadwal serah terima dan kendala lapangan.</div>
+        <div class="dummy-features">
+          <div class="dummy-feature">🏠 Progress Per Blok</div>
+          <div class="dummy-feature">📅 Jadwal Serah Terima</div>
+          <div class="dummy-feature">⚠️ Kendala Lapangan</div>
+          <div class="dummy-feature">👷 Monitoring Kontraktor</div>
+          <div class="dummy-feature">📸 Dokumentasi Foto</div>
+          <div class="dummy-feature">📊 S-Curve Progress</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEGAL (dummy) -->
+    <div class="divisi-pane" id="pane-legal">
+      <div class="dummy-wrap">
+        <div class="dummy-icon">⚖️</div>
+        <div class="coming-soon-badge">Segera Hadir</div>
+        <br>
+        <div class="dummy-title">Legal & Landbank</div>
+        <div class="dummy-sub">Tracking status perizinan, dokumen lahan, dan pipeline akuisisi lahan baru.</div>
+        <div class="dummy-features">
+          <div class="dummy-feature">📄 Status Perizinan</div>
+          <div class="dummy-feature">🗺️ Peta Lahan</div>
+          <div class="dummy-feature">📋 Dokumen Tracker</div>
+          <div class="dummy-feature">🏷️ Pipeline Akuisisi</div>
+          <div class="dummy-feature">⏰ Deadline Alert</div>
+          <div class="dummy-feature">📑 SHGB / SHM Tracker</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCE (dummy) -->
+    <div class="divisi-pane" id="pane-finance">
+      <div class="dummy-wrap">
+        <div class="dummy-icon">💰</div>
+        <div class="coming-soon-badge">Segera Hadir</div>
+        <br>
+        <div class="dummy-title">Divisi Finance</div>
+        <div class="dummy-sub">Monitoring cashflow, realisasi anggaran, dan rekap penerimaan per proyek.</div>
+        <div class="dummy-features">
+          <div class="dummy-feature">💵 Cashflow Monitor</div>
+          <div class="dummy-feature">📊 Budget vs Realisasi</div>
+          <div class="dummy-feature">🧾 Rekap Penerimaan</div>
+          <div class="dummy-feature">📈 Grafik Keuangan</div>
+          <div class="dummy-feature">🏦 Laporan Bank</div>
+          <div class="dummy-feature">📅 Jadwal Pembayaran</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIM BM4 (hanya untuk Branch Manager) -->
+    <div class="divisi-pane" id="pane-tim">
+      <div class="tim-wrap">
+        <div class="tim-head">
+          <div class="tim-head-left">
+            <h2>👥 Tim BM Area 4</h2>
+            <p>Kelola akun anggota tim · Atur username, password, foto, bio, dan hak akses</p>
+          </div>
+          <button class="tim-btn-add" onclick="openAccModal('add')">+ Tambah Akun</button>
+        </div>
+        <div class="tim-grid" id="tim-grid"></div>
+        <div class="tim-log">
+          <div class="tim-log-title">📋 Monitoring Aktivitas Tim</div>
+          <div class="monitor-stats" id="monitor-stats"></div>
+          <div class="monitor-filters">
+            <select class="monitor-filter-select" id="monitor-filter-user" onchange="renderLogList()">
+              <option value="">👤 Semua User</option>
+            </select>
+            <select class="monitor-filter-select" id="monitor-filter-action" onchange="renderLogList()">
+              <option value="">⚡ Semua Aktivitas</option>
+              <option value="login">Login</option>
+              <option value="logout">Logout</option>
+              <option value="edit akun">Edit Akun</option>
+              <option value="tambah akun">Tambah Akun</option>
+              <option value="hapus akun">Hapus Akun</option>
+              <option value="ganti password">Ganti Password</option>
+              <option value="ganti foto">Ganti Foto</option>
+              <option value="ganti bio">Ganti Bio</option>
+            </select>
+            <select class="monitor-filter-select" id="monitor-filter-range" onchange="renderLogList()">
+              <option value="all">📅 Semua Waktu</option>
+              <option value="today">Hari Ini</option>
+              <option value="7d">7 Hari Terakhir</option>
+              <option value="30d">30 Hari Terakhir</option>
+            </select>
+            <button class="monitor-filter-select" onclick="exportLogCSV()" style="cursor:pointer;background:var(--accent-light);color:var(--accent);border-color:var(--accent);font-weight:600;">⬇ Export CSV</button>
+          </div>
+          <div class="tim-log-list" id="tim-log-list">
+            <div class="tim-log-empty">Belum ada aktivitas tercatat.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GALERI TIM (untuk semua user) -->
+    <div class="divisi-pane" id="pane-galeri">
+      <div class="galeri-wrap">
+        <div class="galeri-head">
+          <div class="galeri-kicker">Tim BM Area 4</div>
+          <h2>Wajah di Balik Kinerja</h2>
+          <p>Klik foto untuk kata-kata hari ini</p>
+        </div>
+        <div class="galeri-daily" id="galeri-daily">
+          <div class="galeri-daily-icon">✦</div>
+          <div style="flex:1;">
+            <div class="galeri-daily-label">Kata Hari Ini</div>
+            <div class="galeri-daily-text" id="galeri-daily-text">—</div>
+          </div>
+        </div>
+        <div class="galeri-grid" id="galeri-grid"></div>
+      </div>
+    </div>
+
+    <!-- [v14 PROYEK] KELOLA PROYEK (BM only) -->
+    <div class="divisi-pane" id="pane-proyek">
+      <div class="pry-pane-head">
+        <div>
+          <div class="pry-pane-title">🏗️ Kelola Proyek</div>
+          <div class="pry-pane-sub">Tambah, edit, atau hapus proyek yang dikelola BM4</div>
+        </div>
+        <button class="pry-btn-add" onclick="openProyekModal()">➕ Tambah Proyek</button>
+      </div>
+      <div class="pry-grid" id="pry-grid"></div>
+    </div>
+
+
+
+    <!-- SECURITY CENTER (Secure Mode v2 · BM/Admin only) -->
+    <div class="divisi-pane" id="pane-security">
+      <div class="sec-wrap">
+        <div class="sec-head">
+          <div>
+            <div class="sec-kicker">Secure Mode v2</div>
+            <h2>🛡️ Security Center</h2>
+            <p>Kelola user, session aktif, audit log, dan backup Google Sheet dari aplikasi.</p>
+          </div>
+          <div class="sec-head-actions">
+            <button class="sec-btn sec-btn-secondary" onclick="bm4SecRefreshAll()">↻ Refresh</button>
+            <button class="sec-btn sec-btn-primary" onclick="bm4SecBackupNow()">🗂️ Backup Sekarang</button>
+          </div>
+        </div>
+
+        <div class="sec-stat-grid">
+          <div class="sec-stat"><span>User aktif</span><b id="sec-stat-users">—</b></div>
+          <div class="sec-stat"><span>Session aktif</span><b id="sec-stat-sessions">—</b></div>
+          <div class="sec-stat"><span>Audit terbaru</span><b id="sec-stat-audit">—</b></div>
+          <div class="sec-stat"><span>Backup terakhir</span><b id="sec-stat-backup">—</b></div>
+        </div>
+
+        <div class="sec-tabs">
+          <button class="sec-tab active" data-sec-tab="users" onclick="bm4SecSwitchTab('users',this)">👥 User</button>
+          <button class="sec-tab" data-sec-tab="sessions" onclick="bm4SecSwitchTab('sessions',this)">🔑 Session</button>
+          <button class="sec-tab" data-sec-tab="audit" onclick="bm4SecSwitchTab('audit',this)">🧾 Audit Log</button>
+          <button class="sec-tab" data-sec-tab="backup" onclick="bm4SecSwitchTab('backup',this)">🗂️ Backup</button>
+        </div>
+
+        <div class="sec-panel active" id="sec-panel-users">
+          <div class="sec-card">
+            <div class="sec-card-head">
+              <div><b>Tambah / update user</b><small>Role dan akses ini tetap divalidasi ulang oleh Apps Script.</small></div>
+            </div>
+            <div class="sec-user-form">
+              <input id="sec-user-username" placeholder="username">
+              <input id="sec-user-nama" placeholder="nama lengkap">
+              <input id="sec-user-jabatan" placeholder="jabatan">
+              <select id="sec-user-role">
+                <option value="viewer">Viewer</option>
+                <option value="sales">Sales</option>
+                <option value="strategi">Strategi</option>
+                <option value="konstruksi">Konstruksi</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+                <option value="bm">BM / Owner</option>
+              </select>
+              <input id="sec-user-password" placeholder="password baru / opsional" type="password">
+            </div>
+            <div class="sec-access-grid" id="sec-access-grid"></div>
+            <div class="sec-form-actions">
+              <button class="sec-btn sec-btn-secondary" onclick="bm4SecClearUserForm()">Bersihkan</button>
+              <button class="sec-btn sec-btn-primary" onclick="bm4SecSaveUser()">Simpan User</button>
+            </div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-head"><div><b>Daftar user</b><small>Reset password akan menampilkan password sementara satu kali.</small></div></div>
+            <div class="sec-table-wrap"><table class="sec-table"><thead><tr><th>User</th><th>Role</th><th>Akses</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="sec-users-body"><tr><td colspan="5">Memuat…</td></tr></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-panel-sessions">
+          <div class="sec-card">
+            <div class="sec-card-head"><div><b>Session aktif</b><small>Gunakan logout paksa jika ada perangkat mencurigakan.</small></div></div>
+            <div class="sec-table-wrap"><table class="sec-table"><thead><tr><th>User</th><th>Dibuat</th><th>Terakhir aktif</th><th>Expired</th><th>Device</th><th>Aksi</th></tr></thead><tbody id="sec-sessions-body"><tr><td colspan="6">Memuat…</td></tr></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-panel-audit">
+          <div class="sec-card">
+            <div class="sec-card-head sec-card-head-row">
+              <div><b>Audit log</b><small>Riwayat login, edit data, hapus data, backup, dan aksi admin.</small></div>
+              <div class="sec-filter-row"><input id="sec-audit-q" placeholder="filter user/action/module" oninput="bm4SecRenderAudit()"><select id="sec-audit-status" onchange="bm4SecRenderAudit()"><option value="">Semua status</option><option value="success">Success</option><option value="failed">Failed</option></select></div>
+            </div>
+            <div class="sec-table-wrap"><table class="sec-table"><thead><tr><th>Waktu</th><th>User</th><th>Role</th><th>Aksi</th><th>Modul</th><th>Status</th><th>Pesan</th></tr></thead><tbody id="sec-audit-body"><tr><td colspan="7">Memuat…</td></tr></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-panel-backup">
+          <div class="sec-card">
+            <div class="sec-card-head sec-card-head-row">
+              <div><b>Backup Google Sheet</b><small>Backup membuat salinan file Sheet ke Google Drive akun owner Apps Script.</small></div>
+              <button class="sec-btn sec-btn-primary" onclick="bm4SecBackupNow()">🗂️ Backup Sekarang</button>
+            </div>
+            <div class="sec-backup-note" id="sec-backup-note">Backup otomatis bisa diaktifkan dari Apps Script dengan fungsi <code>installDailyBackupTrigger()</code>.</div>
+            <div class="sec-table-wrap"><table class="sec-table"><thead><tr><th>Waktu</th><th>Nama File</th><th>File ID</th><th>Oleh</th></tr></thead><tbody id="sec-backups-body"><tr><td colspan="4">Memuat…</td></tr></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content-area -->
+</div><!-- end s-app -->
+
+<!-- MODAL GALERI (v11) -->
+<div class="gmodal-backdrop" id="gmodal-backdrop" onclick="closeGmodal(event)">
+  <div class="gmodal" onclick="event.stopPropagation()">
+    <div class="gmodal-photo" id="gmodal-photo">
+      <button class="gmodal-close" onclick="closeGmodal()">✕</button>
+    </div>
+    <div class="gmodal-body">
+      <div class="gmodal-name" id="gmodal-name">—</div>
+      <div class="gmodal-jabatan" id="gmodal-jabatan">—</div>
+      <div class="gmodal-quote-label">Kata untukmu</div>
+      <div class="gmodal-quote" id="gmodal-quote">—</div>
+      <button class="gmodal-refresh" onclick="refreshGmodalQuote()">↻ Kata Lain</button>
+      <div class="gmodal-bio" id="gmodal-bio"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MOBILE MENU BUTTON (untuk buka sidebar di Analisa Lokasi) -->
+<button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;">☰</button>
+
+<!-- MOBILE FAB: buka sidebar Strategi -->
+<button class="mobile-strat-btn" id="mobile-strat-btn" onclick="toggleMobileStratSidebar()" style="display:none;">🎯 Target</button>
+
+<!-- BACKDROP STRATEGI -->
+<div class="strat-backdrop" id="strat-backdrop" onclick="toggleMobileStratSidebar()"></div>
+<div class="sb-backdrop" id="sb-backdrop" onclick="toggleMobileSidebar()"></div>
+
+<!-- SCREEN: PENGATURAN AKUN -->
+<div id="s-settings" class="screen">
+  <div class="settings-card">
+    <div class="settings-head">
+      <h2>⚙️ Pengaturan Akun</h2>
+      <button class="settings-back" onclick="closeSettings()">← Kembali</button>
+    </div>
+    <div class="settings-avatar-box">
+      <div class="settings-avatar" id="settings-avatar">?</div>
+      <button class="settings-upload-btn" onclick="document.getElementById('settings-avatar-input').click()">📷 Ganti Foto</button>
+      <input type="file" id="settings-avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(event)">
+      <div class="settings-name" id="settings-name">—</div>
+      <div class="settings-meta" id="settings-meta">—</div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Bio / Kata Motivasi</div>
+      <div class="acc-form-group">
+        <textarea class="acc-form-textarea" id="set-bio" placeholder="Tulis kata semangat atau motivasi kamu di sini..." maxlength="150" oninput="updateBioCounter('set-bio','set-bio-counter')"></textarea>
+        <div class="bio-counter" id="set-bio-counter">0 / 150</div>
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="saveBioChange()">💾 Simpan Bio</button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Ubah Password</div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password Lama</label>
+        <input type="password" class="acc-form-input" id="set-pw-old" placeholder="Masukkan password lama">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password Baru</label>
+        <input type="password" class="acc-form-input" id="set-pw-new" placeholder="Min. 4 karakter">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Konfirmasi Password Baru</label>
+        <input type="password" class="acc-form-input" id="set-pw-new2" placeholder="Ulangi password baru">
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="savePasswordChange()">💾 Simpan Password Baru</button>
+    </div>
+    <div class="settings-section" id="settings-formula-section" style="display:none;">
+      <div class="settings-section-title">⚙️ Formula Potensi Unit <span style="background:var(--anchor-light);color:var(--anchor);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:0.4px;">BM ONLY</span></div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Formula ini menghitung <b>potensi pembelian unit</b> dari setiap target pasar berdasarkan jumlah karyawan. Perubahan berlaku untuk semua target pasar secara otomatis.</div>
+      <div style="background:var(--accent-light);border:1px solid var(--accent);border-radius:8px;padding:12px 14px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0.8px;margin-bottom:4px;">FORMULA SAAT INI</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);">Potensi = Karyawan × <span id="set-formula-pct-disp" style="color:var(--anchor);">15</span>%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;">Contoh: 5.000 karyawan × <span id="set-formula-pct-disp2">15</span>% = <b id="set-formula-sample" style="color:#15803D;">750</b> unit potensial</div>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Persentase (1–100%)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="number" class="acc-form-input" id="set-formula-pct" min="1" max="100" step="0.5" value="15" style="flex:1;" oninput="previewFormulaPotensi()">
+          <span style="font-size:15px;font-weight:600;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <button class="acc-btn-save" style="width:100%;" onclick="saveFormulaPotensi()">💾 Simpan Formula</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5;">⚠️ Perubahan akan diterapkan ke <b>semua target pasar</b> untuk seluruh tim di perangkat ini.</div>
+    </div>
+
+    <!-- [v9 SECURITY] Master Password Manager — BM only -->
+    <div class="settings-section" id="settings-masterpw-section" style="display:none;">
+      <div class="settings-section-title">🔐 Master Password <span style="background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:0.4px;">BM ONLY</span></div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Master password memungkinkan login sebagai BM <b>tanpa username</b>. Berguna untuk recovery jika lupa akun. Simpan di tempat aman.</div>
+      <div id="set-masterpw-status" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#B91C1C;">
+        ⚠️ Status: <b>Belum diset</b> — fitur master login nonaktif
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password Master Baru</label>
+        <input type="password" class="acc-form-input" id="set-masterpw-new" placeholder="Minimal 8 karakter" autocomplete="new-password">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Konfirmasi Password Master</label>
+        <input type="password" class="acc-form-input" id="set-masterpw-new2" placeholder="Ulangi password master" autocomplete="new-password">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="acc-btn-save" style="flex:1;" onclick="saveMasterPassword()">💾 Simpan Master Password</button>
+        <button class="acc-btn-cancel" onclick="clearMasterPassword()" title="Hapus master password">🗑 Hapus</button>
+      </div>
+    </div>
+
+    <!-- [v11 BACKUP] Panel Backup & Restore — BM only -->
+    <div class="settings-section" id="settings-backup-section" style="display:none;">
+      <div class="settings-section-title">💾 Backup & Restore Data <span style="background:#DBEAFE;color:#1E40AF;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:0.4px;">BM ONLY</span></div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Simpan salinan lengkap data aplikasi ke file JSON. Berguna sebagai cadangan jika terjadi kehilangan data atau untuk migrasi ke perangkat baru.</div>
+
+      <!-- Info backup terakhir -->
+      <div id="backup-status-box" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--muted);line-height:1.6;">
+        <div>📅 Backup terakhir: <b id="backup-last-date">Belum pernah</b></div>
+        <div id="backup-warning" style="display:none;color:#B45309;margin-top:4px;">⚠️ Sudah lebih dari 7 hari belum backup. Disarankan backup sekarang.</div>
+      </div>
+
+      <!-- Ringkasan data -->
+      <div style="background:#F1F5F9;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text);">
+        <div style="font-weight:700;margin-bottom:6px;color:var(--muted);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;">Data yang akan di-backup:</div>
+        <div id="backup-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;">
+          <div>👥 Akun: <b id="backup-cnt-accounts">—</b></div>
+          <div>📝 Log aktivitas: <b id="backup-cnt-logs">—</b></div>
+          <div>🏘️ Perumahan: <b id="backup-cnt-perumahan">—</b></div>
+          <div>📍 POI: <b id="backup-cnt-poi">—</b></div>
+          <div>🏭 Target pasar: <b id="backup-cnt-tp">—</b></div>
+          <div>⚙️ Formula & settings</div>
+        </div>
+      </div>
+
+      <!-- Tombol aksi -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button class="acc-btn-save" style="flex:1;" onclick="exportBackup()">📥 Export (Download)</button>
+        <button class="acc-btn-save" style="flex:1;background:#059669;" onclick="document.getElementById('backup-import-input').click()">📤 Import (Upload)</button>
+      </div>
+      <input type="file" id="backup-import-input" accept=".json,application/json" style="display:none;" onchange="handleBackupImport(event)">
+
+      <div style="font-size:10px;color:var(--muted);text-align:center;line-height:1.5;">
+        ℹ️ File backup berformat JSON. Simpan di tempat aman — file berisi hash password (tidak bisa dibaca langsung tapi bisa dipakai login jika dipulihkan).
+      </div>
+    </div>
+
+    <!-- [v9 SECURITY] Info Keamanan — untuk semua user -->
+    <div class="settings-section">
+      <div class="settings-section-title">🔒 Info Keamanan</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.7;background:#F8FAFC;border-radius:8px;padding:12px;">
+        <div>🔐 Password Anda disimpan dalam bentuk <b>hash SHA-256</b> (tidak bisa dibalik).</div>
+        <div>⏱ Sesi login otomatis berakhir setelah <b>8 jam tanpa aktivitas</b>.</div>
+        <div>🚫 Setelah <b>5x salah password</b>, login akan dikunci 5 menit.</div>
+        <div>📝 Semua aktivitas penting (login, edit, hapus) tercatat di log.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH/EDIT AKUN -->
+<div class="acc-modal-overlay" id="acc-modal">
+  <div class="acc-modal">
+    <div class="acc-modal-head">
+      <h3 id="acc-modal-title">Tambah Akun Baru</h3>
+      <button class="acc-modal-close" onclick="closeAccModal()">✕</button>
+    </div>
+    <div class="acc-modal-body">
+      <div class="acc-form-group">
+        <label class="acc-form-label">Username</label>
+        <input type="text" class="acc-form-input" id="acc-username" placeholder="misal: sales1" autocomplete="off">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Password</label>
+        <input type="text" class="acc-form-input" id="acc-password" placeholder="Minimal 4 karakter" autocomplete="off">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Nama Lengkap</label>
+        <input type="text" class="acc-form-input" id="acc-nama" placeholder="Nama lengkap">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Jabatan</label>
+        <input type="text" class="acc-form-input" id="acc-jabatan" placeholder="misal: Sales Executive">
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Bio / Kata Motivasi <span style="color:var(--faint);font-weight:400;text-transform:none;">(opsional)</span></label>
+        <textarea class="acc-form-textarea" id="acc-bio" placeholder="misal: Semangat pantang menyerah untuk capai target!" maxlength="150" oninput="updateBioCounter('acc-bio','acc-bio-counter')"></textarea>
+        <div class="bio-counter" id="acc-bio-counter">0 / 150</div>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Role / Divisi Utama</label>
+        <select class="acc-form-select" id="acc-role" onchange="onRoleChange()">
+          <option value="bm">Branch Manager</option>
+          <option value="sales">Sales</option>
+          <option value="strategi">Strategi</option>
+          <option value="konstruksi">Konstruksi</option>
+          <option value="legal">Legal</option>
+          <option value="finance">Finance</option>
+        </select>
+      </div>
+      <div class="acc-form-group">
+        <label class="acc-form-label">Hak Akses Menu</label>
+        <div class="acc-checkbox-grid" id="acc-access-grid">
+          <label class="acc-checkbox"><input type="checkbox" value="dashboard" checked disabled> 🏠 Dashboard</label>
+          <label class="acc-checkbox"><input type="checkbox" value="analisa"> 📍 Analisa Lokasi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="strategi"> 🎯 Strategi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="sales"> 📊 Sales</label>
+          <label class="acc-checkbox"><input type="checkbox" value="konstruksi"> 🏗️ Konstruksi</label>
+          <label class="acc-checkbox"><input type="checkbox" value="legal"> ⚖️ Legal</label>
+          <label class="acc-checkbox"><input type="checkbox" value="finance"> 💰 Finance</label>
+        </div>
+      </div>
+    </div>
+    <div class="acc-modal-actions">
+      <button class="acc-btn-cancel" onclick="closeAccModal()">Batal</button>
+      <button class="acc-btn-save" onclick="saveAccount()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TARGET PASAR -->
+<div class="modal-overlay" id="tp-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="tp-modal-title">Tambah Target Pasar</div>
+      <button class="modal-close" onclick="closeTpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mf"><label>Nama Perusahaan</label><input type="text" id="tpf-nama" placeholder="PT Contoh Industri"></div>
+      <div class="mf"><label>Jenis</label>
+        <select id="tpf-jenis">
+          <option value="pabrik">🏭 Pabrik / Manufaktur</option>
+          <option value="perusahaan">🏢 Perusahaan / Kantor</option>
+          <option value="kawasan">🏗️ Kawasan Industri</option>
+        </select>
+      </div>
+      <!-- [v13 SMART-INPUT] Paste dari Google Maps -->
+      <div class="smart-input-box">
+        <div class="smart-input-head">
+          <span class="smart-input-title">📍 Ambil dari Google Maps</span>
+          <button type="button" class="smart-input-help-btn" id="smi-tp-helpbtn">❓ Cara pakai</button>
+        </div>
+        <div class="smart-input-row">
+          <input type="text" id="smi-tp-input" placeholder="Paste link Maps atau koordinat (contoh: -6.5578, 107.8131)">
+          <button type="button" class="smart-input-btn" id="smi-tp-btn">🔍 Ambil</button>
+        </div>
+        <div class="smart-input-fb" id="smi-tp-fb"></div>
+        <div class="smart-input-help" id="smi-tp-help">
+          <b>Cara cepat:</b>
+          <ol>
+            <li>Buka Google Maps, cari perusahaan/pabrik target</li>
+            <li>Tekan lama (HP) / klik kanan (PC) di pin lokasi</li>
+            <li>Klik angka koordinat yang muncul (contoh <code>-6.5578, 107.8131</code>) untuk copy</li>
+            <li>Paste di sini, klik "Ambil" — Lat/Lng otomatis + pin di mini-map</li>
+          </ol>
+        </div>
+      </div>
+      <!-- Mini-map preview di modal -->
+      <div class="tpmodal-minimap-wrap">
+        <div class="tpmodal-minimap-head">
+          <span><b>🗺️ Preview Lokasi</b></span>
+          <span style="font-size:9px;font-style:italic;color:var(--faint);">Klik/drag pin = isi otomatis</span>
+        </div>
+        <div id="tpmodal-minimap" class="tpmodal-minimap"></div>
+      </div>
+      <div class="two-col">
+        <div class="mf"><label>Latitude</label><input type="number" id="tpf-lat" placeholder="-6.52" step="0.0000001"></div>
+        <div class="mf"><label>Longitude</label><input type="number" id="tpf-lng" placeholder="107.79" step="0.0000001"></div>
+      </div>
+      <div class="mf"><label>Est. Jumlah Karyawan</label><input type="number" id="tpf-karyawan" placeholder="500"></div>
+      <div class="mf"><label>PIC / Kontak</label><input type="text" id="tpf-pic" placeholder="Nama - 08xx"></div>
+      <div class="mf"><label>Tanggal Terakhir Kontak</label><input type="date" id="tpf-lastcontact"></div>
+      <div class="mf"><label>Status Pendekatan</label>
+        <select id="tpf-status">
+          <option value="0">🔍 Identifikasi — Baru diketahui</option>
+          <option value="1">📞 Kontak Awal — Sudah dihubungi</option>
+          <option value="2">🤝 Presentasi — Sudah bertemu</option>
+          <option value="3">💬 Negosiasi — Sedang diskusi</option>
+          <option value="4">✅ Deal — Sudah closing</option>
+        </select>
+      </div>
+      <div class="mf"><label>Catatan</label><textarea id="tpf-catatan" placeholder="Catatan pendekatan, hasil meeting, dll..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeTpModal()">Batal</button>
+      <button class="btn-primary" onclick="saveTpTarget()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- [v14 PROYEK] MODAL TAMBAH/EDIT PROYEK -->
+<div class="pry-modal-overlay" id="pry-modal">
+  <div class="pry-modal">
+    <div class="pry-modal-head">
+      <h3 id="pry-modal-title">Tambah Proyek Baru</h3>
+      <button class="pry-modal-close" onclick="closeProyekModal()">✕</button>
+    </div>
+    <div class="pry-modal-body">
+      <input type="hidden" id="pry-edit-id" value="">
+      <div class="pry-form-row">
+        <div class="pry-form-group">
+          <label class="pry-form-label">Nama Proyek *</label>
+          <input type="text" class="pry-form-input" id="pry-nama" placeholder="misal: Griya Wijaya Cibogo" autocomplete="off">
+        </div>
+        <div class="pry-form-group">
+          <label class="pry-form-label">Kode Singkat *</label>
+          <input type="text" class="pry-form-input" id="pry-kode" placeholder="GWC" maxlength="8" autocomplete="off" style="text-transform:uppercase;">
+          <div class="pry-form-hint">Pakai huruf saja, max 8 karakter</div>
+        </div>
+      </div>
+      <div class="pry-form-group">
+        <label class="pry-form-label">Area / Lokasi *</label>
+        <input type="text" class="pry-form-input" id="pry-area" placeholder="misal: Cibogo, Subang" autocomplete="off">
+      </div>
+      <div class="pry-form-row">
+        <div class="pry-form-group">
+          <label class="pry-form-label">Tipe Proyek</label>
+          <select class="pry-form-select" id="pry-tipe">
+            <option value="Mix-use">Mix-use</option>
+            <option value="Subsidi">Subsidi</option>
+            <option value="Komersial">Komersial</option>
+            <option value="Ruko">Ruko</option>
+            <option value="Apartemen">Apartemen</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="pry-form-group">
+          <label class="pry-form-label">Status</label>
+          <select class="pry-form-select" id="pry-status">
+            <option value="Aktif">Aktif</option>
+            <option value="Pipeline">Pipeline</option>
+            <option value="Selesai">Selesai</option>
+          </select>
+        </div>
+      </div>
+      <div class="pry-form-row">
+        <div class="pry-form-group">
+          <label class="pry-form-label">Target Unit</label>
+          <input type="number" class="pry-form-input" id="pry-unit" placeholder="0" min="0">
+        </div>
+        <div class="pry-form-group">
+          <label class="pry-form-label">Developer</label>
+          <input type="text" class="pry-form-input" id="pry-developer" placeholder="Nama PT / developer" autocomplete="off">
+        </div>
+      </div>
+      <!-- [v15 PROYEK] Smart-input Google Maps untuk lat/lng -->
+      <div class="smart-input-box">
+        <div class="smart-input-head">
+          <span class="smart-input-title">📍 Ambil Koordinat dari Google Maps</span>
+          <button type="button" class="smart-input-help-btn" id="smi-pry-helpbtn">❓ Cara pakai</button>
+        </div>
+        <div class="smart-input-row">
+          <input type="text" id="smi-pry-input" placeholder="Paste link Maps atau koordinat (contoh: -6.5578, 107.8131)">
+          <button type="button" class="smart-input-btn" id="smi-pry-btn">🔍 Ambil</button>
+        </div>
+        <div class="smart-input-fb" id="smi-pry-fb"></div>
+        <div class="smart-input-help" id="smi-pry-help">
+          <b>Cara cepat:</b>
+          <ol>
+            <li>Buka Google Maps, cari lokasi proyek</li>
+            <li>Tekan lama (HP) / klik kanan (PC) di pin lokasi</li>
+            <li>Klik angka koordinat yang muncul (contoh <code>-6.5578, 107.8131</code>) untuk copy</li>
+            <li>Paste di sini, klik "Ambil" — Lat/Lng otomatis + pin di mini-map</li>
+          </ol>
+        </div>
+      </div>
+      <!-- Mini-map preview di modal proyek -->
+      <div class="pry-minimap-wrap">
+        <div class="pry-minimap-head">
+          <span><b>🗺️ Preview Lokasi</b></span>
+          <span style="font-size:9px;font-style:italic;color:var(--faint);">Klik/drag pin = isi otomatis</span>
+        </div>
+        <div id="pry-minimap" class="pry-minimap"></div>
+      </div>
+      <div class="pry-form-row">
+        <div class="pry-form-group">
+          <label class="pry-form-label">Latitude *</label>
+          <input type="number" class="pry-form-input" id="pry-lat" placeholder="-6.5578890" step="any">
+        </div>
+        <div class="pry-form-group">
+          <label class="pry-form-label">Longitude *</label>
+          <input type="number" class="pry-form-input" id="pry-lng" placeholder="107.8131269" step="any">
+        </div>
+      </div>
+      <div class="pry-form-row">
+        <div class="pry-form-group">
+          <label class="pry-form-label">Ikon / Emoji</label>
+          <input type="text" class="pry-form-input" id="pry-ikon" placeholder="🏘️" maxlength="4">
+          <div class="pry-form-hint">Emoji satu karakter</div>
+        </div>
+        <div class="pry-form-group">
+          <label class="pry-form-label">Warna</label>
+          <input type="color" class="pry-form-input" id="pry-warna" value="#3B82F6" style="height:38px;padding:3px;">
+        </div>
+      </div>
+      <div class="pry-form-group">
+        <label class="pry-form-label">Deskripsi Singkat <span style="color:var(--faint);font-weight:400;text-transform:none;">(opsional)</span></label>
+        <textarea class="pry-form-textarea" id="pry-deskripsi" placeholder="1-2 kalimat tentang proyek ini" maxlength="200"></textarea>
+      </div>
+
+      <!-- [v15 PROYEK] Foto proyek: upload (auto-compress) atau URL eksternal -->
+      <div class="pry-photo-block">
+        <div class="pry-photo-block-head">
+          <span class="pry-photo-block-title">📸 Foto Proyek</span>
+          <div class="pry-photo-actions">
+            <button type="button" class="pry-photo-btn" onclick="document.getElementById('pry-foto-file').click()">📁 Upload</button>
+            <button type="button" class="pry-photo-btn" onclick="togglePryFotoUrl()">🔗 URL</button>
+            <button type="button" class="pry-photo-btn danger" onclick="removePryFoto()" id="pry-foto-remove-btn" style="display:none;">🗑 Hapus</button>
+          </div>
+        </div>
+        <div class="pry-photo-preview" id="pry-foto-preview">
+          <div class="pry-photo-preview-empty">Belum ada foto — klik <b>Upload</b> atau <b>URL</b> di atas</div>
+        </div>
+        <div class="pry-photo-url-row" id="pry-foto-url-row">
+          <input type="url" id="pry-foto-url-input" placeholder="https://drive.google.com/file/d/.../view  ATAU  link gambar langsung">
+          <button type="button" onclick="applyPryFotoUrl()">Gunakan</button>
+        </div>
+        <div class="pry-photo-status" id="pry-foto-status">📁 Upload file (auto-compress 600px) ATAU 🔗 paste link Google Drive (resolusi penuh, direkomendasi)</div>
+        <input type="file" id="pry-foto-file" accept="image/*" style="display:none;" onchange="handlePryFotoFile(event)">
+      </div>
+    </div>
+    <div class="pry-modal-actions">
+      <button class="pry-btn-cancel" onclick="closeProyekModal()">Batal</button>
+      <button class="pry-btn-save" onclick="saveProyek()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FORMULA EDITOR MODAL -->
+<div class="formula-trigger analisa-only" id="formula-trigger" title="Hub Formula">⚙️</div>
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-modal">
+    <div class="admin-header">
+      <h2>⚙️ Hub Formula</h2>
+      <button class="admin-close-btn" onclick="document.getElementById('admin-overlay').classList.remove('open')">✕</button>
+    </div>
+    <!-- [TAHAP 3] Tab navigation -->
+    <div class="hub-tabs" role="tablist">
+      <button class="hub-tab active" data-hub-tab="scoring" onclick="switchHubTab('scoring')">📊 Scoring Lokasi</button>
+      <button class="hub-tab" data-hub-tab="potensi" onclick="switchHubTab('potensi')" id="hub-tab-potensi">🎯 Potensi Unit</button>
+      <button class="hub-tab" data-hub-tab="cache" onclick="switchHubTab('cache')">🗄️ Route Cache</button>
+      <button class="hub-tab" data-hub-tab="kategori" onclick="switchHubTab('kategori')">⚖️ Kategori Vs Anchor</button>
+      <button class="hub-tab" data-hub-tab="pdl_formula" onclick="switchHubTab('pdl_formula')">🎯 Formula Detail</button>
+      <button class="hub-tab" data-hub-tab="field_mgr" onclick="switchHubTab('field_mgr')">🗂️ Field Manager</button>
+      <button class="hub-tab" data-hub-tab="gap_analysis" onclick="switchHubTab('gap_analysis')">🔍 Gap Analysis</button>
+    </div>
+    <div class="admin-body">
+      <!-- ── TAB 1: SCORING ── -->
+      <div class="hub-pane active" data-hub-pane="scoring">
+      <div class="admin-section">
+        <div class="admin-section-title">Bobot 3 Faktor Utama (total harus = 100%)</div>
+        <div class="admin-fw"><label>🚗 Aksesibilitas</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-aksesibilitas" min="0" max="100" value="50"> %</div></div>
+        <div class="admin-fw" style="background:#ECFDF5;"><label style="color:#059669;">🏥 Fasilitas & Infrastruktur</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-fasilitas" min="0" max="100" value="30" style="border-color:#059669;color:#059669;"> %</div></div>
+        <div class="admin-fw" style="background:#FFFBEB;"><label style="color:#D97706;">🏗️ Kondisi Fisik Jalan</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="w-fisik" min="0" max="100" value="20" style="border-color:#D97706;color:#D97706;"> %</div></div>
+        <div class="weight-total ok" id="weight-total-display">Total: 100% ✓</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Aksesibilitas (total = 100%)</div>
+        <div class="admin-row"><label>🛣️ Exit Tol</label><input type="range" min="0" max="100" value="40" id="sw-tol" oninput="syncNum('sw-tol','sn-tol')"><input type="number" id="sn-tol" value="40" min="0" max="100" oninput="syncRng('sn-tol','sw-tol')"> %</div>
+        <div class="admin-row"><label>🏙️ Pusat Kota (CBD)</label><input type="range" min="0" max="100" value="40" id="sw-cbd" oninput="syncNum('sw-cbd','sn-cbd')"><input type="number" id="sn-cbd" value="40" min="0" max="100" oninput="syncRng('sn-cbd','sw-cbd')"> %</div>
+        <div class="admin-row"><label>🚦 Transportasi Umum</label><input type="range" min="0" max="100" value="20" id="sw-transport" oninput="syncNum('sw-transport','sn-transport')"><input type="number" id="sn-transport" value="20" min="0" max="100" oninput="syncRng('sn-transport','sw-transport')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Sub-Bobot Fasilitas & Infrastruktur (total = 100%)</div>
+        <div class="admin-row"><label>🏥 RS / Klinik</label><input type="range" min="0" max="100" value="30" id="sw-rs" oninput="syncNum('sw-rs','sn-rs')"><input type="number" id="sn-rs" value="30" min="0" max="100" oninput="syncRng('sn-rs','sw-rs')"> %</div>
+        <div class="admin-row"><label>🎓 Kampus</label><input type="range" min="0" max="100" value="20" id="sw-kampus" oninput="syncNum('sw-kampus','sn-kampus')"><input type="number" id="sn-kampus" value="20" min="0" max="100" oninput="syncRng('sn-kampus','sw-kampus')"> %</div>
+        <div class="admin-row"><label>🏬 Mall / Belanja</label><input type="range" min="0" max="100" value="20" id="sw-mall" oninput="syncNum('sw-mall','sn-mall')"><input type="number" id="sn-mall" value="20" min="0" max="100" oninput="syncRng('sn-mall','sw-mall')"> %</div>
+        <div class="admin-row"><label>🏛️ Pemerintahan</label><input type="range" min="0" max="100" value="10" id="sw-pemda" oninput="syncNum('sw-pemda','sn-pemda')"><input type="number" id="sn-pemda" value="10" min="0" max="100" oninput="syncRng('sn-pemda','sw-pemda')"> %</div>
+        <div class="admin-row"><label>💼 Kawasan Industri</label><input type="range" min="0" max="100" value="10" id="sw-industri" oninput="syncNum('sw-industri','sn-industri')"><input type="number" id="sn-industri" value="10" min="0" max="100" oninput="syncRng('sn-industri','sw-industri')"> %</div>
+        <div class="admin-row"><label>🌳 Ruang Publik</label><input type="range" min="0" max="100" value="10" id="sw-publik" oninput="syncNum('sw-publik','sn-publik')"><input type="number" id="sn-publik" value="10" min="0" max="100" oninput="syncRng('sn-publik','sw-publik')"> %</div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">Kurva Decay (semakin besar = skor turun lebih cepat per km)</div>
+        <div class="admin-row"><label>🚗 Decay Aksesibilitas</label><input type="range" min="1" max="20" value="8" step="0.5" id="sw-decay-aks" oninput="syncNum('sw-decay-aks','sn-decay-aks')"><input type="number" id="sn-decay-aks" value="8" min="1" max="20" step="0.5" oninput="syncRng('sn-decay-aks','sw-decay-aks')"></div>
+        <div class="admin-row"><label>🏥 Decay Fasilitas</label><input type="range" min="1" max="20" value="6" step="0.5" id="sw-decay-fas" oninput="syncNum('sw-decay-fas','sn-decay-fas')"><input type="number" id="sn-decay-fas" value="6" min="1" max="20" step="0.5" oninput="syncRng('sn-decay-fas','sw-decay-fas')"></div>
+      </div>
+      <div class="admin-btn-row">
+        <button class="admin-btn admin-btn-primary" onclick="applyFormula()">✓ Terapkan & Hitung Ulang</button>
+        <button class="admin-btn admin-btn-reset" onclick="resetFormula()">↺ Reset Default</button>
+        <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Batal</button>
+      </div>
+      </div><!-- /pane scoring -->
+
+      <!-- ── TAB 2: POTENSI UNIT ── -->
+      <div class="hub-pane" data-hub-pane="potensi">
+        <div class="admin-section">
+          <div class="admin-section-title">Formula Potensi Unit <span style="background:var(--anchor-light);color:var(--anchor);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;letter-spacing:0.4px;">BM ONLY</span></div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Formula ini menghitung <b>potensi pembelian unit</b> dari setiap target pasar berdasarkan jumlah karyawan. Perubahan berlaku untuk semua target pasar secara otomatis.</div>
+          <div style="background:var(--accent-light);border:1px solid var(--accent);border-radius:8px;padding:12px 14px;text-align:center;margin-bottom:12px;">
+            <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0.8px;margin-bottom:4px;">FORMULA SAAT INI</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);">Potensi = Karyawan × <span id="hub-formula-pct-disp" style="color:var(--anchor);">15</span>%</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;">Contoh: 5.000 karyawan × <span id="hub-formula-pct-disp2">15</span>% = <b id="hub-formula-sample" style="color:#15803D;">750</b> unit potensial</div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px;">Persentase (1–100%)</label>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input type="number" id="hub-formula-pct" min="1" max="100" step="0.5" value="15" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'DM Mono',monospace;" oninput="previewHubFormulaPotensi()">
+              <span style="font-size:15px;font-weight:600;color:var(--muted);">%</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;">⚠️ Perubahan diterapkan ke <b>semua target pasar</b> untuk seluruh tim di perangkat ini.</div>
+          <div id="hub-potensi-locked" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;padding:12px 14px;border-radius:8px;font-size:12px;margin-top:10px;">🔒 Hanya role <b>BM</b> yang dapat mengubah formula ini.</div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-primary" id="hub-potensi-save" onclick="saveHubFormulaPotensi()">💾 Simpan Formula</button>
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane potensi -->
+
+      <!-- ── TAB 3: ROUTE CACHE ── -->
+      <div class="hub-pane" data-hub-pane="cache">
+        <div class="admin-section">
+          <div class="admin-section-title">Status Cache Jarak via Jalan</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Cache menyimpan hasil pengukuran jarak via jalan (OSRM) ke penyimpanan lokal browser. TTL 30 hari. Hapus cache jika terasa data sudah usang atau ingin re-measure semua rute.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <div class="hub-cache-stat">
+              <div class="hub-cache-stat-label">Total Entri</div>
+              <div class="hub-cache-stat-val" id="hub-cache-count">0</div>
+              <div class="hub-cache-stat-sub">rute tersimpan</div>
+            </div>
+            <div class="hub-cache-stat">
+              <div class="hub-cache-stat-label">Ukuran</div>
+              <div class="hub-cache-stat-val" id="hub-cache-size">0 KB</div>
+              <div class="hub-cache-stat-sub" id="hub-cache-oldest">—</div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.6;">
+            <b style="color:var(--text);">Tips:</b> Cache otomatis di-load saat app dibuka. Setelah di-clear, jarak via jalan akan dihitung ulang dari OSRM saat kamu klik kompetitor di Analisa (butuh koneksi internet).
+          </div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-reset" onclick="clearRouteCacheUI()">🗑 Hapus Semua Cache</button>
+          <button class="admin-btn admin-btn-secondary" onclick="refreshCacheStats()">↻ Refresh</button>
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane cache -->
+
+      <!-- ── TAB 4: KATEGORI VS ANCHOR [v18 SECTIONS] ── -->
+      <div class="hub-pane" data-hub-pane="kategori">
+        <div class="admin-section">
+          <div class="admin-section-title">Kelola Section Tabel Vs Anchor</div>
+          <div class="kat-intro">Atur section yang muncul sebagai sub-tab di tabel ⚖️ Vs Anchor. Drag <b>⇅</b> untuk urutkan. Klik emoji untuk ganti, klik <b>Edit baris</b> untuk pilih baris yang masuk ke section tersebut.</div>
+          <div class="kat-list" id="kat-list"></div>
+          <div class="kat-add-row">
+            <button class="admin-btn admin-btn-secondary" style="flex:0 0 auto;padding:7px 12px;font-size:11px;" onclick="addKategoriSection()">+ Tambah Section</button>
+            <button class="admin-btn admin-btn-secondary" style="flex:0 0 auto;padding:7px 12px;font-size:11px;" onclick="resetKategoriDefault()">↺ Reset ke default (4P + 2)</button>
+            <span id="kat-unassigned-warn" style="font-size:10px;color:#B45309;display:none;">⚠ <b id="kat-unassigned-count">0</b> baris belum di-assign ke section manapun.</span>
+          </div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-primary" onclick="saveKategoriChanges()">✓ Simpan Perubahan</button>
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane kategori -->
+
+      <!-- ── TAB 5: FORMULA DETAIL [TAHAP3-IT2] ── -->
+      <div class="hub-pane" data-hub-pane="pdl_formula">
+        <div class="admin-section">
+          <div class="admin-section-title">Formula Skor Detail Lengkap</div>
+          <div class="kat-intro">Atur bobot formula untuk 5 section skor di modal <b>📄 Detail Lengkap</b>. Total bobot per section harus 100. Section <b>Place</b> pakai formula existing di tab "📊 Scoring Lokasi" — tidak diatur dari sini.</div>
+          <div id="pdl-formula-editor"></div>
+          <div style="margin-top:14px;padding:10px 12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:7px;font-size:11px;color:#92400E;line-height:1.55;">
+            ⚠️ <b>Penting:</b> Perubahan formula hanya mempengaruhi skor di modal Detail Lengkap. Skor di tabel Vs Anchor (aksesibilitas/fasilitas/fisik) tetap pakai formula dari tab "Scoring Lokasi".
+          </div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-primary" onclick="savePdlFormulas()">💾 Simpan Formula</button>
+          <button class="admin-btn admin-btn-reset" onclick="resetPdlFormulasDefault()">↺ Reset Default</button>
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane pdl_formula -->
+
+      <!-- ── TAB 6: FIELD MANAGER [TAHAP4B-1] ── -->
+      <div class="hub-pane" data-hub-pane="field_mgr">
+        <div class="admin-section">
+          <div class="admin-section-title">🗂️ Field Manager</div>
+          <div class="kat-intro">
+            Kelola field data per section. Tambah field baru, edit label, atau sembunyikan field yang tidak dipakai. Field yang di-enable akan otomatis muncul di form input, tabel Vs Anchor, dan modal Detail Lengkap.
+          </div>
+          <!-- [FIX C] Banner sinkronisasi -->
+          <div style="padding:9px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:7px;margin-bottom:10px;font-size:11px;color:#92400E;line-height:1.55;">
+            🔗 <b>Sinkronisasi dengan Kategori Vs Anchor:</b> Saat kamu enable/tambah field baru, akan muncul dialog tanya <i>"Tampilkan di tabel Vs Anchor juga?"</i> (default Ya). Pengaturan <b>tampil/urutan</b> di tabel Vs Anchor tetap di tab <b>⚖️ Kategori Vs Anchor</b> — Field Manager hanya master data.
+          </div>
+          <div id="fm-section-nav" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
+          <div id="fm-active-panel"></div>
+          <div id="fm-template-panel" style="margin-top:12px;"></div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane field_mgr -->
+
+      <!-- ── TAB 7: GAP ANALYSIS ── -->
+      <div class="hub-pane" data-hub-pane="gap_analysis">
+        <div class="admin-section">
+          <div class="admin-section-title">🔍 Gap Analysis — Kelengkapan Data</div>
+          <div class="kat-intro">
+            Lihat perumahan mana yang datanya belum lengkap. Klik baris perumahan untuk langsung buka editor datanya. Perhitungan berdasarkan <b>semua field aktif</b> (bawaan + custom, kecuali yang disembunyikan).
+          </div>
+          <div id="gap-stats-summary" style="margin-bottom:12px;"></div>
+          <div id="gap-analysis-body"></div>
+        </div>
+        <div class="admin-btn-row">
+          <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('admin-overlay').classList.remove('open')">Tutup</button>
+        </div>
+      </div><!-- /pane gap_analysis -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     [PERF DASH L1] Performance Dashboard — Layer 1 Snapshot
+     Section terpisah, dipicu tombol mengambang 📊 di pojok kanan-bawah.
+     Pattern overlay sama dengan Hub Formula.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="perf-trigger analisa-only" id="perf-trigger" title="Performance Dashboard" onclick="openPerfDashboard()">📊</div>
+<div class="admin-overlay" id="perf-overlay">
+  <div class="admin-modal" style="max-width:900px;">
+    <div class="admin-header">
+      <h2>📊 Performance Dashboard</h2>
+      <button class="admin-close-btn" onclick="closePerfDashboard()">✕</button>
+    </div>
+    <div class="admin-body">
+      <!-- Header info area + filter -->
+      <div class="perf-header-row">
+        <div>
+          <div class="perf-title">Snapshot Area</div>
+          <div class="perf-subtitle" id="perf-area-info">— pilih area untuk mulai</div>
+        </div>
+        <div class="perf-filter">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Filter perumahan:</label>
+          <select id="perf-filter-mode" onchange="renderPerfDashboard()" style="font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <option value="all">Semua perumahan area</option>
+            <option value="anchor">Hanya kompetitor anchor</option>
+            <option value="non-anchor">Selain anchor (kita + sekitar)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section 1: 4 Big Metrics -->
+      <div class="perf-section">
+        <div class="perf-section-head">
+          <div class="perf-section-title">📌 Snapshot area</div>
+          <div class="perf-section-sub" id="perf-snapshot-sub">Auto-compute dari data Tapera + Sikumbang</div>
+        </div>
+        <div class="perf-metrics-grid">
+          <div class="perf-metric-card">
+            <div class="perf-metric-label">Total realisasi YTD</div>
+            <div class="perf-metric-value" id="perf-m-total">—</div>
+            <div class="perf-metric-trend" id="perf-m-total-trend">—</div>
+          </div>
+          <div class="perf-metric-card">
+            <div class="perf-metric-label">Velocity rata2</div>
+            <div class="perf-metric-value" id="perf-m-velocity">—</div>
+            <div class="perf-metric-trend" id="perf-m-velocity-sub">unit/bln per perumahan</div>
+          </div>
+          <div class="perf-metric-card">
+            <div class="perf-metric-label">Market share kita</div>
+            <div class="perf-metric-value" id="perf-m-share">—</div>
+            <div class="perf-metric-trend" id="perf-m-share-trend">—</div>
+          </div>
+          <div class="perf-metric-card">
+            <div class="perf-metric-label">Posisi kita</div>
+            <div class="perf-metric-value" id="perf-m-rank">—</div>
+            <div class="perf-metric-trend" id="perf-m-rank-sub">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Heatmap -->
+      <div class="perf-section">
+        <div class="perf-section-head">
+          <div class="perf-section-title">🌡️ Heatmap velocity perumahan (3 bulan terakhir)</div>
+          <div class="perf-section-sub">Hover/klik untuk detail · merah = velocity tinggi · abu-abu = data tidak ada</div>
+        </div>
+        <div class="perf-heatmap-wrap" id="perf-heatmap-wrap"></div>
+        <div class="perf-heatmap-legend">
+          <span style="font-size:11px;color:var(--muted);">Rendah</span>
+          <div class="perf-legend-cell" style="background:#F1EFE8;"></div>
+          <div class="perf-legend-cell" style="background:#9FE1CB;"></div>
+          <div class="perf-legend-cell" style="background:#FAC775;"></div>
+          <div class="perf-legend-cell" style="background:#EF9F27;"></div>
+          <div class="perf-legend-cell" style="background:#E24B4A;"></div>
+          <span style="font-size:11px;color:var(--muted);">Tinggi</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--muted);">⭐ = perumahan kita</span>
+        </div>
+      </div>
+
+      <!-- Section 3: Alerts -->
+      <div class="perf-section">
+        <div class="perf-section-head">
+          <div class="perf-section-title">🚨 Alerts &amp; rekomendasi action</div>
+          <div class="perf-section-sub">Auto-detect dari pattern data Tapera + Sikumbang</div>
+        </div>
+        <div class="perf-alerts-wrap" id="perf-alerts-wrap"></div>
+      </div>
+
+      <!-- Footer info -->
+      <div class="perf-footer">
+        <div class="perf-footer-left">
+          <span id="perf-last-update">— belum di-load</span>
+        </div>
+        <div class="perf-footer-right">
+          <button class="btn-sm" onclick="renderPerfDashboard()">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="kat-rowedit-overlay" id="kat-rowedit-overlay">
+  <div class="kat-rowedit-modal">
+    <div class="kat-rowedit-head">
+      <div>
+        <h3 id="kat-rowedit-title">Pilih Baris untuk Section</h3>
+        <div class="sub" id="kat-rowedit-sub">Centang baris yang ingin muncul di section ini.</div>
+      </div>
+      <button class="admin-close-btn" onclick="closeKatRowEdit()">✕</button>
+    </div>
+    <div class="kat-rowedit-body" id="kat-rowedit-body"></div>
+    <div class="kat-rowedit-foot">
+      <button class="admin-btn admin-btn-primary" onclick="applyKatRowEdit()">✓ Terapkan</button>
+      <button class="admin-btn admin-btn-secondary" onclick="closeKatRowEdit()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- [TAHAP 4] Overlay picker kompetitor untuk Banding Multi -->
+<div class="cmp-picker-overlay" id="cmp-picker-overlay">
+  <div class="cmp-picker-modal">
+    <div class="cmp-picker-head">
+      <h3>Tambah Pembanding</h3>
+      <button class="admin-close-btn" onclick="closeCmpPicker()">✕</button>
+    </div>
+    <div class="cmp-picker-search">
+      <input type="text" id="cmp-picker-search" placeholder="Cari nama / area…" oninput="renderCmpPickerList()">
+    </div>
+    <div class="cmp-picker-list" id="cmp-picker-list"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/10-core-security-config-state.js?v=rc11"></script>
+<script src="js/11-api-layer.js?v=rc11"></script>
+<script src="js/12-data-store.js?v=rc11"></script>
+<script src="js/20-data-scoring-tapera-seed.js?v=rc11"></script>
+<script src="js/30-analisa-map-detail.js?v=rc11"></script>
+<script src="js/40-vs-anchor-registry.js?v=rc11"></script>
+<script src="js/50-detail-formula-field-gap-dashboard.js?v=rc11"></script>
+<script src="js/60-strategi-target-pasar.js?v=rc11"></script>
+<script src="js/70-editor-data.js?v=rc11"></script>
+<script src="js/80-formula-hub.js?v=rc11"></script>
+<script src="js/90-navigation-sheets-toast.js?v=rc11"></script>
+<script src="js/100-accounts-auth.js?v=rc11"></script>
+<script src="js/110-proyek-management.js?v=rc11"></script>
+<script src="js/120-team-gallery-settings.js?v=rc11"></script>
+<script src="js/130-backup-mobile-session.js?v=rc11"></script>
+<script src="js/140-tapera-sikumbang-performance.js?v=rc11"></script>
+<script src="js/150-kategori-editor.js?v=rc11"></script>
+<script src="js/patches/patch-registry.js?v=rc11"></script>
+<script src="js/patches/patch-loader.js?v=rc11"></script>
+
+<!-- [TAHAP2] Detail modal untuk row kompleks -->
+<div class="vsa-detail-overlay" id="vsa-detail-overlay" onclick="if(event.target===this)closeVsaDetail()">
+  <div class="vsa-detail-modal">
+    <div class="vsa-detail-head">
+      <div class="vsa-detail-title" id="vsa-detail-title">Detail</div>
+      <button class="vsa-detail-close" onclick="closeVsaDetail()" aria-label="Tutup">×</button>
+    </div>
+    <div class="vsa-detail-body" id="vsa-detail-body"></div>
+  </div>
+</div>
+
+<!-- [TAHAP3-IT1] Modal Detail Lengkap per Perumahan -->
+<div class="pdl-overlay" id="pdl-overlay" onclick="if(event.target===this)closePdlModal()">
+  <div class="pdl-modal">
+    <div class="pdl-head">
+      <div class="pdl-head-left">
+        <div>
+          <div class="pdl-head-title" id="pdl-head-title">Detail Lengkap</div>
+          <div class="pdl-head-sub" id="pdl-head-sub">—</div>
+        </div>
+      </div>
+      <button class="pdl-head-close" onclick="printPdlModal()" style="margin-right:6px;" aria-label="Cetak PDF" title="Cetak / Simpan sebagai PDF">🖨️ PDF</button>
+      <button class="pdl-head-close" onclick="closePdlModal()" aria-label="Tutup">✕ Tutup</button>
+    </div>
+    <div class="pdl-selector">
+      <span class="pdl-selector-lbl">🏘️ Ganti Perumahan:</span>
+      <select class="pdl-selector-select" id="pdl-selector" onchange="switchPdlPerum(this.value)"></select>
+    </div>
+    <div class="pdl-body" id="pdl-body"></div>
+  </div>
+</div>
+
+<!-- [TAHAP4B-2] Modal Wizard Field Manager -->
+<div class="fmw-overlay" id="fmw-overlay" onclick="if(event.target===this)closeFmWizard()">
+  <div class="fmw-modal">
+    <div class="fmw-head">
+      <div class="fmw-title" id="fmw-title">Field Manager</div>
+      <button class="fmw-close" onclick="closeFmWizard()" aria-label="Tutup">×</button>
+    </div>
+    <div class="fmw-body" id="fmw-body"></div>
+    <div class="fmw-footer" id="fmw-footer"></div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#1C2B4A">
+<title>BM4 Mobile Lite</title>
+<link rel="manifest" href="manifest.json?v=rc11">
+<style>
+:root{--navy:#1C2B4A;--accent:#2563EB;--bg:#F2F1EE;--surface:#fff;--text:#1C1C1A;--muted:#64748B;--border:rgba(0,0,0,.08);--danger:#DC2626;--ok:#059669}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}.top{background:var(--navy);color:#fff;padding:16px 18px 18px;position:sticky;top:0;z-index:10}.top h1{font-size:18px;margin:0}.top p{font-size:12px;color:#94A3B8;margin:3px 0 0}.wrap{padding:14px;max-width:620px;margin:0 auto}.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 6px 20px rgba(28,43,74,.05)}.section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tab{border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff;font-weight:700;color:var(--muted)}.tab.active{background:#EFF6FF;border-color:#2563EB;color:#2563EB}label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 5px}input,select,textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 11px;font:inherit;font-size:14px;background:#fff}textarea{min-height:82px;resize:vertical}.btn{border:none;border-radius:12px;padding:11px 13px;font-weight:800;font:inherit;font-size:13px;background:var(--accent);color:#fff;width:100%;cursor:pointer}.btn.secondary{background:#fff;color:#1C2B4A;border:1px solid var(--border)}.btn.danger{background:#FEF2F2;color:var(--danger);border:1px solid #FECACA}.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px}.draft{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;background:#FAFAF8}.draft b{display:block;font-size:13px}.draft span{display:block;font-size:11px;color:var(--muted);margin-top:2px}.draft .mini{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px}.pill{display:inline-flex;border-radius:999px;padding:3px 8px;background:#EFF6FF;color:#2563EB;font-size:10px;font-weight:800}.empty{padding:18px;text-align:center;color:#94A3B8;font-size:12px}.footer{font-size:11px;text-align:center;color:#94A3B8;padding:18px}.desktop{display:inline-block;margin-top:6px;color:#60A5FA;text-decoration:none;font-size:12px;font-weight:700}.toast{position:fixed;left:16px;right:16px;bottom:16px;background:#1C2B4A;color:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:.2s;z-index:100}.toast.show{opacity:1;transform:translateY(0)}@media(min-width:540px){.top{text-align:center}.grid2{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top"><h1>BM4 Mobile Lite</h1><p>Input lapangan cepat · Export JSON · Import ke desktop</p><a class="desktop" href="index.html?desktop=1&v=rc11">Buka desktop</a></div>
+<div class="wrap">
+  <div class="card">
+    <div class="section-title">Mode input</div>
+    <div class="grid2"><button class="tab active" data-type="perumahan">🏘️ Perumahan</button><button class="tab" data-type="poi">📍 POI</button><button class="tab" data-type="catatan">📝 Catatan</button></div>
+    <div class="hint">Versi mobile ini dibuat ringan untuk survey/input awal. Data disimpan di HP dulu sebagai draft, lalu export JSON dan import lewat tombol 📲 Import Mobile di desktop.</div>
+  </div>
+  <div class="card">
+    <div class="section-title" id="form-title">Input Perumahan</div>
+    <div id="form-wrap"></div>
+    <div class="btnrow"><button class="btn secondary" onclick="useGps()">📡 Ambil GPS</button><button class="btn" onclick="saveDraft()">Simpan Draft</button></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Draft Lokal <span id="draft-count" class="pill">0</span></div>
+    <div id="draft-list"></div>
+    <div class="btnrow"><button class="btn secondary" onclick="exportJson()">Export JSON</button><button class="btn secondary" onclick="exportCsv()">Export CSV</button></div>
+    <button class="btn danger" style="margin-top:8px" onclick="clearDrafts()">Hapus Semua Draft</button>
+  </div>
+</div>
+<div class="footer">BM4 Mobile Lite v11 RC · untuk input cepat, bukan dashboard penuh.</div>
+<div class="toast" id="toast"></div>
+<script>
+const LS='bm4_mobile_drafts_v1';let currentType='perumahan';let gps={lat:'',lng:''};
+const forms={perumahan:[['nama','Nama perumahan','text'],['area','Area/kecamatan','text'],['tipe','Tipe','select:subsidi|mix'],['developer','Developer','text'],['unit','Total unit','number'],['realisasi','Realisasi','number'],['tahun','Tahun','number'],['lat','Latitude','number'],['lng','Longitude','number'],['catatan','Catatan lapangan','textarea']],poi:[['nama','Nama POI','text'],['kat','Kategori','select:rs|kampus|mall|tol|pemda|industri|publik'],['lat','Latitude','number'],['lng','Longitude','number'],['catatan','Catatan','textarea']],catatan:[['judul','Judul catatan','text'],['proyek','Proyek/lokasi','text'],['lat','Latitude','number'],['lng','Longitude','number'],['catatan','Isi catatan','textarea']]};
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function read(){try{return JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){return[]}}
+function write(v){localStorage.setItem(LS,JSON.stringify(v||[]));renderDrafts()}
+function renderForm(){document.getElementById('form-title').textContent=currentType==='perumahan'?'Input Perumahan':currentType==='poi'?'Input POI':'Input Catatan';document.getElementById('form-wrap').innerHTML=forms[currentType].map(f=>{const [id,lbl,type]=f;if(type==='textarea')return `<label>${lbl}</label><textarea id="f-${id}"></textarea>`;if(type.startsWith('select:'))return `<label>${lbl}</label><select id="f-${id}">${type.split(':')[1].split('|').map(x=>`<option value="${x}">${x}</option>`).join('')}</select>`;return `<label>${lbl}</label><input id="f-${id}" type="${type}" ${type==='number'?'step="any"':''}>`;}).join('');if(gps.lat){const lat=document.getElementById('f-lat'),lng=document.getElementById('f-lng');if(lat)lat.value=gps.lat;if(lng)lng.value=gps.lng;}}
+function useGps(){if(!navigator.geolocation){toast('GPS tidak didukung');return}toast('Mengambil GPS...');navigator.geolocation.getCurrentPosition(pos=>{gps={lat:pos.coords.latitude.toFixed(7),lng:pos.coords.longitude.toFixed(7)};const lat=document.getElementById('f-lat'),lng=document.getElementById('f-lng');if(lat)lat.value=gps.lat;if(lng)lng.value=gps.lng;toast('GPS terisi')},err=>toast('Gagal GPS: '+err.message),{enableHighAccuracy:true,timeout:10000})}
+function saveDraft(){const obj={id:Date.now(),type:currentType,createdAt:new Date().toISOString(),data:{}};forms[currentType].forEach(f=>{const el=document.getElementById('f-'+f[0]);obj.data[f[0]]=el?el.value:''});if(!obj.data.nama && !obj.data.judul){toast('Isi nama/judul dulu');return}const list=read();list.unshift(obj);write(list);renderForm();toast('Draft tersimpan')}
+function renderDrafts(){const list=read();document.getElementById('draft-count').textContent=list.length;document.getElementById('draft-list').innerHTML=list.length?list.map(d=>`<div class="draft"><b>${esc(d.data.nama||d.data.judul||'Tanpa judul')}</b><span>${esc(d.type)} · ${new Date(d.createdAt).toLocaleString('id-ID')}</span><span>${esc(d.data.area||d.data.kat||d.data.proyek||'')}</span><div class="mini"><span class="pill">${esc(d.data.lat||'-')}, ${esc(d.data.lng||'-')}</span><button onclick="delDraft(${d.id})">Hapus</button></div></div>`).join(''):'<div class="empty">Belum ada draft.</div>'}
+function delDraft(id){write(read().filter(x=>x.id!==id));toast('Draft dihapus')}
+function clearDrafts(){if(confirm('Hapus semua draft mobile?')){write([]);toast('Draft dikosongkan')}}
+function download(name,content,type){const blob=new Blob([content],{type:type||'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},800)}
+function exportJson(){download('BM4-mobile-drafts-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(read(),null,2),'application/json;charset=utf-8')}
+function exportCsv(){const rows=['type,createdAt,nama,area_kat_proyek,lat,lng,catatan'].concat(read().map(d=>[d.type,d.createdAt,d.data.nama||d.data.judul||'',d.data.area||d.data.kat||d.data.proyek||'',d.data.lat||'',d.data.lng||'',d.data.catatan||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')));download('BM4-mobile-drafts-'+new Date().toISOString().slice(0,10)+'.csv','\ufeff'+rows.join('\n'),'text/csv;charset=utf-8')}
+document.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{currentType=b.dataset.type;document.querySelectorAll('[data-type]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderForm()});renderForm();renderDrafts();
+</script>
+</body>
+</html>
