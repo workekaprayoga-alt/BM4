@@ -1,882 +1,442 @@
-/**
- * BM4 Secure Apps Script API
- * Google Sheet Secure Mode: server-side login, session token, role permission,
- * LockService writes, audit log, backup helper.
- *
- * Deploy:
- * 1) Paste ke Apps Script yang terhubung dengan Google Sheet BM4.
- * 2) Run setupBM4Security() sekali dari editor Apps Script.
- * 3) Lihat temporary admin password di Logs.
- * 4) Deploy Web App: Execute as Me, Who has access: Anyone.
- */
+// ============================================================
+// BM4 SECURE SESSION ADAPTER + UX BRIDGE
+// Tujuan:
+// - Secure Mode tetap aktif server-side.
+// - Tim BM4 kembali bisa dipakai untuk kelola user/profil/akses.
+// - Tombol lama diarahkan ke API Secure Mode, bukan localStorage.
+// - Security Center tetap untuk pantauan audit/session/backup.
+// - Loading awal dibuat lebih ringan: daftar user hanya dimuat saat diperlukan.
+// ============================================================
+(function(window){
+  const secureModeOn = !!(
+    window.BM4_SECURE_MODE ||
+    (typeof BM4_SECURE_MODE !== 'undefined' && BM4_SECURE_MODE === true)
+  );
+  if(!secureModeOn) return;
+  window.BM4_SECURE_MODE = true;
 
-const BM4_CONFIG = {
-  SESSION_HOURS: 12,
-  IDLE_HOURS: 2,
-  MAX_LOGIN_FAILS: 5,
-  LOCK_MINUTES: 15,
-  HASH_ITERATIONS: 4000,
-  SHEETS: {
-    USERS: 'Users',
-    SESSIONS: 'Sessions',
-    AUDIT: 'AuditLogs',
-    DELETED: 'DeletedRecords',
-    SETTINGS: 'Settings',
-    PERUMAHAN: 'Perumahan',
-    POI: 'POI',
-    TARGET_PASAR: 'TargetPasar',
-    PROYEK: 'Proyek',
-    ACCOUNTS: 'Accounts',
-    BACKUPS: 'Backups'
+  const ADMIN_ROLES = ['bm','owner','admin'];
+  let teamCacheAt = 0;
+  let teamLoading = false;
+
+  function rememberEnabled(){ return false; }
+  function notify(msg){ try { if(typeof showToast === 'function') showToast(msg); else alert(msg); } catch(e){ try{ alert(msg); }catch(_){} } }
+  function esc(s){ try { return typeof escapeHtml === 'function' ? escapeHtml(s) : String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); } catch(e){ return String(s||''); } }
+  function isSecureMode(){ return !!(window.BM4_SECURE_MODE || (typeof BM4_SECURE_MODE !== 'undefined' && BM4_SECURE_MODE === true)); }
+  function isAdminUser(u){ return !!(u && ADMIN_ROLES.includes(String(u.role || '').toLowerCase())); }
+  function getCurrent(){ try { return currentUser || window.currentUser || null; } catch(e){ return window.currentUser || null; } }
+  function getAccounts(){ try { return Array.isArray(accounts) ? accounts : []; } catch(e){ return Array.isArray(window.accounts) ? window.accounts : []; } }
+  function setAccounts(list){
+    try { accounts = list; } catch(e){ window.accounts = list; }
+    try { window.accounts = list; } catch(e){}
   }
-};
-
-const HEADERS = {
-  Users: ['id','username','passwordHash','salt','nama','jabatan','role','akses','active','failedLoginCount','lockedUntil','lastLogin','createdAt','updatedAt','foto','bio'],
-  Sessions: ['sessionId','userId','username','tokenHash','createdAt','expiresAt','lastSeen','deviceInfo','active'],
-  AuditLogs: ['timestamp','userId','username','role','action','module','projectId','recordId','beforeJson','afterJson','deviceInfo','status','message'],
-  DeletedRecords: ['timestamp','userId','username','module','recordId','beforeJson'],
-  Settings: ['key','value','updatedAt','updatedBy'],
-  Perumahan: ['id','nama','area','tipe','lat','lng','developer','unit','realisasi','tahun'],
-  POI: ['nama','lat','lng','kat','label','emoji'],
-  TargetPasar: ['id','nama','kategori','lat','lng','catatan','status','createdAt','updatedAt'],
-  Proyek: ['id','nama','kode','area','tipe','unit','lat','lng','developer','ikon','warna','status','deskripsi','foto'],
-  Accounts: ['username','password','nama','jabatan','role','foto','bio','akses','suspended'],
-  Backups: ['timestamp','fileId','name','username','createdBy']
-};
-
-const READ_ACTIONS = ['ping','auth_verify','getPerumahan','getPoi','getTargetPasar','getProyek','getAccounts'];
-const WRITE_ACTIONS = ['savePerumahan','savePoi','deletePerumahan','deletePoi','saveTargetPasar','deleteTargetPasar','saveProyek','saveAccounts','deleteAccount','logActivity'];
-
-const ROLE_RULES = {
-  bm: '*',
-  owner: '*',
-  admin: '*',
-  manager: ['getPerumahan','getPoi','getTargetPasar','getProyek','savePerumahan','savePoi','saveTargetPasar','saveProyek','logActivity'],
-  strategi: ['getPerumahan','getPoi','getTargetPasar','getProyek','saveTargetPasar','deleteTargetPasar','logActivity'],
-  sales: ['getPerumahan','getPoi','getTargetPasar','getProyek','logActivity'],
-  konstruksi: ['getPerumahan','getPoi','getProyek','logActivity'],
-  viewer: ['getPerumahan','getPoi','getTargetPasar','getProyek','logActivity']
-};
-
-function doGet(e){
-  return safeHandle_(e, 'GET');
-}
-
-function doPost(e){
-  return safeHandle_(e, 'POST');
-}
-
-function safeHandle_(e, method){
-  try {
-    ensureSecuritySheets_();
-    const req = parseRequest_(e);
-    const result = route_(req, method);
-    return json_(result);
-  } catch (err) {
-    console.error(err && err.stack ? err.stack : err);
-    return json_({ success:false, error:String(err && err.message ? err.message : err) });
+  function setCurrentUser(user){
+    if(!user) return;
+    try { currentUser = user; } catch(e){}
+    try { window.currentUser = user; } catch(e){}
   }
-}
-
-function parseRequest_(e){
-  const out = Object.assign({}, (e && e.parameter) || {});
-  const raw = e && e.postData && e.postData.contents;
-  if(raw){
-    try { Object.assign(out, JSON.parse(raw)); }
-    catch(_){ out.rawBody = raw; }
+  function selectedAccessFromModal(){ return Array.from(document.querySelectorAll('#acc-access-grid input:checked')).map(cb => cb.value); }
+  function normalizeAccess(v){ return Array.isArray(v) ? v : String(v||'').split(',').map(x=>x.trim()).filter(Boolean); }
+  function activeToSuspended(u){ return !(u.active !== false && String(u.active).toLowerCase() !== 'false'); }
+  function normalizeUser(u){
+    return Object.assign({}, u, {
+      username: String(u.username || '').toLowerCase(),
+      password: '',
+      akses: normalizeAccess(u.akses),
+      suspended: activeToSuspended(u),
+      active: !activeToSuspended(u),
+      foto: u.foto || '',
+      bio: u.bio || ''
+    });
   }
-  return out;
-}
 
-function route_(req, method){
-  const action = String(req.action || '').trim();
-  if(!action) return { success:false, error:'missing_action' };
-
-  if(action === 'ping') return { success:true, app:'BM4 Secure API', time: nowIso_() };
-  if(action === 'auth_login') return authLogin_(req);
-
-  const ctx = requireSession_(req, action);
-  if(action === 'auth_verify') return { success:true, user: publicUser_(ctx.user), expiresAt: ctx.session.expiresAt };
-  if(action === 'auth_logout') return authLogout_(req, ctx);
-  if(action === 'auth_change_password') return withWriteLock_(() => authChangePassword_(ctx, req));
-  if(action === 'auth_update_profile') return withWriteLock_(() => authUpdateProfile_(ctx, req.profile || {}));
-
-  requirePermission_(ctx, action);
-
-  switch(action){
-    case 'getPerumahan': return { success:true, data: readRows_(BM4_CONFIG.SHEETS.PERUMAHAN) };
-    case 'getPoi': return { success:true, data: readRows_(BM4_CONFIG.SHEETS.POI) };
-    case 'getTargetPasar': return { success:true, data: readRows_(BM4_CONFIG.SHEETS.TARGET_PASAR) };
-    case 'getProyek': return { success:true, data: readRows_(BM4_CONFIG.SHEETS.PROYEK) };
-    case 'getAccounts': return getAccounts_(ctx);
-
-    case 'savePerumahan': return withWriteLock_(() => saveRowsAction_(ctx, BM4_CONFIG.SHEETS.PERUMAHAN, req.rows || req.data || [], action));
-    case 'savePoi': return withWriteLock_(() => saveRowsAction_(ctx, BM4_CONFIG.SHEETS.POI, req.rows || req.data || [], action));
-    case 'saveTargetPasar': return withWriteLock_(() => saveRowsAction_(ctx, BM4_CONFIG.SHEETS.TARGET_PASAR, req.rows || req.data || [], action));
-    case 'saveProyek': return withWriteLock_(() => saveRowsAction_(ctx, BM4_CONFIG.SHEETS.PROYEK, req.data || req.rows || [], action));
-
-    case 'deletePerumahan': return withWriteLock_(() => deleteRowAction_(ctx, BM4_CONFIG.SHEETS.PERUMAHAN, 'id', req.id, action));
-    case 'deletePoi': return withWriteLock_(() => deleteRowAction_(ctx, BM4_CONFIG.SHEETS.POI, 'nama', req.nama, action));
-    case 'deleteTargetPasar': return withWriteLock_(() => deleteRowAction_(ctx, BM4_CONFIG.SHEETS.TARGET_PASAR, 'id', req.id, action));
-
-    case 'saveAccounts': return withWriteLock_(() => saveAccounts_(ctx, req.data || []));
-    case 'deleteAccount': return withWriteLock_(() => deleteAccount_(ctx, req.username));
-    case 'admin_users_list': return adminUsersList_(ctx);
-    case 'admin_user_save': return withWriteLock_(() => adminUserSave_(ctx, req.user || {}));
-    case 'admin_user_reset_password': return withWriteLock_(() => adminUserResetPassword_(ctx, req.username));
-    case 'admin_user_set_active': return withWriteLock_(() => adminUserSetActive_(ctx, req.username, req.active));
-    case 'admin_user_force_logout': return withWriteLock_(() => adminUserForceLogout_(ctx, req.username));
-    case 'admin_sessions_list': return adminSessionsList_(ctx);
-    case 'admin_session_revoke': return withWriteLock_(() => adminSessionRevoke_(ctx, req.sessionId));
-    case 'admin_audit_list': return adminAuditList_(ctx, req);
-    case 'admin_backup_now': return withWriteLock_(() => backupNow_(ctx));
-    case 'admin_backup_status': return adminBackupStatus_(ctx, req);
-    case 'logActivity': return logActivityCompat_(ctx, req.data || req);
-    case 'backup_now': return withWriteLock_(() => backupNow_(ctx));
-    default: return { success:false, error:'unknown_action', action:action };
-  }
-}
-
-/** Run once from Apps Script editor. */
-function setupBM4Security(){
-  ensureSecuritySheets_();
-  const users = readRows_(BM4_CONFIG.SHEETS.USERS);
-  if(users.length){
-    Logger.log('BM4 Security already has users. No admin created.');
-    return;
-  }
-  const tempPass = Utilities.getUuid().replace(/-/g,'').slice(0,12) + '!';
-  createUser_({
-    username:'bm4',
-    password:tempPass,
-    nama:'Branch Manager Area 4',
-    jabatan:'Branch Manager',
-    role:'bm',
-    akses:['dashboard','analisa','strategi','sales','konstruksi','legal','finance','galeri','tim','proyek'],
-    active:true
-  });
-  setSetting_('security_setup_at', nowIso_(), 'system');
-  Logger.log('Admin awal dibuat. Username: bm4');
-  Logger.log('Password sementara: ' + tempPass);
-  Logger.log('Segera login lalu ganti password / buat user baru.');
-}
-
-/** Optional: install daily backup trigger. */
-function installDailyBackupTrigger(){
-  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'scheduledBackupBM4').forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('scheduledBackupBM4').timeBased().everyDays(1).atHour(23).create();
-  Logger.log('Daily backup trigger installed at around 23:00.');
-}
-
-function scheduledBackupBM4(){
-  const fakeCtx = { user:{ id:'system', username:'system', role:'system' } };
-  backupNow_(fakeCtx);
-}
-
-function authLogin_(req){
-  const username = String(req.username || '').trim().toLowerCase();
-  const password = String(req.password || '');
-  const deviceInfo = String(req.deviceInfo || '').slice(0, 500);
-  if(!username || !password) return { success:false, error:'missing_credentials', message:'Username dan password wajib diisi.' };
-
-  return withWriteLock_(() => {
-    const userTable = getTable_(BM4_CONFIG.SHEETS.USERS);
-    const idx = userTable.rows.findIndex(r => String(r.username || '').toLowerCase() === username);
-    if(idx < 0) {
-      writeAudit_({ action:'auth_login_failed', module:'auth', username, status:'failed', message:'unknown_user', deviceInfo });
-      Utilities.sleep(350);
-      return { success:false, error:'invalid_login', message:'Username atau password salah.' };
+  async function request(action, payload){
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: gasPost(Object.assign({ action }, payload || {})),
+      cache: 'no-store'
+    });
+    let json;
+    try { json = await res.json(); }
+    catch(e){ throw new Error('Response Apps Script bukan JSON. Cek deployment Web App.'); }
+    if(!json || json.success === false){
+      const msg = json && (json.message || json.error) ? (json.message || json.error) : 'Request gagal';
+      const err = new Error(msg); err.response = json; throw err;
     }
-    const user = userTable.rows[idx];
-    if(String(user.active).toLowerCase() === 'false' || String(user.active) === '0'){
-      return { success:false, error:'account_inactive', message:'Akun dinonaktifkan. Hubungi BM.' };
-    }
-    const lockedUntil = user.lockedUntil ? new Date(user.lockedUntil).getTime() : 0;
-    if(lockedUntil && lockedUntil > Date.now()){
-      return { success:false, error:'account_locked', message:'Akun terkunci sementara karena terlalu banyak gagal login.' };
-    }
+    return json;
+  }
 
-    const ok = verifyPasswordServer_(password, user.passwordHash, user.salt);
-    if(!ok){
-      const fails = (Number(user.failedLoginCount) || 0) + 1;
-      user.failedLoginCount = fails;
-      if(fails >= BM4_CONFIG.MAX_LOGIN_FAILS){
-        user.lockedUntil = new Date(Date.now() + BM4_CONFIG.LOCK_MINUTES * 60000).toISOString();
+  function saveSecureUser(user){
+    if(!user) return;
+    const normalized = normalizeUser(user);
+    try { sessionStorage.setItem(BM4_SESSION_USER_KEY, JSON.stringify(normalized)); localStorage.setItem('bm4_last_username', normalized.username || ''); } catch(e){}
+    setCurrentUser(normalized);
+    const list = getAccounts().slice();
+    const idx = list.findIndex(a => String(a.username).toLowerCase() === String(normalized.username).toLowerCase());
+    if(idx >= 0) list[idx] = Object.assign({}, list[idx], normalized);
+    else list.push(normalized);
+    setAccounts(list);
+    try { if(typeof applyUserAccess === 'function') applyUserAccess(); } catch(e){}
+  }
+
+  function loadTeamCache(){
+    try{
+      const raw = localStorage.getItem('bm4_secure_team_cache');
+      if(!raw) return false;
+      const c = JSON.parse(raw);
+      if(!c || !Array.isArray(c.users)) return false;
+      setAccounts(c.users.map(normalizeUser));
+      teamCacheAt = Number(c.ts || 0);
+      return true;
+    }catch(e){ return false; }
+  }
+  function saveTeamCache(users){
+    try { localStorage.setItem('bm4_secure_team_cache', JSON.stringify({ ts:Date.now(), users })); } catch(e){}
+  }
+
+  async function syncTeamFromSecure(force){
+    const me = getCurrent();
+    if(!isSecureMode() || !isAdminUser(me)) return false;
+    if(teamLoading) return false;
+    if(!force && teamCacheAt && Date.now() - teamCacheAt < 60000 && getAccounts().length) return true;
+    teamLoading = true;
+    try{
+      const r = await request('admin_users_list', {});
+      const users = (r.data || []).map(normalizeUser);
+      setAccounts(users);
+      saveTeamCache(users);
+      teamCacheAt = Date.now();
+      const freshMe = users.find(u => String(u.username).toLowerCase() === String(me.username).toLowerCase());
+      if(freshMe) setCurrentUser(freshMe);
+      return true;
+    }catch(e){
+      console.warn('[BM4Secure] gagal sync daftar tim:', e);
+      return false;
+    }finally{ teamLoading = false; }
+  }
+
+  function addTeamBridgeNote(){
+    const pane = document.getElementById('pane-tim');
+    if(!pane || pane.querySelector('#bm4-tim-secure-bridge-note')) return;
+    const title = pane.querySelector('h2, h3, .pane-title, .section-title') || pane.firstElementChild || pane;
+    const note = document.createElement('div');
+    note.id = 'bm4-tim-secure-bridge-note';
+    note.style.cssText = 'margin:10px 0 14px;padding:10px 12px;border:1px solid #BBF7D0;background:#F0FDF4;color:#166534;border-radius:10px;font-size:12px;line-height:1.45;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;';
+    note.innerHTML = '<span>✓ Secure Mode aktif. <b>Tim BM4 tetap dipakai</b> untuk nama, jabatan, foto, bio, role, akses, reset password, nonaktifkan, dan force logout — semua tersimpan ke server.</span><button type="button" id="bm4-refresh-team-secure" style="border:1px solid #86EFAC;background:white;color:#166534;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">Refresh Tim</button>';
+    if(title && title.parentNode) title.parentNode.insertBefore(note, title.nextSibling); else pane.insertBefore(note, pane.firstChild);
+    const btn = note.querySelector('#bm4-refresh-team-secure');
+    if(btn) btn.onclick = async () => { btn.disabled = true; await syncTeamFromSecure(true); if(typeof renderTim === 'function') renderTim(); btn.disabled = false; notify('✓ Data Tim BM4 diperbarui dari Secure Mode.'); };
+  }
+
+  function enhanceTeamUi(){
+    if(!isSecureMode()) return;
+    addTeamBridgeNote();
+    // Label password supaya jelas bahwa tombol reset memakai server, bukan localStorage.
+    document.querySelectorAll('.tim-pw-toggle').forEach(btn => {
+      if((btn.textContent || '').toLowerCase().includes('reset')) btn.title = 'Reset password Secure Mode (server-side)';
+    });
+  }
+
+  async function login(){
+    const usernameEl = document.getElementById('login-username');
+    const passwordEl = document.getElementById('login-input');
+    const errEl = document.getElementById('login-error');
+    const username = (usernameEl && usernameEl.value || '').trim();
+    const password = passwordEl && passwordEl.value || '';
+    if(errEl){ errEl.classList.remove('show'); errEl.textContent = 'Username atau password salah. Coba lagi.'; }
+    if(!username || !password){ if(errEl){ errEl.textContent = 'Username dan password wajib diisi.'; errEl.classList.add('show'); } return; }
+    try{
+      if(typeof setSyncStatus === 'function') setSyncStatus('loading','Login ke server aman...');
+      const r = await request('auth_login', { username, password, deviceInfo: navigator.userAgent || 'browser' });
+      setBm4SessionToken(r.sessionToken, rememberEnabled());
+      saveSecureUser(r.user);
+      sessionStorage.setItem(SESSION_KEY, 'ok');
+      sessionStorage.setItem(CURRENT_USER_KEY, r.user.username);
+      sessionStorage.setItem('bm4_session_start', String(Date.now()));
+      if(passwordEl) passwordEl.value = '';
+      if(typeof startSessionTimer === 'function') startSessionTimer();
+      if(typeof setSyncStatus === 'function') setSyncStatus('synced','Login aman berhasil');
+      showScreen('s-proyek');
+      // Data utama tetap dimuat, tapi daftar user/security tidak ikut dimuat di awal.
+      setTimeout(()=>{
+        try { if(typeof loadFromSheets === 'function') loadFromSheets(); } catch(e){}
+        try { if(typeof loadTpFromSheets === 'function') loadTpFromSheets(); } catch(e){}
+        try { if(typeof loadProyekFromSheets === 'function') loadProyekFromSheets().then(()=>{ if(typeof renderProyekCards==='function') renderProyekCards(); }); } catch(e){}
+      }, 250);
+    }catch(e){
+      clearBm4SessionToken();
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(CURRENT_USER_KEY);
+      if(errEl){ errEl.textContent = e.message || 'Login gagal.'; errEl.classList.add('show'); }
+      if(typeof setSyncStatus === 'function') setSyncStatus('offline','Login gagal');
+      if(passwordEl){ passwordEl.value = ''; passwordEl.focus(); }
+    }
+  }
+
+  async function verifySession(){
+    const token = getBm4SessionToken();
+    if(!token) return false;
+    try{
+      const r = await request('auth_verify', { deviceInfo: navigator.userAgent || 'browser' });
+      if(r.user){
+        saveSecureUser(r.user);
+        sessionStorage.setItem(SESSION_KEY, 'ok');
+        sessionStorage.setItem(CURRENT_USER_KEY, r.user.username);
       }
-      user.updatedAt = nowIso_();
-      writeRows_(BM4_CONFIG.SHEETS.USERS, userTable.rows, HEADERS.Users);
-      writeAudit_({ action:'auth_login_failed', module:'auth', userId:user.id, username:user.username, role:user.role, status:'failed', message:'bad_password', deviceInfo });
-      return { success:false, error:'invalid_login', message:'Username atau password salah.' };
+      return true;
+    }catch(e){
+      clearBm4SessionToken();
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(CURRENT_USER_KEY);
+      return false;
     }
+  }
 
-    user.failedLoginCount = 0;
-    user.lockedUntil = '';
-    user.lastLogin = nowIso_();
-    user.updatedAt = nowIso_();
-    writeRows_(BM4_CONFIG.SHEETS.USERS, userTable.rows, HEADERS.Users);
+  async function logout(){
+    try { await request('auth_logout', {}); } catch(e){}
+    clearBm4SessionToken();
+    try { window.currentUser = null; currentUser = null; } catch(e){}
+  }
 
-    const token = Utilities.getUuid() + '.' + Utilities.getUuid();
-    const session = {
-      sessionId: Utilities.getUuid(),
-      userId: user.id,
-      username: user.username,
-      tokenHash: hashToken_(token),
-      createdAt: nowIso_(),
-      expiresAt: new Date(Date.now() + BM4_CONFIG.SESSION_HOURS * 3600000).toISOString(),
-      lastSeen: nowIso_(),
-      deviceInfo: deviceInfo,
-      active: true
+  async function changeOwnPassword(){
+    const oldEl = document.getElementById('set-pw-old');
+    const newEl = document.getElementById('set-pw-new');
+    const new2El = document.getElementById('set-pw-new2');
+    const oldPassword = oldEl && oldEl.value || '';
+    const newPassword = newEl && newEl.value || '';
+    const newPassword2 = new2El && new2El.value || '';
+    if(!oldPassword){ notify('⚠ Password lama wajib diisi.'); return; }
+    if(!newPassword || newPassword.length < 8){ notify('⚠ Password baru minimal 8 karakter.'); return; }
+    if(newPassword !== newPassword2){ notify('⚠ Konfirmasi password tidak cocok.'); return; }
+    try{
+      await request('auth_change_password', { oldPassword, newPassword });
+      if(oldEl) oldEl.value = ''; if(newEl) newEl.value = ''; if(new2El) new2El.value = '';
+      notify('✓ Password berhasil diubah di Secure Mode.');
+    }catch(e){ notify('Gagal ubah password: ' + (e.message || e)); }
+  }
+
+  async function saveOwnProfilePatch(profile){
+    const r = await request('auth_update_profile', { profile });
+    if(r.user) saveSecureUser(r.user);
+    return r;
+  }
+
+  // ==========================================================
+  // Bridge menu Tim BM4 ke Secure API
+  // ==========================================================
+  const oldRenderTim = window.renderTim;
+  window.renderTim = function(){
+    if(isSecureMode() && isAdminUser(getCurrent()) && !getAccounts().length) loadTeamCache();
+    const ret = typeof oldRenderTim === 'function' ? oldRenderTim.apply(this, arguments) : undefined;
+    enhanceTeamUi();
+    if(isSecureMode() && isAdminUser(getCurrent())) syncTeamFromSecure(false).then(changed => {
+      if(changed && typeof oldRenderTim === 'function') { oldRenderTim(); enhanceTeamUi(); }
+    });
+    return ret;
+  };
+  try { renderTim = window.renderTim; } catch(e){}
+
+  const oldOpenAccModal = window.openAccModal;
+  window.openAccModal = function(mode, username){
+    if(isSecureMode() && isAdminUser(getCurrent())){
+      // Pakai UI modal lama agar rasa aplikasi tidak berubah.
+      const ret = typeof oldOpenAccModal === 'function' ? oldOpenAccModal.apply(this, arguments) : undefined;
+      try{
+        const pw = document.getElementById('acc-password');
+        if(pw){
+          pw.placeholder = mode === 'edit' ? 'Kosongkan jika tidak ingin ganti password' : 'Password awal min. 8 karakter';
+        }
+      }catch(e){}
+      return ret;
+    }
+    if(typeof oldOpenAccModal === 'function') return oldOpenAccModal.apply(this, arguments);
+  };
+
+  window.saveAccount = async function(){
+    if(!isSecureMode()) return window.__legacy_saveAccount ? window.__legacy_saveAccount() : undefined;
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    const get = id => (document.getElementById(id) || {}).value || '';
+    const username = get('acc-username').trim().toLowerCase();
+    const password = get('acc-password');
+    const nama = get('acc-nama').trim();
+    const jabatan = get('acc-jabatan').trim();
+    const bio = get('acc-bio').trim();
+    const role = get('acc-role') || 'sales';
+    const akses = selectedAccessFromModal();
+    const editing = (typeof editingAccUsername !== 'undefined' && editingAccUsername) ? String(editingAccUsername).toLowerCase() : '';
+    if(!username){ notify('⚠ Username wajib diisi'); return; }
+    if(!editing && (!password || password.length < 8)){ notify('⚠ Password awal minimal 8 karakter'); return; }
+    if(editing && password && password.length < 8){ notify('⚠ Password baru minimal 8 karakter atau kosongkan'); return; }
+    if(!nama){ notify('⚠ Nama wajib diisi'); return; }
+    if(bio.length > 150){ notify('⚠ Bio maksimal 150 karakter'); return; }
+    const old = getAccounts().find(a => String(a.username).toLowerCase() === (editing || username));
+    const user = { username, nama, jabatan, bio, role, akses, active: old ? !old.suspended : true, foto: old ? (old.foto || '') : '' };
+    if(password) user.password = password;
+    try{
+      await request('admin_user_save', { user });
+      notify(editing ? '✓ Akun diperbarui di server' : '✓ Akun baru dibuat di server');
+      if(typeof closeAccModal === 'function') closeAccModal();
+      await syncTeamFromSecure(true);
+      if(typeof renderTim === 'function') renderTim();
+    }catch(e){ notify('Gagal simpan akun: ' + (e.message || e)); }
+  };
+
+  window.deleteAccount = async function(username){
+    if(!isSecureMode()) return;
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    if(String(username).toLowerCase() === String(me.username).toLowerCase()){ notify('⚠ Tidak bisa menonaktifkan akun sendiri.'); return; }
+    if(!confirm('Nonaktifkan akun "' + username + '"?\n\nDi Secure Mode akun tidak dihapus permanen, hanya dinonaktifkan.')) return;
+    try{
+      await request('admin_user_set_active', { username, active:false });
+      notify('⛔ Akun dinonaktifkan.');
+      await syncTeamFromSecure(true);
+      if(typeof renderTim === 'function') renderTim();
+    }catch(e){ notify('Gagal nonaktifkan akun: ' + (e.message || e)); }
+  };
+
+  window.bmResetPassword = async function(username){
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    if(!confirm('Reset password untuk "' + username + '"?\n\nPassword sementara akan ditampilkan sekali.')) return;
+    try{
+      const r = await request('admin_user_reset_password', { username });
+      if(typeof showResetPasswordModal === 'function') showResetPasswordModal(username, r.tempPassword);
+      else alert('Password sementara untuk ' + username + ':\n\n' + r.tempPassword);
+      await syncTeamFromSecure(true);
+      if(typeof renderTim === 'function') renderTim();
+    }catch(e){ notify('Gagal reset password: ' + (e.message || e)); }
+  };
+
+  window.bmToggleSuspend = async function(username){
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    const acc = getAccounts().find(a => String(a.username).toLowerCase() === String(username).toLowerCase());
+    if(!acc){ notify('⚠ Akun tidak ditemukan'); return; }
+    if(String(acc.username).toLowerCase() === String(me.username).toLowerCase()){ notify('⚠ Tidak bisa nonaktifkan akun sendiri.'); return; }
+    const willSuspend = !acc.suspended;
+    if(!confirm((willSuspend ? 'Nonaktifkan' : 'Aktifkan') + ' akun "' + username + '"?')) return;
+    try{
+      await request('admin_user_set_active', { username, active: !willSuspend });
+      notify(willSuspend ? '⛔ Akun dinonaktifkan.' : '✓ Akun diaktifkan.');
+      await syncTeamFromSecure(true);
+      if(typeof renderTim === 'function') renderTim();
+    }catch(e){ notify('Gagal update status akun: ' + (e.message || e)); }
+  };
+
+  window.bmForceLogout = async function(username){
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    if(String(username).toLowerCase() === String(me.username).toLowerCase()){ notify('⚠ Tidak bisa force logout diri sendiri. Gunakan tombol Keluar.'); return; }
+    if(!confirm('Paksa logout semua session "' + username + '"?')) return;
+    try{
+      const r = await request('admin_user_force_logout', { username });
+      notify('🚪 Force logout selesai. Session dicabut: ' + (r.revoked || 0));
+    }catch(e){ notify('Gagal force logout: ' + (e.message || e)); }
+  };
+
+  window.bmShowAuditPerUser = async function(username){
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    try{
+      const r = await request('admin_audit_list', { limit:300 });
+      const rows = (r.data || []).filter(x => String(x.username || '').toLowerCase() === String(username).toLowerCase()).slice(0,100);
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      const logsHtml = rows.length ? rows.map(l => `<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #F1F5F9;"><div><div style="font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;">${esc(l.action||'-')}</div><div style="font-size:11px;color:#64748B;line-height:1.4;">${esc(l.module||'')} ${esc(l.message||'')}</div></div><div style="font-size:10px;color:#94A3B8;white-space:nowrap;">${esc(l.timestamp||'')}</div></div>`).join('') : '<div style="padding:40px 20px;text-align:center;color:#64748B;font-size:12px;">Belum ada audit user ini.</div>';
+      overlay.innerHTML = `<div style="background:white;border-radius:14px;max-width:560px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);"><div style="padding:18px 22px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:16px;font-weight:700;">📊 Audit Aktivitas</div><div style="font-size:12px;color:#64748B;margin-top:2px;">User: <b>${esc(username)}</b> · ${rows.length} aktivitas</div></div><button id="audit-close" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:#64748B;">✕</button></div><div style="overflow:auto;">${logsHtml}</div></div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#audit-close').onclick = () => overlay.remove();
+      overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+    }catch(e){ notify('Gagal ambil audit: ' + (e.message || e)); }
+  };
+
+  window.bmEditPhoto = function(username){
+    const me = getCurrent();
+    if(!isAdminUser(me)){ notify('⚠ Hanya BM/Admin.'); return; }
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = event => {
+      const file = event.target.files && event.target.files[0]; if(!file) return;
+      if(!file.type || !file.type.startsWith('image/')){ notify('⚠ File harus berupa gambar'); return; }
+      if(file.size > 10 * 1024 * 1024){ notify('⚠ Ukuran foto maksimal 10MB'); return; }
+      notify('⚙️ Memproses foto...');
+      _compressAvatar(file).then(async dataUrl => {
+        const acc = getAccounts().find(a => String(a.username).toLowerCase() === String(username).toLowerCase());
+        if(!acc) throw new Error('Akun tidak ditemukan');
+        await request('admin_user_save', { user:Object.assign({}, acc, { foto:dataUrl, active:!acc.suspended }) });
+        if(String(username).toLowerCase() === String(me.username).toLowerCase()) saveSecureUser(Object.assign({}, me, { foto:dataUrl }));
+        await syncTeamFromSecure(true); if(typeof renderTim === 'function') renderTim();
+        notify('✓ Foto diperbarui di server');
+      }).catch(e => notify('Gagal update foto: ' + (e.message || e)));
     };
-    const sessions = readRows_(BM4_CONFIG.SHEETS.SESSIONS).filter(s => !(s.username === user.username && String(s.active).toLowerCase() === 'true'));
-    sessions.push(session);
-    writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-
-    writeAudit_({ action:'auth_login', module:'auth', userId:user.id, username:user.username, role:user.role, status:'success', deviceInfo });
-    return { success:true, sessionToken: token, expiresAt: session.expiresAt, user: publicUser_(user) };
-  });
-}
-
-function authLogout_(req, ctx){
-  const tokenHash = hashToken_(String(req.sessionToken || ''));
-  const rows = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-  rows.forEach(r => { if(r.tokenHash === tokenHash) r.active = false; });
-  writeRows_(BM4_CONFIG.SHEETS.SESSIONS, rows, HEADERS.Sessions);
-  writeAudit_({ action:'auth_logout', module:'auth', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, status:'success', deviceInfo:String(req.deviceInfo||'') });
-  return { success:true };
-}
-
-function authChangePassword_(ctx, req){
-  const oldPassword = String(req.oldPassword || '');
-  const newPassword = String(req.newPassword || '');
-  const deviceInfo = String(req.deviceInfo || '').slice(0, 500);
-
-  if(!oldPassword || !newPassword){
-    return { success:false, error:'missing_password', message:'Password lama dan password baru wajib diisi.' };
-  }
-  if(newPassword.length < 8){
-    return { success:false, error:'weak_password', message:'Password baru minimal 8 karakter.' };
-  }
-  if(oldPassword === newPassword){
-    return { success:false, error:'same_password', message:'Password baru tidak boleh sama dengan password lama.' };
-  }
-
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const idx = rows.findIndex(u => String(u.id) === String(ctx.user.id) || String(u.username).toLowerCase() === String(ctx.user.username).toLowerCase());
-  if(idx < 0) throw new Error('User tidak ditemukan');
-
-  const u = rows[idx];
-  const ok = verifyPasswordServer_(oldPassword, u.passwordHash, u.salt);
-  if(!ok){
-    writeAudit_({
-      action:'auth_change_password_failed',
-      module:'auth',
-      userId:ctx.user.id,
-      username:ctx.user.username,
-      role:ctx.user.role,
-      status:'failed',
-      message:'old_password_wrong',
-      deviceInfo
-    });
-    return { success:false, error:'invalid_old_password', message:'Password lama salah.' };
-  }
-
-  u.salt = Utilities.getUuid();
-  u.passwordHash = hashPasswordServer_(newPassword, u.salt);
-  u.failedLoginCount = 0;
-  u.lockedUntil = '';
-  u.updatedAt = nowIso_();
-  rows[idx] = u;
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-
-  // Amankan akun: session lain milik user ini dicabut, session saat ini tetap aktif.
-  const sessions = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-  sessions.forEach(s => {
-    const sameUser = String(s.username).toLowerCase() === String(ctx.user.username).toLowerCase();
-    const currentSession = String(s.sessionId) === String(ctx.session.sessionId);
-    if(sameUser && !currentSession) s.active = false;
-  });
-  writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-
-  writeAudit_({
-    action:'auth_change_password',
-    module:'auth',
-    userId:ctx.user.id,
-    username:ctx.user.username,
-    role:ctx.user.role,
-    status:'success',
-    message:'password_changed_self',
-    deviceInfo
-  });
-
-  return { success:true, message:'Password berhasil diubah.' };
-}
-
-function authUpdateProfile_(ctx, profile){
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const idx = rows.findIndex(u => String(u.username).toLowerCase() === String(ctx.user.username).toLowerCase());
-  if(idx < 0) throw new Error('User tidak ditemukan');
-  const u = rows[idx];
-  const before = Object.assign({}, u);
-  if(profile.bio !== undefined) u.bio = String(profile.bio || '').slice(0, 150);
-  if(profile.foto !== undefined) {
-    const foto = String(profile.foto || '');
-    if(foto && !(foto.indexOf('data:image/') === 0 || foto.indexOf('http://') === 0 || foto.indexOf('https://') === 0)) throw new Error('Format foto tidak valid');
-    u.foto = foto;
-  }
-  u.updatedAt = nowIso_();
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  writeAudit_({ action:'auth_update_profile', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:ctx.user.username, beforeJson:JSON.stringify({bio:before.bio||'', foto:before.foto?'set':''}), afterJson:JSON.stringify({bio:u.bio||'', foto:u.foto?'set':''}), status:'success' });
-  return { success:true, user: publicUser_(u) };
-}
-
-function requireSession_(req, action){
-  const token = String(req.sessionToken || '').trim();
-  if(!token) throw new Error('unauthorized: session token kosong');
-  const tokenHash = hashToken_(token);
-  const sessions = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-  const sIdx = sessions.findIndex(s => s.tokenHash === tokenHash && String(s.active).toLowerCase() !== 'false');
-  if(sIdx < 0) throw new Error('unauthorized: session tidak ditemukan');
-  const session = sessions[sIdx];
-  const now = Date.now();
-  const exp = new Date(session.expiresAt).getTime();
-  const last = new Date(session.lastSeen || session.createdAt).getTime();
-  if(exp < now || (last && now - last > BM4_CONFIG.IDLE_HOURS * 3600000)){
-    session.active = false;
-    writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-    throw new Error('unauthorized: session expired');
-  }
-  session.lastSeen = nowIso_();
-  sessions[sIdx] = session;
-  writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-
-  const user = readRows_(BM4_CONFIG.SHEETS.USERS).find(u => u.id === session.userId || String(u.username).toLowerCase() === String(session.username).toLowerCase());
-  if(!user) throw new Error('unauthorized: user tidak ditemukan');
-  if(String(user.active).toLowerCase() === 'false' || String(user.active) === '0') throw new Error('forbidden: akun nonaktif');
-  return { session, user };
-}
-
-function requirePermission_(ctx, action){
-  const role = String(ctx.user.role || '').toLowerCase();
-  const rule = ROLE_RULES[role] || [];
-  if(rule === '*') return true;
-  if(rule.indexOf(action) >= 0) return true;
-  throw new Error('permission_denied: role ' + role + ' tidak boleh menjalankan ' + action);
-}
-
-function getAccounts_(ctx){
-  requirePermission_(ctx, 'getAccounts');
-  if(!['bm','owner','admin'].includes(String(ctx.user.role).toLowerCase())) throw new Error('permission_denied');
-  const users = readRows_(BM4_CONFIG.SHEETS.USERS).map(publicUser_);
-  return { success:true, data: users };
-}
-
-function saveAccounts_(ctx, rows){
-  if(!Array.isArray(rows)) throw new Error('saveAccounts expects array');
-  const before = readRows_(BM4_CONFIG.SHEETS.USERS);
-  rows.forEach(a => {
-    if(!a.username) return;
-    const existing = before.find(u => String(u.username).toLowerCase() === String(a.username).toLowerCase());
-    if(existing){
-      existing.nama = a.nama || existing.nama || '';
-      existing.jabatan = a.jabatan || existing.jabatan || '';
-      if(a.foto !== undefined) existing.foto = a.foto || '';
-      if(a.bio !== undefined) existing.bio = String(a.bio || '').slice(0,150);
-      existing.role = a.role || existing.role || 'viewer';
-      existing.akses = Array.isArray(a.akses) ? a.akses.join(',') : (a.akses || existing.akses || 'dashboard');
-      existing.active = a.suspended ? false : (a.active !== false);
-      if(a.password && !String(a.password).startsWith('s1$')){
-        existing.salt = Utilities.getUuid();
-        existing.passwordHash = hashPasswordServer_(String(a.password), existing.salt);
-      }
-      existing.updatedAt = nowIso_();
-    } else {
-      createUser_({
-        username:a.username,
-        password:a.password || Utilities.getUuid().slice(0,10) + '!',
-        nama:a.nama || '', jabatan:a.jabatan || '', foto:a.foto || '', bio:a.bio || '', role:a.role || 'viewer', akses:a.akses || ['dashboard'], active:!a.suspended
-      }, before);
-    }
-  });
-  writeRows_(BM4_CONFIG.SHEETS.USERS, before, HEADERS.Users);
-  writeAudit_({ action:'saveAccounts', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, beforeJson:'', afterJson:JSON.stringify(rows), status:'success' });
-  return { success:true, count:rows.length };
-}
-
-function deleteAccount_(ctx, username){
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const u = rows.find(r => String(r.username).toLowerCase() === String(username).toLowerCase());
-  if(!u) return { success:false, error:'not_found' };
-  u.active = false;
-  u.updatedAt = nowIso_();
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  writeAudit_({ action:'deleteAccount', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:username, beforeJson:JSON.stringify(u), status:'success' });
-  return { success:true };
-}
-
-
-function requireAdmin_(ctx){
-  const role = String(ctx.user && ctx.user.role || '').toLowerCase();
-  if(['bm','owner','admin'].indexOf(role) < 0) throw new Error('permission_denied: Security Center hanya untuk BM/Admin');
-}
-
-function adminUsersList_(ctx){
-  requireAdmin_(ctx);
-  return { success:true, data: readRows_(BM4_CONFIG.SHEETS.USERS).map(publicUser_) };
-}
-
-function adminUserSave_(ctx, input){
-  requireAdmin_(ctx);
-  const username = String(input.username || '').trim().toLowerCase();
-  if(!username) throw new Error('Username wajib diisi');
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const idx = rows.findIndex(u => String(u.username).toLowerCase() === username);
-  const before = idx >= 0 ? Object.assign({}, rows[idx]) : null;
-  const akses = Array.isArray(input.akses) ? input.akses.join(',') : String(input.akses || 'dashboard,galeri');
-  if(idx >= 0){
-    const u = rows[idx];
-    u.nama = input.nama || u.nama || '';
-    u.jabatan = input.jabatan || u.jabatan || '';
-    if(input.foto !== undefined){
-      const foto = String(input.foto || '');
-      if(foto && !(foto.indexOf('data:image/') === 0 || foto.indexOf('http://') === 0 || foto.indexOf('https://') === 0)) throw new Error('Format foto tidak valid');
-      u.foto = foto;
-    }
-    if(input.bio !== undefined) u.bio = String(input.bio || '').slice(0,150);
-    u.role = input.role || u.role || 'viewer';
-    u.akses = akses;
-    u.active = input.active !== false;
-    if(input.password){
-      u.salt = Utilities.getUuid();
-      u.passwordHash = hashPasswordServer_(String(input.password), u.salt);
-      u.failedLoginCount = 0;
-      u.lockedUntil = '';
-    }
-    u.updatedAt = nowIso_();
-  } else {
-    const pass = input.password || Utilities.getUuid().replace(/-/g,'').slice(0,10) + '!';
-    createUser_({ username:username, password:pass, nama:input.nama||'', jabatan:input.jabatan||'', foto:input.foto||'', bio:input.bio||'', role:input.role||'viewer', akses:akses, active:input.active !== false }, rows);
-  }
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  writeAudit_({ action:'admin_user_save', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:username, beforeJson:JSON.stringify(before || {}), afterJson:JSON.stringify({ username:username, role:input.role, akses:akses, active:input.active !== false }), status:'success' });
-  return { success:true };
-}
-
-function adminUserResetPassword_(ctx, username){
-  requireAdmin_(ctx);
-  username = String(username || '').trim().toLowerCase();
-  if(!username) throw new Error('Username kosong');
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const u = rows.find(r => String(r.username).toLowerCase() === username);
-  if(!u) throw new Error('User tidak ditemukan');
-  const tempPass = Utilities.getUuid().replace(/-/g,'').slice(0,12) + '!';
-  u.salt = Utilities.getUuid();
-  u.passwordHash = hashPasswordServer_(tempPass, u.salt);
-  u.failedLoginCount = 0;
-  u.lockedUntil = '';
-  u.updatedAt = nowIso_();
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  writeAudit_({ action:'admin_user_reset_password', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:username, status:'success' });
-  return { success:true, tempPassword:tempPass };
-}
-
-function adminUserSetActive_(ctx, username, active){
-  requireAdmin_(ctx);
-  username = String(username || '').trim().toLowerCase();
-  const rows = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const u = rows.find(r => String(r.username).toLowerCase() === username);
-  if(!u) throw new Error('User tidak ditemukan');
-  u.active = !!active;
-  u.updatedAt = nowIso_();
-  if(!active){
-    const sessions = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-    sessions.forEach(s => { if(String(s.username).toLowerCase() === username) s.active = false; });
-    writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-  }
-  writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  writeAudit_({ action:'admin_user_set_active', module:'users', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:username, afterJson:JSON.stringify({active:!!active}), status:'success' });
-  return { success:true };
-}
-
-function adminUserForceLogout_(ctx, username){
-  requireAdmin_(ctx);
-  username = String(username || '').trim().toLowerCase();
-  if(!username) throw new Error('Username kosong');
-  if(String(ctx.user.username || '').toLowerCase() === username) throw new Error('Tidak bisa force logout diri sendiri. Gunakan tombol Keluar.');
-  const sessions = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-  let count = 0;
-  sessions.forEach(s => {
-    if(String(s.username || '').toLowerCase() === username && String(s.active).toLowerCase() !== 'false'){
-      s.active = false;
-      count++;
-    }
-  });
-  writeRows_(BM4_CONFIG.SHEETS.SESSIONS, sessions, HEADERS.Sessions);
-  writeAudit_({ action:'admin_user_force_logout', module:'sessions', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:username, afterJson:JSON.stringify({revoked:count}), status:'success' });
-  return { success:true, revoked:count };
-}
-
-function adminSessionsList_(ctx){
-  requireAdmin_(ctx);
-  const rows = readRows_(BM4_CONFIG.SHEETS.SESSIONS)
-    .filter(s => String(s.active).toLowerCase() !== 'false')
-    .map(s => ({ sessionId:s.sessionId, userId:s.userId, username:s.username, createdAt:s.createdAt, expiresAt:s.expiresAt, lastSeen:s.lastSeen, deviceInfo:s.deviceInfo, active:String(s.active).toLowerCase() !== 'false' }));
-  rows.sort((a,b) => new Date(b.lastSeen || b.createdAt).getTime() - new Date(a.lastSeen || a.createdAt).getTime());
-  return { success:true, data:rows };
-}
-
-function adminSessionRevoke_(ctx, sessionId){
-  requireAdmin_(ctx);
-  const rows = readRows_(BM4_CONFIG.SHEETS.SESSIONS);
-  let found = false;
-  rows.forEach(s => { if(String(s.sessionId) === String(sessionId)){ s.active = false; found = true; } });
-  writeRows_(BM4_CONFIG.SHEETS.SESSIONS, rows, HEADERS.Sessions);
-  writeAudit_({ action:'admin_session_revoke', module:'sessions', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:sessionId, status:found?'success':'failed', message:found?'':'session_not_found' });
-  return { success:found, error:found?'':'not_found' };
-}
-
-function adminAuditList_(ctx, req){
-  requireAdmin_(ctx);
-  const limit = Math.min(500, Math.max(10, Number(req.limit || 120)));
-  let rows = readRows_(BM4_CONFIG.SHEETS.AUDIT);
-  rows.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  return { success:true, data:rows.slice(0, limit) };
-}
-
-function adminBackupStatus_(ctx, req){
-  requireAdmin_(ctx);
-  const limit = Math.min(50, Math.max(5, Number(req.limit || 20)));
-  let rows = readRows_(BM4_CONFIG.SHEETS.BACKUPS);
-  rows.sort((a,b) => new Date(b.timestamp || b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime());
-  return { success:true, data:rows.slice(0, limit) };
-}
-
-function logActivityCompat_(ctx, data){
-  writeAudit_({ action:data.action || 'client_log', module:'client', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, afterJson:JSON.stringify(data), status:'success', message:data.detail || '' });
-  return { success:true };
-}
-
-function saveRowsAction_(ctx, sheetName, rows, action){
-  if(!Array.isArray(rows)) throw new Error(action + ' expects rows array');
-  const headers = inferHeaders_(sheetName, rows);
-  const before = readRows_(sheetName);
-  writeRows_(sheetName, rows, headers);
-  writeAudit_({ action, module:sheetName, userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, beforeJson:JSON.stringify({count:before.length}), afterJson:JSON.stringify({count:rows.length}), status:'success' });
-  return { success:true, count:rows.length };
-}
-
-function deleteRowAction_(ctx, sheetName, key, value, action){
-  const rows = readRows_(sheetName);
-  const idx = rows.findIndex(r => String(r[key]) === String(value));
-  if(idx < 0) return { success:false, error:'not_found' };
-  const before = rows[idx];
-  rows.splice(idx, 1);
-  writeRows_(sheetName, rows, inferHeaders_(sheetName, rows));
-  writeRowsAppend_(BM4_CONFIG.SHEETS.DELETED, [{ timestamp:nowIso_(), userId:ctx.user.id, username:ctx.user.username, module:sheetName, recordId:value, beforeJson:JSON.stringify(before) }], HEADERS.DeletedRecords);
-  writeAudit_({ action, module:sheetName, userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, recordId:value, beforeJson:JSON.stringify(before), status:'success' });
-  return { success:true };
-}
-
-function backupNow_(ctx){
-  const ss = getSpreadsheet_();
-  const name = 'BM4 Backup ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HHmmss');
-  const file = DriveApp.getFileById(ss.getId()).makeCopy(name);
-  const row = { timestamp:nowIso_(), fileId:file.getId(), name:name, username:(ctx.user && ctx.user.username) || 'system', createdBy:(ctx.user && ctx.user.id) || 'system' };
-  writeRowsAppend_(BM4_CONFIG.SHEETS.BACKUPS, [row], HEADERS.Backups);
-  writeAudit_({ action:'backup_now', module:'backup', userId:ctx.user.id, username:ctx.user.username, role:ctx.user.role, afterJson:JSON.stringify({ fileId:file.getId(), name:name }), status:'success' });
-  return { success:true, fileId:file.getId(), name:name };
-}
-
-function createUser_(input, existingRows){
-  const rows = existingRows || readRows_(BM4_CONFIG.SHEETS.USERS);
-  const salt = Utilities.getUuid();
-  const user = {
-    id: Utilities.getUuid(),
-    username: String(input.username || '').trim().toLowerCase(),
-    passwordHash: hashPasswordServer_(String(input.password || ''), salt),
-    salt: salt,
-    nama: input.nama || '',
-    jabatan: input.jabatan || '',
-    foto: input.foto || '',
-    bio: input.bio || '',
-    role: input.role || 'viewer',
-    akses: Array.isArray(input.akses) ? input.akses.join(',') : (input.akses || 'dashboard'),
-    active: input.active !== false,
-    failedLoginCount: 0,
-    lockedUntil: '',
-    lastLogin: '',
-    createdAt: nowIso_(),
-    updatedAt: nowIso_()
+    input.click();
   };
-  rows.push(user);
-  if(!existingRows) writeRows_(BM4_CONFIG.SHEETS.USERS, rows, HEADERS.Users);
-  return user;
-}
 
-function publicUser_(u){
-  return {
-    id:u.id || '', username:u.username || '', nama:u.nama || '', jabatan:u.jabatan || '', role:u.role || 'viewer',
-    akses: parseAccess_(u.akses), active: String(u.active).toLowerCase() !== 'false', foto:u.foto || '', bio:u.bio || ''
+  // Settings user sendiri: foto, bio, password tetap memakai halaman lama, backend-nya Secure Mode.
+  const oldSaveBioChange = window.saveBioChange;
+  window.saveBioChange = async function(){
+    if(!isSecureMode()) return typeof oldSaveBioChange === 'function' ? oldSaveBioChange.apply(this, arguments) : undefined;
+    const el = document.getElementById('set-bio'); const bio = el && el.value ? el.value.trim() : '';
+    if(bio.length > 150){ notify('⚠ Bio maksimal 150 karakter'); return; }
+    try{ await saveOwnProfilePatch({ bio }); notify('✓ Bio berhasil disimpan di server'); }
+    catch(e){ notify('Gagal simpan bio: ' + (e.message || e)); }
   };
-}
 
-function parseAccess_(v){
-  if(Array.isArray(v)) return v;
-  if(!v) return [];
-  return String(v).split(',').map(s => s.trim()).filter(Boolean);
-}
+  const oldUploadAvatar = window.uploadAvatar;
+  window.uploadAvatar = function(event){
+    if(!isSecureMode()) return typeof oldUploadAvatar === 'function' ? oldUploadAvatar.apply(this, arguments) : undefined;
+    const file = event && event.target && event.target.files && event.target.files[0]; if(!file) return;
+    if(!file.type || !file.type.startsWith('image/')){ notify('⚠ File harus berupa gambar'); return; }
+    if(file.size > 10 * 1024 * 1024){ notify('⚠ Ukuran foto maksimal 10MB'); return; }
+    notify('⚙️ Memproses foto...');
+    _compressAvatar(file).then(async dataUrl => {
+      await saveOwnProfilePatch({ foto:dataUrl });
+      const av = document.getElementById('settings-avatar'); if(av) av.innerHTML = `<img src="${dataUrl}" alt="">`;
+      const tb = document.getElementById('tb-profile-avatar'); if(tb) tb.innerHTML = `<img src="${dataUrl}" alt="">`;
+      notify('✓ Foto profil diperbarui di server');
+    }).catch(e => notify('Gagal update foto: ' + (e.message || e)));
+  };
 
-function hashPasswordServer_(password, salt){
-  const secret = getSecret_('BM4_PASSWORD_PEPPER');
-  let h = password + ':' + salt + ':' + secret;
-  for(let i=0;i<BM4_CONFIG.HASH_ITERATIONS;i++){
-    h = bytesToHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h, Utilities.Charset.UTF_8));
-  }
-  return 's1$' + BM4_CONFIG.HASH_ITERATIONS + '$' + h;
-}
+  const oldSavePasswordChange = window.savePasswordChange;
+  window.savePasswordChange = function(){
+    if(isSecureMode()) return changeOwnPassword();
+    if(typeof oldSavePasswordChange === 'function') return oldSavePasswordChange.apply(this, arguments);
+  };
 
-function verifyPasswordServer_(password, storedHash, salt){
-  if(!storedHash || !salt) return false;
-  if(String(storedHash).indexOf('s1$') !== 0) return false;
-  return hashPasswordServer_(password, salt) === storedHash;
-}
+  const oldOpenSettings = window.openSettings;
+  window.openSettings = function(){
+    const ret = typeof oldOpenSettings === 'function' ? oldOpenSettings.apply(this, arguments) : undefined;
+    try{
+      const masterSection = document.getElementById('settings-masterpw-section');
+      if(masterSection && isSecureMode()) masterSection.style.display = 'none';
+      const np = document.getElementById('set-pw-new'); if(np) np.placeholder = 'Min. 8 karakter';
+      const np2 = document.getElementById('set-pw-new2'); if(np2) np2.placeholder = 'Ulangi password baru';
+    }catch(e){}
+    return ret;
+  };
 
-function hashToken_(token){
-  return bytesToHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(token || '') + ':' + getSecret_('BM4_SESSION_SECRET'), Utilities.Charset.UTF_8));
-}
-
-function getSecret_(key){
-  const props = PropertiesService.getScriptProperties();
-  let v = props.getProperty(key);
-  if(!v){
-    v = Utilities.getUuid() + Utilities.getUuid();
-    props.setProperty(key, v);
-  }
-  return v;
-}
-
-function bytesToHex_(bytes){
-  return bytes.map ? bytes.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2,'0')).join('') : Array.prototype.map.call(bytes, b => (b < 0 ? b + 256 : b).toString(16).padStart(2,'0')).join('');
-}
-
-function getSpreadsheet_(){
-  const id = PropertiesService.getScriptProperties().getProperty('BM4_SPREADSHEET_ID');
-  if(id) return SpreadsheetApp.openById(id);
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if(!ss) throw new Error('Spreadsheet tidak ditemukan. Isi Script Property BM4_SPREADSHEET_ID.');
-  return ss;
-}
-
-function ensureSecuritySheets_(){
-  const ss = getSpreadsheet_();
-  Object.keys(HEADERS).forEach(name => ensureSheet_(ss, name, HEADERS[name]));
-}
-
-function ensureSheet_(ss, name, headers){
-  let sh = ss.getSheetByName(name);
-  if(!sh) sh = ss.insertSheet(name);
-  const first = sh.getRange(1,1,1,Math.max(headers.length, sh.getLastColumn() || 1)).getValues()[0];
-  const empty = first.every(v => !v);
-  if(empty){
-    sh.getRange(1,1,1,headers.length).setValues([headers]);
-    sh.setFrozenRows(1);
-  }
-  return sh;
-}
-
-function getTable_(sheetName){
-  const ss = getSpreadsheet_();
-  const sh = ensureSheet_(ss, sheetName, HEADERS[sheetName] || []);
-  const values = sh.getDataRange().getValues();
-  if(values.length < 1) return { headers:HEADERS[sheetName] || [], rows:[] };
-  const headers = values[0].map(String);
-  const rows = values.slice(1).filter(r => r.some(v => v !== '')).map(r => {
-    const o = {};
-    headers.forEach((h,i) => o[h] = r[i]);
-    return o;
-  });
-  return { headers, rows };
-}
-
-function readRows_(sheetName){
-  return getTable_(sheetName).rows;
-}
-
-function writeRows_(sheetName, rows, headers){
-  const ss = getSpreadsheet_();
-  const sh = ensureSheet_(ss, sheetName, headers || HEADERS[sheetName] || []);
-  const h = headers && headers.length ? headers : inferHeaders_(sheetName, rows);
-  sh.clearContents();
-  sh.getRange(1,1,1,h.length).setValues([h]);
-  if(rows && rows.length){
-    const vals = rows.map(row => h.map(k => normalizeCell_(row[k])));
-    sh.getRange(2,1,vals.length,h.length).setValues(vals);
-  }
-  sh.setFrozenRows(1);
-  SpreadsheetApp.flush();
-}
-
-function writeRowsAppend_(sheetName, rows, headers){
-  if(!rows || !rows.length) return;
-  const ss = getSpreadsheet_();
-  const sh = ensureSheet_(ss, sheetName, headers || HEADERS[sheetName] || []);
-  const h = headers || getTable_(sheetName).headers;
-  const vals = rows.map(row => h.map(k => normalizeCell_(row[k])));
-  sh.getRange(sh.getLastRow()+1,1,vals.length,h.length).setValues(vals);
-  SpreadsheetApp.flush();
-}
-
-function inferHeaders_(sheetName, rows){
-  const base = HEADERS[sheetName] ? HEADERS[sheetName].slice() : [];
-  (rows || []).forEach(r => Object.keys(r || {}).forEach(k => { if(base.indexOf(k) < 0) base.push(k); }));
-  return base.length ? base : ['id','data'];
-}
-
-function normalizeCell_(v){
-  if(v === null || v === undefined) return '';
-  if(Array.isArray(v)) return v.join(',');
-  if(typeof v === 'object') return JSON.stringify(v);
-  return v;
-}
-
-function writeAudit_(a){
-  writeRowsAppend_(BM4_CONFIG.SHEETS.AUDIT, [{
-    timestamp: nowIso_(), userId:a.userId||'', username:a.username||'', role:a.role||'', action:a.action||'', module:a.module||'', projectId:a.projectId||'', recordId:a.recordId||'',
-    beforeJson:a.beforeJson||'', afterJson:a.afterJson||'', deviceInfo:a.deviceInfo||'', status:a.status||'', message:a.message||''
-  }], HEADERS.AuditLogs);
-}
-
-function setSetting_(key, value, by){
-  const rows = readRows_(BM4_CONFIG.SHEETS.SETTINGS);
-  const idx = rows.findIndex(r => r.key === key);
-  const row = { key, value, updatedAt:nowIso_(), updatedBy:by || '' };
-  if(idx >= 0) rows[idx] = row; else rows.push(row);
-  writeRows_(BM4_CONFIG.SHEETS.SETTINGS, rows, HEADERS.Settings);
-}
-
-function withWriteLock_(fn){
-  const lock = LockService.getScriptLock();
-  if(!lock.tryLock(30000)) throw new Error('server_busy: gagal mendapatkan lock');
-  try { return fn(); }
-  finally { lock.releaseLock(); }
-}
-
-function json_(obj){
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function nowIso_(){ return new Date().toISOString(); }
-
-/**
- * MIGRASI AKUN LAMA → SECURE USERS
- *
- * Cara pakai:
- * 1. Buka Apps Script editor (tempat Code.gs ini berada)
- * 2. Pilih fungsi migrateOldAccountsToUsers di dropdown
- * 3. Klik Run
- * 4. Lihat tab "Logs" (View → Logs atau Execution log)
- * 5. Catat daftar password sementara dari log → bagikan ke tim secara aman
- *
- * Fungsi ini AMAN dijalankan beberapa kali:
- * - Akun yang sudah ada di Users (berdasarkan username) akan di-skip
- * - Hanya akun baru yang dibuatkan password sementara
- * - Tab Accounts lama TIDAK dihapus, tetap sebagai cadangan
- */
-function migrateOldAccountsToUsers(){
-  ensureSecuritySheets_();
-  const oldAccounts = readRows_(BM4_CONFIG.SHEETS.ACCOUNTS);
-  if(!oldAccounts.length){
-    Logger.log('Tab "Accounts" kosong. Tidak ada yang dimigrasi.');
-    return;
-  }
-
-  const existingUsers = readRows_(BM4_CONFIG.SHEETS.USERS);
-  const existingUsernames = new Set(existingUsers.map(u => String(u.username || '').toLowerCase()));
-
-  const created = [];
-  const skipped = [];
-
-  oldAccounts.forEach(a => {
-    const username = String(a.username || '').trim().toLowerCase();
-    if(!username) return;
-
-    if(existingUsernames.has(username)){
-      skipped.push(username);
-      return;
-    }
-
-    // Generate password sementara: 4 huruf + 4 angka, hindari karakter membingungkan
-    const tempPass = _bm4MigrationGenPass_();
-
-    // Tentukan akses dari kolom akses lama (string atau array)
-    let akses = a.akses;
-    if(typeof akses === 'string'){
-      akses = akses.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    if(!Array.isArray(akses) || akses.length === 0){
-      akses = ['dashboard'];
-    }
-
-    // Role dari Sheets lama, fallback ke 'viewer' kalau kosong
-    const role = String(a.role || 'viewer').toLowerCase();
-
-    // Active: kalau kolom 'suspended' true → akun nonaktif
-    const active = !(a.suspended === true || String(a.suspended).toLowerCase() === 'true');
-
-    createUser_({
-      username: username,
-      password: tempPass,
-      nama: a.nama || '',
-      jabatan: a.jabatan || '',
-      foto: a.foto || '',
-      bio: a.bio || '',
-      role: role,
-      akses: akses,
-      active: active
-    }, existingUsers);
-
-    created.push({ username: username, role: role, password: tempPass });
-    existingUsernames.add(username);
-  });
-
-  // Tulis sekaligus untuk efisiensi
-  if(created.length){
-    writeRows_(BM4_CONFIG.SHEETS.USERS, existingUsers, HEADERS.Users);
-    setSetting_('migration_old_accounts_at', nowIso_(), 'system');
-    writeAudit_({
-      action: 'migrate_accounts',
-      module: 'admin',
-      userId: 'system',
-      username: 'system',
-      role: 'system',
-      afterJson: JSON.stringify({ count: created.length, usernames: created.map(c => c.username) }),
-      status: 'success'
+  // Override logout lama: logout server + bersihkan token lokal.
+  const oldLogout = window.doLogout;
+  window.doLogout = function(){
+    logout().finally(()=>{
+      if(typeof oldLogout === 'function') oldLogout();
+      else { sessionStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(CURRENT_USER_KEY); showScreen('s-login'); }
     });
-  }
+  };
 
-  // Logs ringkas
-  Logger.log('========================================');
-  Logger.log('MIGRASI AKUN LAMA → USERS SELESAI');
-  Logger.log('========================================');
-  Logger.log('Berhasil dibuat: ' + created.length + ' akun');
-  Logger.log('Di-skip (sudah ada di Users): ' + skipped.length + ' akun');
-  if(skipped.length) Logger.log('Skipped: ' + skipped.join(', '));
-  Logger.log('');
-  Logger.log('PASSWORD SEMENTARA — bagikan ke tim secara AMAN:');
-  Logger.log('(Setiap user wajib ganti sendiri setelah login pertama lewat Security Center → Reset Password)');
-  Logger.log('----------------------------------------');
-  created.forEach(c => {
-    Logger.log('Username: ' + c.username + '  |  Role: ' + c.role + '  |  Password: ' + c.password);
-  });
-  Logger.log('----------------------------------------');
-  Logger.log('PENTING: Setelah semua password dibagikan, hapus log ini dari riwayat eksekusi.');
-}
+  window.BM4Secure = Object.assign(window.BM4Secure || {}, { login, verifySession, logout, request, refreshAccounts: syncTeamFromSecure });
 
-function _bm4MigrationGenPass_(){
-  const alpha = 'abcdefghjkmnpqrstuvwxyz';
-  const num = '23456789';
-  let pw = '';
-  for(let i = 0; i < 4; i++) pw += alpha.charAt(Math.floor(Math.random() * alpha.length));
-  for(let i = 0; i < 4; i++) pw += num.charAt(Math.floor(Math.random() * num.length));
-  return pw;
-}
+  // Validasi session tersimpan setelah startup. Tidak memuat Security Center/daftar user.
+  setTimeout(()=>{
+    if(sessionStorage.getItem(SESSION_KEY) === 'ok' || getBm4SessionToken()){
+      verifySession().then(ok => {
+        if(!ok){
+          if(typeof showScreen === 'function') showScreen('s-login');
+          notify('Sesi tidak valid / sudah kedaluwarsa. Silakan login ulang.');
+        }
+      });
+    }
+  }, 500);
+})(window);
