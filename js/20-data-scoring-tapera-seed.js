@@ -210,14 +210,17 @@ let tpTargets=JSON.parse(localStorage.getItem('bm4_tp_targets')||'null')||[
 
 // [v13.1] Migration: tambahkan field `proyek` ke target lama yang belum punya
 // Default ke 'gwc' (Subang). BM bisa edit nanti via modal edit target.
+// [v13.2] Juga auto-lowercase field proyek (sebelumnya bisa 'GWC' dari Sheets)
 (function _migrateTpTargets(){
   let changed=false;
   tpTargets.forEach(t=>{
-    if(!t.proyek){t.proyek='gwc';changed=true;}
+    if(!t.proyek){t.proyek='gwc';changed=true;return;}
+    const lower=String(t.proyek).toLowerCase();
+    if(lower!==t.proyek){t.proyek=lower;changed=true;}
   });
   if(changed){
     try{localStorage.setItem('bm4_tp_targets',JSON.stringify(tpTargets));}catch(e){}
-    console.log('[BM4] Migrated tpTargets: tambah field proyek=gwc untuk data lama');
+    console.log('[BM4] Migrated tpTargets: normalize field proyek (lowercase)');
   }
 })();
 let tpMap=null,tpMapInit=false,tpMarkers={},selectedTpId=null,tpFilter='semua',editingTpId=-1;
