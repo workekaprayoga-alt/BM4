@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="theme-color" content="#1C2B4A">
 <title>BM4 Mobile</title>
-<link rel="manifest" href="manifest.json?v=rc13">
+<link rel="manifest" href="manifest.json?v=rc14">
 <style>
 :root{
   --navy:#1C2B4A;
@@ -24,6 +24,12 @@
 html,body{margin:0;padding:0}
 body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
+/* ============== LOADING SCREEN ============== */
+.boot-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#1C2B4A 0%,#0F1A35 100%);color:#fff;padding:24px}
+.boot-screen .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px}
+.boot-screen p{font-size:13px;opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ============== LOGIN SCREEN ============== */
 .login-screen{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px;background:linear-gradient(180deg,#1C2B4A 0%,#0F1A35 100%)}
 .login-box{background:#fff;border-radius:20px;padding:28px 22px;max-width:380px;width:100%;margin:0 auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}
@@ -35,11 +41,14 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .login-box input{width:100%;border:1px solid var(--border);border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;background:#FAFAF8}
 .login-box input:focus{outline:none;border-color:var(--accent);background:#fff}
 .login-box .btn-login{width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:14px;margin-top:18px;cursor:pointer}
+.login-box .btn-login:disabled{opacity:.6}
 .login-box .btn-login:active{transform:scale(.98)}
 .login-box .err{background:#FEF2F2;color:var(--danger);font-size:12px;padding:10px 12px;border-radius:10px;margin-top:14px;display:none;border:1px solid #FECACA}
 .login-box .err.show{display:block}
 .login-box .info{font-size:11px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
 .login-box .info a{color:var(--accent);text-decoration:none}
+.login-box .loader{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px}
+.login-box .btn-login.loading .loader{display:inline-block}
 
 /* ============== APP SCREEN ============== */
 .app-screen{display:none}
@@ -61,10 +70,15 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .proyek-bar select{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:6px 8px;font:inherit;font-size:12px}
 .proyek-bar select option{background:var(--navy);color:#fff}
 
+/* Sync indicator */
+.sync-state{padding:6px 10px;font-size:11px;text-align:center;color:#94A3B8;background:rgba(0,0,0,.04)}
+.sync-state.loading{color:var(--accent)}
+.sync-state.err{color:var(--danger);background:#FEF2F2}
+
 /* Content wrapper */
 .content{padding:12px;max-width:620px;margin:0 auto}
 
-/* Stats card grid (dashboard) */
+/* Stats card grid */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 12px}
 .stat-label{font-size:11px;color:var(--muted);margin-bottom:2px}
@@ -85,7 +99,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .pipeline-legend{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:10px;color:var(--muted)}
 .pipeline-legend .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
 
-/* Action button row */
+/* Action button */
 .btn-primary{width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:13px;margin-bottom:10px;cursor:pointer}
 .btn-primary:active{transform:scale(.99)}
 
@@ -141,8 +155,14 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 </head>
 <body>
 
+<!-- ========== LAYAR LOADING (auto-login check) ========== -->
+<div class="boot-screen" id="screen-boot">
+  <div class="spinner"></div>
+  <p>Memuat...</p>
+</div>
+
 <!-- ========== LAYAR LOGIN ========== -->
-<div class="login-screen" id="screen-login">
+<div class="login-screen" id="screen-login" style="display:none">
   <div class="login-box">
     <div class="login-logo">
       <div class="icon">B4</div>
@@ -154,10 +174,11 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
     <label>Password</label>
     <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
     <div class="err" id="login-err">Username atau password salah.</div>
-    <button class="btn-login" id="btn-login">Masuk</button>
+    <button class="btn-login" id="btn-login"><span class="loader"></span><span class="btn-label">Masuk</span></button>
     <div class="info">
+      Login pertama butuh internet.<br>
       Belum punya akun? Hubungi BM kamu.<br>
-      <a href="index.html?desktop=1&v=rc13">Buka versi desktop ↗</a>
+      <a href="index.html?desktop=1&v=rc14">Buka versi desktop ↗</a>
     </div>
   </div>
 </div>
@@ -179,208 +200,288 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
     </div>
   </div>
 
+  <div class="sync-state" id="sync-state" style="display:none"></div>
+
   <div class="content" id="content-area">
     <!-- Konten dinamis sesuai role -->
   </div>
 
-  <div class="footer">BM4 Mobile v13 &middot; <a href="index.html?desktop=1&v=rc13">Buka desktop &uarr;</a></div>
+  <div class="footer">BM4 Mobile v14 &middot; <a href="index.html?desktop=1&v=rc14">Buka desktop &uarr;</a></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 // ============================================================
-// BM4 Mobile v13 - Login + Role-based UI (Mini-Tahap 1A)
+// BM4 Mobile v14 — Login via Apps Script (Mini-Tahap 1A revisi)
 // ============================================================
 
-const LS={
-  ACCOUNTS:'bm4_accounts',
-  CURRENT_USER:'bm4_mobile_current_user',
-  PROYEK:'bm4_proyek',
-  LAST_PROYEK:'bm4_mobile_last_proyek',
-  TP_TARGETS:'bm4_tp_targets',
-  DRAFTS:'bm4_mobile_drafts_v1'
+// ===== CONFIG (sinkron dengan desktop) =====
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyPm0hR8SqqI572qjkaZ97PERPocBcE7ydhRcjoY_hve1qI6PItWMJeZ94kwG_q_gHpaw/exec';
+
+const LS = {
+  TOKEN: 'bm4_secure_session_token',
+  USER: 'bm4_secure_user',
+  PROYEK: 'bm4_proyek',
+  LAST_PROYEK: 'bm4_mobile_last_proyek',
+  TP_TARGETS: 'bm4_tp_targets'
 };
 
-const PW_HASH_PREFIX='h1$';
-const PW_SALT='bm4_v9_2026';
-
-// Default proyek (kalau localStorage kosong)
-const PROYEK_DEFAULT=[
-  {id:'gwc',nama:'Griya Wijaya Cibogo',kode:'GWC',area:'Cibogo, Subang'},
-  {id:'dpr',nama:'Dirgantara Parahyangan Residence',kode:'DPR',area:'Subang'}
+const PROYEK_DEFAULT = [
+  {id:'gwc', nama:'Griya Wijaya Cibogo', kode:'GWC', area:'Cibogo, Subang'},
+  {id:'dpr', nama:'Dirgantara Parahyangan Residence', kode:'DPR', area:'Subang'}
 ];
 
-// ============================================================
-// MOBILE PERMISSIONS - hardcode untuk Mini-Tahap 1A
-// Nanti di Mini-Tahap 1B akan dipindah ke Sheets supaya
-// BM bisa atur sendiri lewat panel di desktop.
-// ============================================================
-const MOBILE_PERMISSIONS={
-  bm:{
-    role_label:'Branch Manager',
-    modules:['target_pasar'],
-    target_pasar:{view:true,create:true,edit:true,delete:true}
+// ===== PERMISSION MAP (Mini-Tahap 1A: hardcode) =====
+// Mini-Tahap 1B nanti akan dipindah ke Sheets, BM bisa atur sendiri.
+const MOBILE_PERMISSIONS = {
+  bm: {
+    role_label: 'Branch Manager',
+    modules: ['target_pasar'],
+    target_pasar: { view:true, create:true, edit:true, delete:true }
   },
-  strategi:{
-    role_label:'Strategi Promo',
-    modules:['target_pasar'],
-    target_pasar:{view:true,create:true,edit:true,delete:false}
+  owner: {
+    role_label: 'Owner',
+    modules: ['target_pasar'],
+    target_pasar: { view:true, create:true, edit:true, delete:true }
   },
-  // Role lain belum ada akses di Mini-Tahap 1A
-  sales:{role_label:'Sales',modules:[]},
-  konstruksi:{role_label:'Konstruksi',modules:[]},
-  manager:{role_label:'Manager',modules:[]},
-  viewer:{role_label:'Viewer',modules:[]}
+  admin: {
+    role_label: 'Admin',
+    modules: ['target_pasar'],
+    target_pasar: { view:true, create:true, edit:true, delete:true }
+  },
+  strategi: {
+    role_label: 'Strategi Promo',
+    modules: ['target_pasar'],
+    target_pasar: { view:true, create:true, edit:true, delete:false }
+  },
+  manager: { role_label:'Manager', modules:[] },
+  sales: { role_label:'Sales', modules:[] },
+  konstruksi: { role_label:'Konstruksi', modules:[] },
+  viewer: { role_label:'Viewer', modules:[] }
 };
 
-const STATUS_LABELS=['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
-const STATUS_ICONS=['🔍','📞','🤝','💬','✅'];
+const STATUS_LABELS = ['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
+const STATUS_ICONS  = ['🔍','📞','🤝','💬','✅'];
+const STATUS_COLORS = ['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'];
 
-// State
-let currentUser=null;
-let proyekList=[];
-let currentProyekId='gwc';
-let tpTargets=[];
-let activeFilter='all';
+// ===== State =====
+let currentUser = null;
+let sessionToken = '';
+let proyekList = [];
+let currentProyekId = 'gwc';
+let tpTargets = [];
+let activeFilter = 'all';
 
 // ============================================================
 // Helpers
 // ============================================================
 function $(id){return document.getElementById(id);}
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function toast(msg,kind){
+function esc(s){return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg, kind){
   const t=$('toast');
   t.textContent=msg;
   t.className='toast show '+(kind||'');
-  setTimeout(()=>t.classList.remove('show'),2400);
+  setTimeout(()=>t.classList.remove('show'), 2400);
 }
-async function hashPasswordMobile(plain){
-  if(!plain) return '';
-  if(typeof plain==='string' && plain.startsWith(PW_HASH_PREFIX)) return plain;
-  try{
-    const enc=new TextEncoder().encode(PW_SALT+':'+plain);
-    const buf=await crypto.subtle.digest('SHA-256',enc);
-    const arr=Array.from(new Uint8Array(buf));
-    const hex=arr.map(b=>b.toString(16).padStart(2,'0')).join('');
-    return PW_HASH_PREFIX+hex;
-  }catch(e){console.error('Hash gagal',e);return '';}
+function showSyncState(msg, kind){
+  const el=$('sync-state');
+  if(!msg){el.style.display='none';return;}
+  el.textContent=msg;
+  el.className='sync-state '+(kind||'');
+  el.style.display='block';
 }
-async function verifyPasswordMobile(plain,stored){
-  if(!stored) return false;
-  if(!stored.startsWith(PW_HASH_PREFIX)) return plain===stored;
-  const hashed=await hashPasswordMobile(plain);
-  return hashed===stored;
+
+// ============================================================
+// Apps Script request helper
+// ============================================================
+async function gasRequest(action, payload, opts){
+  opts = opts || {};
+  const body = Object.assign({ action }, payload || {});
+  if(sessionToken && !opts.noToken) body.sessionToken = sessionToken;
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body),
+    cache: 'no-store'
+  });
+  let json;
+  try { json = await res.json(); }
+  catch(e){ throw new Error('Server tidak respon JSON. Cek koneksi internet.'); }
+  if(!json || json.success === false){
+    const msg = (json && (json.message || json.error)) || 'Request gagal';
+    const err = new Error(msg);
+    err.response = json;
+    throw err;
+  }
+  return json;
+}
+
+async function gasGet(action, extraParams){
+  const params = Object.assign({}, extraParams||{}, {action, _t:Date.now()});
+  if(sessionToken) params.sessionToken = sessionToken;
+  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url, {cache:'no-store'});
+  let json;
+  try { json = await res.json(); }
+  catch(e){ throw new Error('Server tidak respon JSON.'); }
+  if(!json || json.success === false){
+    const msg = (json && (json.message || json.error)) || 'Request gagal';
+    const err = new Error(msg);
+    err.response = json;
+    throw err;
+  }
+  return json;
 }
 
 // ============================================================
 // LOGIN FLOW
 // ============================================================
 async function doLogin(){
-  const u=$('login-username').value.trim().toLowerCase();
-  const p=$('login-password').value;
-  const err=$('login-err');
+  const u = $('login-username').value.trim().toLowerCase();
+  const p = $('login-password').value;
+  const err = $('login-err');
+  const btn = $('btn-login');
   err.classList.remove('show');
 
-  if(!u){err.textContent='Username wajib diisi.';err.classList.add('show');return;}
-
-  let accounts=[];
-  try{accounts=JSON.parse(localStorage.getItem(LS.ACCOUNTS)||'[]');}catch(e){}
-
-  if(!Array.isArray(accounts)||accounts.length===0){
-    err.textContent='Belum ada akun di HP ini. Buka aplikasi dari laptop dulu untuk sync, atau hubungi BM.';
+  if(!u || !p){
+    err.textContent = 'Username dan password wajib diisi.';
     err.classList.add('show');
     return;
   }
 
-  const acc=accounts.find(a=>String(a.username).toLowerCase()===u);
-  if(!acc){
-    err.textContent='Username atau password salah.';
-    err.classList.add('show');
-    return;
-  }
-  if(acc.suspended){
-    err.textContent='Akun kamu sedang dinonaktifkan. Hubungi BM.';
-    err.classList.add('show');
-    return;
-  }
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-label').textContent = 'Memverifikasi...';
 
-  const ok=await verifyPasswordMobile(p,acc.password);
-  if(!ok){
-    err.textContent='Username atau password salah.';
+  try {
+    const r = await gasRequest('auth_login', {
+      username: u,
+      password: p,
+      deviceInfo: 'mobile-' + (navigator.userAgent || 'browser').slice(0, 200)
+    }, { noToken: true });
+
+    // Sukses — simpan token & user
+    sessionToken = r.sessionToken;
+    currentUser = r.user;
+    try {
+      // Pendekatan B: simpan di localStorage supaya persist sampai logout manual
+      localStorage.setItem(LS.TOKEN, sessionToken);
+      localStorage.setItem(LS.USER, JSON.stringify(currentUser));
+    } catch(e){}
+
+    toast('Selamat datang, ' + (currentUser.nama || currentUser.username), 'ok');
+    await enterApp();
+  } catch(e){
+    console.error('[Login] error:', e);
+    err.textContent = e.message || 'Login gagal. Coba lagi.';
     err.classList.add('show');
-    return;
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-label').textContent = 'Masuk';
   }
-
-  // SUCCESS - simpan user (pendekatan B: persist sampai logout manual)
-  const userToSave={
-    username:acc.username,
-    nama:acc.nama||acc.username,
-    jabatan:acc.jabatan||'',
-    role:acc.role||'viewer',
-    foto:acc.foto||'',
-    bio:acc.bio||'',
-    akses:acc.akses||[],
-    loginAt:new Date().toISOString()
-  };
-  localStorage.setItem(LS.CURRENT_USER,JSON.stringify(userToSave));
-  currentUser=userToSave;
-
-  toast('Selamat datang, '+(currentUser.nama||currentUser.username),'ok');
-  showAppScreen();
 }
 
-function doLogout(){
+async function doLogout(){
   if(!confirm('Yakin keluar dari akun ini?')) return;
-  localStorage.removeItem(LS.CURRENT_USER);
-  currentUser=null;
+  // Coba logout di server, tapi tidak masalah kalau gagal (offline)
+  try { await gasRequest('auth_logout', {sessionToken}); } catch(e){}
+  sessionToken = '';
+  currentUser = null;
+  try {
+    localStorage.removeItem(LS.TOKEN);
+    localStorage.removeItem(LS.USER);
+  } catch(e){}
   $('screen-app').classList.remove('show');
-  $('screen-login').style.display='';
-  $('login-username').value='';
-  $('login-password').value='';
+  $('screen-login').style.display = '';
+  $('login-username').value = '';
+  $('login-password').value = '';
   toast('Berhasil keluar');
 }
 
-function tryAutoLogin(){
-  try{
-    const raw=localStorage.getItem(LS.CURRENT_USER);
-    if(!raw) return false;
-    const user=JSON.parse(raw);
-    if(!user||!user.username) return false;
-    currentUser=user;
+async function tryAutoLogin(){
+  // Coba ambil token dari localStorage
+  let savedToken = '';
+  let savedUser = null;
+  try {
+    savedToken = localStorage.getItem(LS.TOKEN) || '';
+    const userRaw = localStorage.getItem(LS.USER);
+    if(userRaw) savedUser = JSON.parse(userRaw);
+  } catch(e){}
+
+  if(!savedToken || !savedUser) return false;
+
+  // Verify token ke server
+  sessionToken = savedToken;
+  try {
+    const r = await gasRequest('auth_verify');
+    currentUser = r.user || savedUser;
+    // Update cached user (mungkin role/akses berubah)
+    try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
     return true;
-  }catch(e){return false;}
+  } catch(e){
+    console.warn('[AutoLogin] token invalid:', e.message);
+    sessionToken = '';
+    currentUser = null;
+    try {
+      localStorage.removeItem(LS.TOKEN);
+      localStorage.removeItem(LS.USER);
+    } catch(e){}
+    return false;
+  }
 }
 
 // ============================================================
-// PROYEK
+// PROYEK LIST
 // ============================================================
-function loadProyekList(){
-  try{
-    const saved=localStorage.getItem(LS.PROYEK);
-    if(saved){
-      const arr=JSON.parse(saved);
-      if(Array.isArray(arr) && arr.length>0){proyekList=arr;return;}
+async function loadProyekList(){
+  // Coba dari Sheets dulu (kalau online)
+  try {
+    const r = await gasGet('getProyek');
+    if(r.success && Array.isArray(r.data) && r.data.length > 0){
+      proyekList = r.data.map(p => ({
+        id: p.id, nama: p.nama, kode: p.kode || p.id, area: p.area || ''
+      }));
+      try { localStorage.setItem(LS.PROYEK, JSON.stringify(proyekList)); } catch(e){}
+      return;
     }
-  }catch(e){}
-  proyekList=PROYEK_DEFAULT.slice();
+  } catch(e){
+    console.warn('[Proyek] load from Sheets failed, fallback to local:', e.message);
+  }
+  // Fallback: dari localStorage
+  try {
+    const saved = localStorage.getItem(LS.PROYEK);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr) && arr.length > 0){
+        proyekList = arr;
+        return;
+      }
+    }
+  } catch(e){}
+  // Last fallback: default
+  proyekList = PROYEK_DEFAULT.slice();
 }
 
 function renderProyekDropdown(){
-  const sel=$('proyek-select');
-  sel.innerHTML=proyekList.map(p=>`<option value="${esc(p.id)}">${esc(p.nama)} (${esc(p.kode||p.id)})</option>`).join('');
-  const last=localStorage.getItem(LS.LAST_PROYEK);
-  if(last && proyekList.some(p=>p.id===last)){
-    sel.value=last;
-    currentProyekId=last;
-  }else{
-    currentProyekId=proyekList[0].id;
-    sel.value=currentProyekId;
+  const sel = $('proyek-select');
+  sel.innerHTML = proyekList.map(p =>
+    `<option value="${esc(p.id)}">${esc(p.nama)} (${esc(p.kode||p.id)})</option>`
+  ).join('');
+  let last = '';
+  try { last = localStorage.getItem(LS.LAST_PROYEK) || ''; } catch(e){}
+  if(last && proyekList.some(p => p.id === last)){
+    sel.value = last;
+    currentProyekId = last;
+  } else {
+    currentProyekId = proyekList[0].id;
+    sel.value = currentProyekId;
   }
-  sel.onchange=()=>{
-    currentProyekId=sel.value;
-    localStorage.setItem(LS.LAST_PROYEK,currentProyekId);
-    activeFilter='all';
+  sel.onchange = () => {
+    currentProyekId = sel.value;
+    try { localStorage.setItem(LS.LAST_PROYEK, currentProyekId); } catch(e){}
+    activeFilter = 'all';
     renderContent();
   };
 }
@@ -388,108 +489,138 @@ function renderProyekDropdown(){
 // ============================================================
 // TARGET PASAR DATA
 // ============================================================
-function loadTpTargets(){
-  try{
-    const saved=localStorage.getItem(LS.TP_TARGETS);
-    if(saved){
-      const arr=JSON.parse(saved);
-      if(Array.isArray(arr)){tpTargets=arr;return;}
+async function loadTpTargets(){
+  showSyncState('Memuat data...', 'loading');
+  try {
+    const r = await gasGet('getTargetPasar');
+    if(r.success && Array.isArray(r.data)){
+      tpTargets = r.data.map(row => ({
+        id: parseInt(row.id),
+        proyek: String(row.proyek || 'gwc').toLowerCase(),
+        nama: row.nama,
+        jenis: row.jenis,
+        lat: parseFloat(row.lat),
+        lng: parseFloat(row.lng),
+        karyawan: parseInt(row.karyawan) || 0,
+        pic: row.pic || '',
+        lastcontact: row.lastcontact || '-',
+        status: parseInt(row.status) || 0,
+        catatan: row.catatan || ''
+      }));
+      try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+      showSyncState('');
+      return;
     }
-  }catch(e){}
-  tpTargets=[];
+  } catch(e){
+    console.warn('[TP] load from Sheets failed:', e.message);
+    showSyncState('Offline - pakai data lokal', 'err');
+    setTimeout(() => showSyncState(''), 3000);
+  }
+  // Fallback localStorage
+  try {
+    const saved = localStorage.getItem(LS.TP_TARGETS);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr)){
+        tpTargets = arr.map(t => Object.assign({}, t, {
+          proyek: String(t.proyek || 'gwc').toLowerCase()
+        }));
+        return;
+      }
+    }
+  } catch(e){}
+  tpTargets = [];
 }
 
 function getTargetsForCurrentProyek(){
-  return tpTargets.filter(t=>(t.proyek||'gwc')===currentProyekId);
+  return tpTargets.filter(t => String(t.proyek||'gwc').toLowerCase() === currentProyekId);
 }
 
 // ============================================================
-// SCREEN MANAGEMENT
+// SCREEN FLOW
 // ============================================================
-function showLoginScreen(){
+function showLogin(){
+  $('screen-boot').style.display = 'none';
   $('screen-app').classList.remove('show');
-  $('screen-login').style.display='';
+  $('screen-login').style.display = '';
 }
 
-function showAppScreen(){
-  $('screen-login').style.display='none';
+async function enterApp(){
+  $('screen-boot').style.display = 'none';
+  $('screen-login').style.display = 'none';
   $('screen-app').classList.add('show');
 
   // Render header user
-  const av=$('user-avatar');
-  if(currentUser.foto && currentUser.foto.startsWith('data:image/')){
-    av.innerHTML=`<img src="${currentUser.foto}" alt="">`;
-  }else{
-    av.textContent=(currentUser.nama||currentUser.username||'?').charAt(0).toUpperCase();
+  const av = $('user-avatar');
+  if(currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
+    av.innerHTML = `<img src="${currentUser.foto}" alt="">`;
+  } else {
+    av.textContent = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
   }
-  $('user-name').textContent=currentUser.nama||currentUser.username;
-  const perm=MOBILE_PERMISSIONS[currentUser.role]||{};
-  $('user-role').textContent=perm.role_label||currentUser.role||'';
+  $('user-name').textContent = currentUser.nama || currentUser.username;
+  const perm = MOBILE_PERMISSIONS[currentUser.role] || {};
+  $('user-role').textContent = perm.role_label || currentUser.role || '';
 
-  // Load proyek & targets
-  loadProyekList();
+  // Load data sekuensial
+  await loadProyekList();
   renderProyekDropdown();
-  loadTpTargets();
-
+  await loadTpTargets();
   renderContent();
 }
 
 // ============================================================
-// CONTENT RENDERING - dinamis sesuai role
+// CONTENT RENDERING (dinamis sesuai role)
 // ============================================================
 function renderContent(){
-  const role=currentUser.role||'viewer';
-  const perm=MOBILE_PERMISSIONS[role];
-
-  if(!perm || !perm.modules || perm.modules.length===0){
+  const role = currentUser.role || 'viewer';
+  const perm = MOBILE_PERMISSIONS[role];
+  if(!perm || !perm.modules || perm.modules.length === 0){
     renderNoAccess();
     return;
   }
-
   if(perm.modules.includes('target_pasar')){
     renderTargetPasarDashboard();
-  }else{
+  } else {
     renderNoAccess();
   }
 }
 
 function renderNoAccess(){
-  $('content-area').innerHTML=`
+  $('content-area').innerHTML = `
     <div class="no-access">
       <div class="icon">🔒</div>
       <h2>Belum ada akses mobile</h2>
       <p>Akun <b>${esc(currentUser.username)}</b> dengan role <b>${esc(currentUser.role||'-')}</b> belum punya akses ke fitur mobile.</p>
       <p>Hubungi Branch Manager untuk meminta akses, atau gunakan versi desktop.</p>
-      <p style="margin-top:18px"><a href="index.html?desktop=1&v=rc13" style="color:var(--accent);font-weight:600;text-decoration:none">Buka versi desktop &uarr;</a></p>
+      <p style="margin-top:18px"><a href="index.html?desktop=1&v=rc14" style="color:var(--accent);font-weight:600;text-decoration:none">Buka versi desktop &uarr;</a></p>
     </div>
   `;
 }
 
 function renderTargetPasarDashboard(){
-  const role=currentUser.role;
-  const perm=MOBILE_PERMISSIONS[role].target_pasar||{};
-  const targets=getTargetsForCurrentProyek();
-  const proj=proyekList.find(p=>p.id===currentProyekId);
+  const role = currentUser.role;
+  const perm = (MOBILE_PERMISSIONS[role]||{}).target_pasar || {};
+  const targets = getTargetsForCurrentProyek();
+  const proj = proyekList.find(p => p.id === currentProyekId);
 
-  // Hitung statistik
-  const total=targets.length;
-  const byStatus=[0,0,0,0,0];
-  targets.forEach(t=>{
-    const s=parseInt(t.status)||0;
+  // Statistik
+  const total = targets.length;
+  const byStatus = [0,0,0,0,0];
+  targets.forEach(t => {
+    const s = parseInt(t.status) || 0;
     if(s>=0 && s<=4) byStatus[s]++;
   });
-  const aktif=byStatus[1]+byStatus[2]+byStatus[3];
+  const aktif = byStatus[1] + byStatus[2] + byStatus[3];
 
   // Filter
-  let filtered=targets;
-  if(activeFilter!=='all'){
-    const filterStatus=parseInt(activeFilter);
-    filtered=targets.filter(t=>(parseInt(t.status)||0)===filterStatus);
+  let filtered = targets;
+  if(activeFilter !== 'all'){
+    const fs = parseInt(activeFilter);
+    filtered = targets.filter(t => (parseInt(t.status)||0) === fs);
   }
-  // Sort: status tertinggi (closest to deal) duluan
-  filtered=filtered.slice().sort((a,b)=>(parseInt(b.status)||0)-(parseInt(a.status)||0));
+  filtered = filtered.slice().sort((a,b) => (parseInt(b.status)||0) - (parseInt(a.status)||0));
 
-  let html=`
+  let html = `
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total target</div>
@@ -502,120 +633,118 @@ function renderTargetPasarDashboard(){
     </div>
   `;
 
-  if(total>0){
-    const segs=byStatus.map((n,i)=>{
-      if(n===0) return '';
-      return `<div class="seg s${i}" style="flex:${n}"></div>`;
-    }).filter(Boolean).join('');
-    html+=`
+  if(total > 0){
+    const segs = byStatus.map((n,i) => n>0 ? `<div class="seg s${i}" style="flex:${n}"></div>` : '').filter(Boolean).join('');
+    html += `
       <div class="pipeline-card">
         <div class="label">Distribusi status</div>
-        <div class="pipeline-bar">${segs||'<div class="seg s0" style="flex:1;opacity:.3"></div>'}</div>
+        <div class="pipeline-bar">${segs || '<div class="seg s0" style="flex:1;opacity:.3"></div>'}</div>
         <div class="pipeline-legend">
-          ${byStatus.map((n,i)=>`<span><span class="dot" style="background:${['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'][i]}"></span>${esc(STATUS_LABELS[i])} ${n}</span>`).join('')}
+          ${byStatus.map((n,i) => `<span><span class="dot" style="background:${STATUS_COLORS[i]}"></span>${esc(STATUS_LABELS[i])} ${n}</span>`).join('')}
         </div>
       </div>
     `;
   }
 
   if(perm.create){
-    html+=`<button class="btn-primary" onclick="openAddTarget()">+ Tambah Target Baru</button>`;
+    html += `<button class="btn-primary" onclick="openAddTarget()">+ Tambah Target Baru</button>`;
   }
 
-  html+=`
+  // Filter pills
+  html += `
     <div class="filter-pills">
       <button class="pill-filter ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Semua (${total})</button>
-      ${STATUS_LABELS.map((lbl,i)=>{
-        if(byStatus[i]===0) return '';
-        return `<button class="pill-filter ${activeFilter===String(i)?'active':''}" onclick="setFilter('${i}')">${STATUS_ICONS[i]} ${esc(lbl)} (${byStatus[i]})</button>`;
-      }).filter(Boolean).join('')}
+      ${STATUS_LABELS.map((lbl,i) => byStatus[i]===0 ? '' :
+        `<button class="pill-filter ${activeFilter===String(i)?'active':''}" onclick="setFilter('${i}')">${STATUS_ICONS[i]} ${esc(lbl)} (${byStatus[i]})</button>`
+      ).filter(Boolean).join('')}
     </div>
   `;
 
-  html+=`
+  html += `
     <div class="list-header">
       <span class="title">Daftar target</span>
-      <span class="count">Proyek: ${esc(proj?proj.kode||proj.id:currentProyekId)}</span>
+      <span class="count">Proyek: ${esc(proj ? (proj.kode||proj.id) : currentProyekId)}</span>
     </div>
   `;
 
-  if(filtered.length===0){
-    if(total===0){
-      html+=`
+  if(filtered.length === 0){
+    if(total === 0){
+      html += `
         <div class="empty-state">
           <div class="icon">🎯</div>
           <p><b>Belum ada target</b></p>
           <p>untuk proyek ${esc(proj?proj.nama:currentProyekId)}</p>
-          ${perm.create?'<p class="hint">Tap tombol "+ Tambah Target Baru" di atas untuk mulai.</p>':''}
+          ${perm.create ? '<p class="hint">Tap tombol "+ Tambah Target Baru" di atas untuk mulai.</p>' : ''}
         </div>
       `;
-    }else{
-      html+=`
+    } else {
+      html += `
         <div class="empty-state">
           <p>Tidak ada target di filter ini.</p>
           <p class="hint" style="margin-top:6px">Tap "Semua" untuk lihat semua target.</p>
         </div>
       `;
     }
-  }else{
-    html+=filtered.map(t=>renderTargetCard(t,perm)).join('');
+  } else {
+    html += filtered.map(t => renderTargetCard(t, perm)).join('');
   }
 
-  $('content-area').innerHTML=html;
+  $('content-area').innerHTML = html;
 }
 
-function renderTargetCard(t,perm){
-  const s=parseInt(t.status)||0;
-  const lbl=STATUS_LABELS[s]||'-';
-  const ic=STATUS_ICONS[s]||'';
-  const meta=[];
-  if(t.karyawan) meta.push(Number(t.karyawan).toLocaleString('id-ID')+' karyawan');
+function renderTargetCard(t, perm){
+  const s = parseInt(t.status) || 0;
+  const lbl = STATUS_LABELS[s] || '-';
+  const ic = STATUS_ICONS[s] || '';
+  const meta = [];
+  if(t.karyawan) meta.push(Number(t.karyawan).toLocaleString('id-ID') + ' karyawan');
   if(t.jenis) meta.push(t.jenis);
-  const meta1=meta.join(' • ');
-  const meta2=t.pic?'PIC: '+esc(t.pic):'';
-  const onclick=perm.edit?`onclick="openEditTarget(${parseInt(t.id)||0})"`:'';
+  const meta1 = meta.join(' • ');
+  const meta2 = t.pic ? 'PIC: ' + esc(t.pic) : '';
+  const onclick = perm.edit ? `onclick="openEditTarget(${parseInt(t.id)||0})"` : '';
   return `
     <div class="target-card s${s}" ${onclick}>
       <div class="target-card-head">
-        <div class="target-card-name">${esc(t.nama||'(tanpa nama)')}</div>
+        <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}</div>
         <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
       </div>
-      ${meta1?`<div class="target-card-meta">${esc(meta1)}</div>`:''}
-      ${meta2?`<div class="target-card-meta">${meta2}</div>`:''}
+      ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
+      ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
     </div>
   `;
 }
 
 function setFilter(f){
-  activeFilter=f;
+  activeFilter = f;
   renderContent();
 }
 
 // ============================================================
-// PLACEHOLDER untuk Mini-Tahap 2 - form input target
+// PLACEHOLDER untuk Mini-Tahap 2 (form input target lengkap)
 // ============================================================
 function openAddTarget(){
-  toast('Form input target lengkap akan tersedia di update berikutnya','');
+  toast('Form input target dengan mini-map akan tersedia di update berikutnya', '');
 }
 
 function openEditTarget(id){
-  const t=tpTargets.find(x=>parseInt(x.id)===parseInt(id));
-  if(!t) return;
-  toast('Edit target akan tersedia di update berikutnya','');
+  toast('Edit target akan tersedia di update berikutnya', '');
 }
 
 // ============================================================
 // INIT
 // ============================================================
-document.addEventListener('DOMContentLoaded',()=>{
-  $('btn-login').addEventListener('click',doLogin);
-  $('login-password').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
-  $('login-username').addEventListener('keypress',e=>{if(e.key==='Enter')$('login-password').focus();});
+document.addEventListener('DOMContentLoaded', async () => {
+  // Bind login form
+  $('btn-login').addEventListener('click', doLogin);
+  $('login-password').addEventListener('keypress', e => { if(e.key==='Enter') doLogin(); });
+  $('login-username').addEventListener('keypress', e => { if(e.key==='Enter') $('login-password').focus(); });
 
-  if(tryAutoLogin()){
-    showAppScreen();
-  }else{
-    showLoginScreen();
+  // Coba auto-login
+  const ok = await tryAutoLogin();
+  if(ok){
+    await enterApp();
+  } else {
+    showLogin();
   }
 });
 </script>
