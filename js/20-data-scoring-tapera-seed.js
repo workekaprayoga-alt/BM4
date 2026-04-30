@@ -195,14 +195,29 @@ function _genBulananDummy(total, peak){
 // ============================================================
 const STATUS_STEPS=[{label:'Identifikasi',icon:'🔍'},{label:'Kontak Awal',icon:'📞'},{label:'Presentasi',icon:'🤝'},{label:'Negosiasi',icon:'💬'},{label:'Deal',icon:'✅'}];
 const STATUS_COLOR=['#94A3B8','#2563EB','#7C3AED','#D97706','#15803D'];
+// [v13.1] tpTargets sekarang punya field `proyek` (id proyek, mis: 'gwc', 'dpr')
+// Default proyek untuk seed = 'gwc' (Subang). Migration data lama dilakukan di _migrateTpTargets()
 let tpTargets=JSON.parse(localStorage.getItem('bm4_tp_targets')||'null')||[
-  {id:1,nama:'PT Taifa Industrial Estate',jenis:'kawasan',lat:-6.516994,lng:107.801795,karyawan:5000,pic:'Bagian Marketing - 0811-xxxx',lastcontact:'2026-04-01',status:1,catatan:'Sudah kenalan dengan security, perlu cari kontak HRD.'},
-  {id:2,nama:'PT Subang Smartpolitan',jenis:'kawasan',lat:-6.480000,lng:107.620000,karyawan:8000,pic:'Belum ada',lastcontact:'-',status:0,catatan:'Kawasan industri besar, estimasi ribuan karyawan.'},
-  {id:3,nama:'PT Kahatex Subang',jenis:'pabrik',lat:-6.525000,lng:107.782000,karyawan:2000,pic:'Bu Sari HRD - 0812-xxxx',lastcontact:'2026-04-10',status:2,catatan:'Sudah presentasi ke HRD, mereka tertarik program KPR subsidi.'},
-  {id:4,nama:'PT Indofood CBP Subang',jenis:'pabrik',lat:-6.558000,lng:107.810000,karyawan:1500,pic:'Pak Budi - 0813-xxxx',lastcontact:'2026-03-20',status:1,catatan:'Sudah hubungi, jadwal meeting masih koordinasi.'},
-  {id:5,nama:'PT Len Industri',jenis:'perusahaan',lat:-6.572000,lng:107.763000,karyawan:800,pic:'Belum ada',lastcontact:'-',status:0,catatan:'BUMN elektronik, karyawan banyak di area Subang kota.'},
-  {id:6,nama:'PT Perkebunan PTPN VIII',jenis:'perusahaan',lat:-6.568000,lng:107.762000,karyawan:600,pic:'Pak Hendra - 0814-xxxx',lastcontact:'2026-04-15',status:3,catatan:'Negosiasi harga, mereka minta diskon kolektif untuk 20 unit.'},
-  {id:7,nama:'PT Kawasan Industri Cibogo',jenis:'kawasan',lat:-6.538337,lng:107.834849,karyawan:3000,pic:'Belum ada',lastcontact:'-',status:0,catatan:'Dekat dengan proyek kita, prioritas untuk didekati.'},
-  {id:8,nama:'PT Kimia Farma Subang',jenis:'pabrik',lat:-6.545000,lng:107.775000,karyawan:400,pic:'Bu Wati HR - 0815-xxxx',lastcontact:'2026-04-05',status:2,catatan:'Sudah presentasi, menunggu approval manajemen.'},
+  {id:1,proyek:'gwc',nama:'PT Taifa Industrial Estate',jenis:'kawasan',lat:-6.516994,lng:107.801795,karyawan:5000,pic:'Bagian Marketing - 0811-xxxx',lastcontact:'2026-04-01',status:1,catatan:'Sudah kenalan dengan security, perlu cari kontak HRD.'},
+  {id:2,proyek:'gwc',nama:'PT Subang Smartpolitan',jenis:'kawasan',lat:-6.480000,lng:107.620000,karyawan:8000,pic:'Belum ada',lastcontact:'-',status:0,catatan:'Kawasan industri besar, estimasi ribuan karyawan.'},
+  {id:3,proyek:'gwc',nama:'PT Kahatex Subang',jenis:'pabrik',lat:-6.525000,lng:107.782000,karyawan:2000,pic:'Bu Sari HRD - 0812-xxxx',lastcontact:'2026-04-10',status:2,catatan:'Sudah presentasi ke HRD, mereka tertarik program KPR subsidi.'},
+  {id:4,proyek:'gwc',nama:'PT Indofood CBP Subang',jenis:'pabrik',lat:-6.558000,lng:107.810000,karyawan:1500,pic:'Pak Budi - 0813-xxxx',lastcontact:'2026-03-20',status:1,catatan:'Sudah hubungi, jadwal meeting masih koordinasi.'},
+  {id:5,proyek:'gwc',nama:'PT Len Industri',jenis:'perusahaan',lat:-6.572000,lng:107.763000,karyawan:800,pic:'Belum ada',lastcontact:'-',status:0,catatan:'BUMN elektronik, karyawan banyak di area Subang kota.'},
+  {id:6,proyek:'gwc',nama:'PT Perkebunan PTPN VIII',jenis:'perusahaan',lat:-6.568000,lng:107.762000,karyawan:600,pic:'Pak Hendra - 0814-xxxx',lastcontact:'2026-04-15',status:3,catatan:'Negosiasi harga, mereka minta diskon kolektif untuk 20 unit.'},
+  {id:7,proyek:'gwc',nama:'PT Kawasan Industri Cibogo',jenis:'kawasan',lat:-6.538337,lng:107.834849,karyawan:3000,pic:'Belum ada',lastcontact:'-',status:0,catatan:'Dekat dengan proyek kita, prioritas untuk didekati.'},
+  {id:8,proyek:'gwc',nama:'PT Kimia Farma Subang',jenis:'pabrik',lat:-6.545000,lng:107.775000,karyawan:400,pic:'Bu Wati HR - 0815-xxxx',lastcontact:'2026-04-05',status:2,catatan:'Sudah presentasi, menunggu approval manajemen.'},
 ];
+
+// [v13.1] Migration: tambahkan field `proyek` ke target lama yang belum punya
+// Default ke 'gwc' (Subang). BM bisa edit nanti via modal edit target.
+(function _migrateTpTargets(){
+  let changed=false;
+  tpTargets.forEach(t=>{
+    if(!t.proyek){t.proyek='gwc';changed=true;}
+  });
+  if(changed){
+    try{localStorage.setItem('bm4_tp_targets',JSON.stringify(tpTargets));}catch(e){}
+    console.log('[BM4] Migrated tpTargets: tambah field proyek=gwc untuk data lama');
+  }
+})();
 let tpMap=null,tpMapInit=false,tpMarkers={},selectedTpId=null,tpFilter='semua',editingTpId=-1;

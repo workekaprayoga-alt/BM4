@@ -34,21 +34,27 @@ async function loadTpFromSheets(){
   try{
     const r=await fetch(gasGet('getTargetPasar')).then(res=>res.json());
     if(r.success&&r.data&&r.data.length>0){
-      tpTargets=r.data.map(row=>({id:parseInt(row.id),nama:row.nama,jenis:row.jenis,lat:parseFloat(row.lat),lng:parseFloat(row.lng),karyawan:parseInt(row.karyawan)||0,pic:row.pic||'',lastcontact:row.lastcontact||'-',status:parseInt(row.status)||0,catatan:row.catatan||''}));
+      tpTargets=r.data.map(row=>({id:parseInt(row.id),proyek:row.proyek||'gwc',nama:row.nama,jenis:row.jenis,lat:parseFloat(row.lat),lng:parseFloat(row.lng),karyawan:parseInt(row.karyawan)||0,pic:row.pic||'',lastcontact:row.lastcontact||'-',status:parseInt(row.status)||0,catatan:row.catatan||''}));
       localStorage.setItem('bm4_tp_targets',JSON.stringify(tpTargets));
       return true;
     }return false;
   }catch(e){return false;}
 }
 function updateTpDashCount(){
-  document.getElementById('d-target').textContent=tpTargets.length;
-  document.getElementById('d-deal').textContent=tpTargets.filter(t=>t.status===4).length;
-  document.getElementById('tp-total').textContent=tpTargets.length;
+  // [v13.1] Hitung per proyek aktif
+  const projId=currentProyek||'gwc';
+  const byProyek=tpTargets.filter(t=>(t.proyek||'gwc')===projId);
+  document.getElementById('d-target').textContent=byProyek.length;
+  document.getElementById('d-deal').textContent=byProyek.filter(t=>t.status===4).length;
+  document.getElementById('tp-total').textContent=byProyek.length;
 }
 function renderTPMarkers(){
   if(!tpMapInit)return;
   Object.values(tpMarkers).forEach(m=>tpMap.removeLayer(m));tpMarkers={};
-  const filtered=tpFilter==='semua'?tpTargets:tpTargets.filter(t=>t.jenis===tpFilter);
+  // [v13.1] Filter dulu by proyek aktif, baru by jenis
+  const projId=currentProyek||'gwc';
+  const byProyek=tpTargets.filter(t=>(t.proyek||'gwc')===projId);
+  const filtered=tpFilter==='semua'?byProyek:byProyek.filter(t=>t.jenis===tpFilter);
   const proj=currentProyek?PROYEK[currentProyek]:PROYEK.gwc;
   filtered.forEach(t=>{
     const color=STATUS_COLOR[t.status]||'#94A3B8';
@@ -62,7 +68,10 @@ function renderTPMarkers(){
 }
 function renderTPList(filter){
   const list=document.getElementById('tp-list');
-  const filtered=filter==='semua'?tpTargets:tpTargets.filter(t=>t.jenis===filter);
+  // [v13.1] Filter dulu by proyek aktif, baru by jenis
+  const projId=currentProyek||'gwc';
+  const byProyek=tpTargets.filter(t=>(t.proyek||'gwc')===projId);
+  const filtered=filter==='semua'?byProyek:byProyek.filter(t=>t.jenis===filter);
   const proj=currentProyek?PROYEK[currentProyek]:PROYEK.gwc;
   list.innerHTML=filtered.map(t=>{
     const color=STATUS_COLOR[t.status]||'#94A3B8';
@@ -84,7 +93,7 @@ function renderTPList(filter){
       <div class="tp-item-meta">${dist} km · ${Number(t.karyawan||0).toLocaleString('id')} karyawan · <b style="color:var(--accent);">${potensi} unit potensi</b></div>
     </div>`;
   }).join('');
-  document.getElementById('tp-total').textContent=tpTargets.length;
+  document.getElementById('tp-total').textContent=byProyek.length;
 }
 function filterTP(f,el){
   document.querySelectorAll('.tp-chip').forEach(c=>c.classList.remove('active'));
@@ -319,9 +328,21 @@ function saveTpTarget(){
   const lat=parseFloat(document.getElementById('tpf-lat').value);
   const lng=parseFloat(document.getElementById('tpf-lng').value);
   if(!nama||isNaN(lat)||isNaN(lng)){alert('Nama, Latitude, dan Longitude wajib diisi!');return;}
+  // [v13.1] Auto-tag dengan proyek aktif. Untuk edit, pertahankan proyek lama.
+  const projAktif=currentProyek||'gwc';
   const data={nama,jenis:document.getElementById('tpf-jenis').value,lat,lng,karyawan:parseInt(document.getElementById('tpf-karyawan').value)||0,pic:document.getElementById('tpf-pic').value.trim(),lastcontact:document.getElementById('tpf-lastcontact').value||'-',status:parseInt(document.getElementById('tpf-status').value),catatan:document.getElementById('tpf-catatan').value.trim()};
-  if(editingTpId===-1){const newId=tpTargets.length>0?Math.max(...tpTargets.map(t=>t.id))+1:1;tpTargets.push({id:newId,...data});}
-  else{const idx=tpTargets.findIndex(x=>x.id===editingTpId);if(idx!==-1)tpTargets[idx]={...tpTargets[idx],...data};}
+  if(editingTpId===-1){
+    const newId=tpTargets.length>0?Math.max(...tpTargets.map(t=>t.id))+1:1;
+    tpTargets.push({id:newId,proyek:projAktif,...data});
+  }
+  else{
+    const idx=tpTargets.findIndex(x=>x.id===editingTpId);
+    if(idx!==-1){
+      // Pertahankan proyek lama saat edit (jangan tiba-tiba pindah proyek)
+      const proyekLama=tpTargets[idx].proyek||'gwc';
+      tpTargets[idx]={...tpTargets[idx],...data,proyek:proyekLama};
+    }
+  }
   saveTpData();closeTpModal();renderTPList(tpFilter);renderTPMarkers();
   if(editingTpId!==-1)selectTP(editingTpId);
   showToast('✅ Data tersimpan!');

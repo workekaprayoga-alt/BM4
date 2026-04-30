@@ -36,7 +36,14 @@
     setGlobal('perumahan', perumahan || []);
     setGlobal('poi', poi || []);
   }
+  // [v12] Save target pasar setelah merge
+  function saveTpTargetsData(targets){
+    try { localStorage.setItem('bm4_tp_targets', JSON.stringify(targets || [])); } catch(e){}
+    setGlobal('tpTargets', targets || []);
+  }
   function makeKey(obj){ return [normText(obj.nama).toLowerCase(), Number(obj.lat||0).toFixed(5), Number(obj.lng||0).toFixed(5)].join('|'); }
+  // [v12] Key untuk target pasar — pakai nama+proyek+lat+lng (deduplikasi per proyek)
+  function makeTpKey(obj){ return [normText(obj.nama).toLowerCase(), normText(obj.proyek||'gwc'), Number(obj.lat||0).toFixed(5), Number(obj.lng||0).toFixed(5)].join('|'); }
   function nowIso(){ return new Date().toISOString(); }
   function addImportEvent(item){
     const list = readJson(LS_IMPORTS, []);
@@ -44,7 +51,7 @@
     writeJson(LS_IMPORTS, list.slice(0,30));
   }
   function normalizeDrafts(drafts){
-    const result = { perumahan: [], poi: [], notes: [], errors: [], warnings: [] };
+    const result = { perumahan: [], poi: [], notes: [], targetPasar: [], errors: [], warnings: [] };
     (drafts || []).forEach((d, idx) => {
       const type = normText(d.type || d.tipe || '').toLowerCase();
       const data = d.data || d;
@@ -83,6 +90,35 @@
           sumber: 'mobile-draft',
           importedAt: nowIso()
         });
+      } else if(type === 'target_pasar'){
+        // [v12] TARGET PASAR — hasil input mobile
+        const nama = normText(data.nama);
+        const lat = parseNum(data.lat);
+        const lng = parseNum(data.lng);
+        const proyek = normText(d.proyek) || 'gwc';
+        if(!nama){ result.errors.push('Draft #'+(idx+1)+' target pasar tanpa nama'); return; }
+        if(!isLat(lat) || !isLng(lng)){ result.errors.push('Draft target '+nama+' tidak punya lat/lng valid'); return; }
+        // Validasi jenis
+        const jenisRaw = normText(data.jenis).toLowerCase();
+        const jenis = ['pabrik','kawasan','perusahaan'].includes(jenisRaw) ? jenisRaw : 'pabrik';
+        // Validasi status (0-4)
+        let status = parseInt(data.status);
+        if(isNaN(status) || status < 0 || status > 4) status = 0;
+        result.targetPasar.push({
+          // ID akan di-assign di doImport setelah cek max id existing
+          _tempId: 'mob-tp-' + (d.id || Date.now()) + '-' + idx,
+          proyek,
+          nama,
+          jenis,
+          lat, lng,
+          karyawan: parseNum(data.karyawan),
+          pic: normText(data.pic) || 'Belum ada',
+          lastcontact: normText(data.lastcontact) || '-',
+          status,
+          catatan: normText(data.catatan),
+          sumber: 'mobile-draft',
+          importedAt: nowIso()
+        });
       } else if(type === 'catatan'){
         result.notes.push({
           id: d.id || ('mob-note-' + Date.now() + '-' + idx),
@@ -104,8 +140,10 @@
     const normalized = normalizeDrafts(drafts);
     const existingP = Array.isArray(getGlobal('perumahan', [])) ? getGlobal('perumahan', []) : [];
     const existingPoi = Array.isArray(getGlobal('poi', [])) ? getGlobal('poi', []) : [];
+    const existingTp = Array.isArray(getGlobal('tpTargets', [])) ? getGlobal('tpTargets', []) : [];
     const pKeys = new Set(existingP.map(makeKey));
     const poiKeys = new Set(existingPoi.map(makeKey));
+    const tpKeys = new Set(existingTp.map(makeTpKey));
     normalized.perumahan = normalized.perumahan.filter(x => {
       const key = makeKey(x);
       if(pKeys.has(key)){ normalized.warnings.push('Duplikat perumahan dilewati: '+x.nama); return false; }
@@ -116,6 +154,12 @@
       if(poiKeys.has(key)){ normalized.warnings.push('Duplikat POI dilewati: '+x.nama); return false; }
       poiKeys.add(key); return true;
     });
+    // [v12] Dedup target_pasar — by nama+proyek+lat+lng
+    normalized.targetPasar = normalized.targetPasar.filter(x => {
+      const key = makeTpKey(x);
+      if(tpKeys.has(key)){ normalized.warnings.push('Duplikat target pasar dilewati: '+x.nama+' ('+x.proyek+')'); return false; }
+      tpKeys.add(key); return true;
+    });
     return normalized;
   }
   function renderPanel(){
@@ -125,13 +169,14 @@
     if(!importReport){
       const events = readJson(LS_IMPORTS, []);
       body.innerHTML = '<div class="bm4-mi-empty">Upload file JSON dari Mobile Lite untuk preview.</div>'+
-        '<div class="bm4-mi-history"><b>Riwayat import</b>'+(events.length?events.slice(0,6).map(e => '<div><span>'+esc(new Date(e.time).toLocaleString('id-ID'))+'</span><b>+'+(e.perumahan||0)+' perumahan · +'+(e.poi||0)+' POI · '+(e.notes||0)+' catatan</b></div>').join(''):'<em>Belum ada import.</em>')+'</div>';
+        '<div class="bm4-mi-history"><b>Riwayat import</b>'+(events.length?events.slice(0,6).map(e => '<div><span>'+esc(new Date(e.time).toLocaleString('id-ID'))+'</span><b>+'+(e.perumahan||0)+' perumahan · +'+(e.poi||0)+' POI · '+(e.targetPasar||0)+' target · '+(e.notes||0)+' catatan</b></div>').join(''):'<em>Belum ada import.</em>')+'</div>';
       return;
     }
     const r = importReport;
     body.innerHTML = '<div class="bm4-mi-summary">'+
       '<div><span>Perumahan baru</span><b>'+r.perumahan.length+'</b></div>'+
       '<div><span>POI baru</span><b>'+r.poi.length+'</b></div>'+
+      '<div><span>Target Pasar</span><b>'+r.targetPasar.length+'</b></div>'+
       '<div><span>Catatan</span><b>'+r.notes.length+'</b></div>'+
       '<div><span>Error</span><b class="'+(r.errors.length?'bad':'')+'">'+r.errors.length+'</b></div></div>'+
       (r.errors.length?'<div class="bm4-mi-box bad"><b>Error</b>'+r.errors.map(x=>'<p>• '+esc(x)+'</p>').join('')+'</div>':'')+
@@ -139,6 +184,7 @@
       '<div class="bm4-mi-preview"><b>Preview</b>'+
       r.perumahan.slice(0,5).map(x=>'<p>🏘️ '+esc(x.nama)+' · '+esc(x.area)+' · '+x.lat+', '+x.lng+'</p>').join('')+
       r.poi.slice(0,5).map(x=>'<p>📍 '+esc(x.nama)+' · '+esc(x.kat)+' · '+x.lat+', '+x.lng+'</p>').join('')+
+      r.targetPasar.slice(0,5).map(x=>'<p>🎯 '+esc(x.nama)+' · '+esc(x.jenis)+' · proyek <b>'+esc(x.proyek)+'</b> · '+x.lat+', '+x.lng+'</p>').join('')+
       r.notes.slice(0,3).map(x=>'<p>📝 '+esc(x.judul)+' · '+esc(x.proyek)+'</p>').join('')+
       '</div>';
   }
@@ -161,7 +207,7 @@
         const data = JSON.parse(text);
         parsedDrafts = Array.isArray(data) ? data : (Array.isArray(data.drafts) ? data.drafts : []);
         importReport = buildReport(parsedDrafts);
-        panel.querySelector('[data-import]').disabled = !(importReport.perumahan.length || importReport.poi.length || importReport.notes.length) || importReport.errors.length > 0;
+        panel.querySelector('[data-import]').disabled = !(importReport.perumahan.length || importReport.poi.length || importReport.notes.length || importReport.targetPasar.length) || importReport.errors.length > 0;
         renderPanel();
       } catch(err){
         importReport = { perumahan:[], poi:[], notes:[], warnings:[], errors:['File JSON tidak bisa dibaca: '+err.message] };
@@ -185,11 +231,51 @@
     const newPoi = poi.concat(importReport.poi);
     saveMainData(newP, newPoi);
     writeJson(LS_NOTES, importReport.notes.concat(notes).slice(0,200));
-    addImportEvent({ perumahan: importReport.perumahan.length, poi: importReport.poi.length, notes: importReport.notes.length });
+
+    // [v12] Commit target pasar — assign ID numerik baru, push ke tpTargets, save
+    let tpAdded = 0;
+    if(importReport.targetPasar.length > 0){
+      const existingTp = Array.isArray(getGlobal('tpTargets', [])) ? getGlobal('tpTargets', []) : [];
+      const maxId = existingTp.length > 0 ? Math.max(...existingTp.map(t => parseInt(t.id) || 0)) : 0;
+      let nextId = maxId + 1;
+      const newTp = importReport.targetPasar.map(x => {
+        const obj = {
+          id: nextId++,
+          proyek: x.proyek || 'gwc',
+          nama: x.nama,
+          jenis: x.jenis,
+          lat: x.lat,
+          lng: x.lng,
+          karyawan: x.karyawan || 0,
+          pic: x.pic || 'Belum ada',
+          lastcontact: x.lastcontact || '-',
+          status: x.status || 0,
+          catatan: x.catatan || ''
+        };
+        return obj;
+      });
+      const merged = existingTp.concat(newTp);
+      saveTpTargetsData(merged);
+      tpAdded = newTp.length;
+    }
+
+    addImportEvent({
+      perumahan: importReport.perumahan.length,
+      poi: importReport.poi.length,
+      targetPasar: tpAdded,
+      notes: importReport.notes.length
+    });
     try { if(typeof renderEPerumahan === 'function') renderEPerumahan(); } catch(e){}
     try { if(typeof renderEPoi === 'function') renderEPoi(); } catch(e){}
     try { if(typeof refreshAll === 'function') refreshAll(); } catch(e){}
-    toast('✅ Draft mobile masuk lokal. Cek data lalu Sync manual.');
+    // [v12] Refresh tampilan target pasar di desktop kalau ada perubahan
+    if(tpAdded > 0){
+      try { if(typeof renderTPList === 'function') renderTPList(typeof tpFilter !== 'undefined' ? tpFilter : 'semua'); } catch(e){}
+      try { if(typeof renderTPMarkers === 'function') renderTPMarkers(); } catch(e){}
+      try { if(typeof updateTpDashCount === 'function') updateTpDashCount(); } catch(e){}
+    }
+    const tpMsg = tpAdded > 0 ? ' (+' + tpAdded + ' target pasar)' : '';
+    toast('✅ Draft mobile masuk lokal' + tpMsg + '. Cek data lalu Sync manual.');
     importReport = null; parsedDrafts = [];
     panel.querySelector('[data-import]').disabled = true;
     renderPanel();
