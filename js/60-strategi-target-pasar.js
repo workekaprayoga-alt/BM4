@@ -4,6 +4,11 @@
 // ============================================================
 function initStratMap(){
   if(tpMapInit){tpMap.invalidateSize();renderTPList(tpFilter);renderTPMarkers();return;}
+  // [v13.2] Cleanup leftover Leaflet container dari init sebelumnya (cegah error "already initialized")
+  const stratMapEl=document.getElementById('strat-map');
+  if(stratMapEl && stratMapEl._leaflet_id){
+    try{ stratMapEl._leaflet_id=null; stratMapEl.innerHTML=''; }catch(e){}
+  }
   tpMap=L.map('strat-map').setView([-6.530,107.740],11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(tpMap);
   const anchorIcon=L.divIcon({html:`<div style="width:20px;height:20px;background:#D97706;border-radius:50%;border:3px solid white;box-shadow:0 0 0 3px rgba(217,119,6,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;">⭐</div>`,iconSize:[20,20],iconAnchor:[10,10],className:''});

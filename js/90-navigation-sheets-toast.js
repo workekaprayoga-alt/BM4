@@ -52,7 +52,13 @@ function selectProyek(id){
   // [DASHBOARD RANKING] Render ranking saat dashboard dibuka
   try{ renderDashboardRanking(); }catch(e){ console.warn('dash ranking err', e); }
   updateTpDashCount();
+  // [v13.2] Reset Strategi map state + force re-render TP list/markers
+  // supaya saat user ganti proyek, list dan peta target market ikut update
+  // walau user tidak sedang di tab Strategi.
   tpMapInit=false;tpMap=null;tpMarkers={};
+  try{
+    if(typeof renderTPList==='function') renderTPList(typeof tpFilter!=='undefined'?tpFilter:'semua');
+  }catch(e){ console.warn('renderTPList on selectProyek err:',e); }
   showScreen('s-app');
   switchDiv('dashboard',document.querySelector('[data-div="dashboard"]'));
   // [v12.4 STATE PERSISTENCE] Coba restore state terakhir setelah app loaded
