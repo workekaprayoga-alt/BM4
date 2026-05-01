@@ -150,71 +150,69 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .no-access h2{font-size:16px;margin:0 0 8px}
 .no-access p{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}
 
-/* ===== KATA HARI INI - BANNER (Dashboard) ===== */
-.motivasi-banner{
-  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 100%);
-  color:#fff;
-  border-radius:14px;
-  padding:14px 16px;
-  margin:14px 16px 0;
-  position:relative;
-  box-shadow:0 4px 12px rgba(28,43,74,0.18);
-  animation:motivasi-fade-in 0.4s ease;
+/* ===== KATA HARI INI - SPLASH (saat login, full screen 2.5 detik) ===== */
+.motivasi-splash{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 60%, #0F1A2E 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 28px;
+  cursor:pointer;
+  animation:splash-in 0.5s ease;
 }
-@keyframes motivasi-fade-in{
-  from{opacity:0;transform:translateY(-6px)}
+.motivasi-splash.show{display:flex}
+.motivasi-splash.fadeout{
+  animation:splash-out 0.5s ease forwards;
+}
+@keyframes splash-in{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes splash-out{
+  from{opacity:1}
+  to{opacity:0;visibility:hidden}
+}
+.motivasi-splash-content{
+  max-width:340px;width:100%;text-align:center;
+  animation:splash-content-in 0.7s 0.15s ease backwards;
+}
+@keyframes splash-content-in{
+  from{opacity:0;transform:translateY(12px)}
   to{opacity:1;transform:translateY(0)}
 }
-.motivasi-banner.hide{display:none}
-.motivasi-banner-head{
-  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+.motivasi-splash-icon{
+  font-size:38px;margin-bottom:18px;
+  animation:splash-icon-pulse 2s ease-in-out infinite;
 }
-.motivasi-banner-icon{
-  width:24px;height:24px;border-radius:50%;
-  background:rgba(96,165,250,0.18);
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;flex-shrink:0;
+@keyframes splash-icon-pulse{
+  0%,100%{transform:scale(1);opacity:0.95}
+  50%{transform:scale(1.08);opacity:1}
 }
-.motivasi-banner-label{
-  font-size:10px;font-weight:700;letter-spacing:1.4px;
+.motivasi-splash-label{
+  font-size:11px;font-weight:700;letter-spacing:2.5px;
   color:#93C5FD;text-transform:uppercase;
-  flex:1;
+  margin-bottom:22px;
 }
-.motivasi-banner-close{
-  background:none;border:none;color:rgba(255,255,255,0.5);
-  font-size:18px;cursor:pointer;padding:0;line-height:1;
-  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-  border-radius:50%;transition:all 0.15s;
+.motivasi-splash-quote{
+  font-size:19px;line-height:1.55;font-style:italic;
+  color:#F1F5F9;font-weight:400;
+  margin-bottom:28px;
 }
-.motivasi-banner-close:hover,.motivasi-banner-close:active{
-  background:rgba(255,255,255,0.1);color:#fff;
+.motivasi-splash-quote::before{
+  content:'\201C';
+  display:block;font-size:36px;color:#60A5FA;
+  font-style:normal;font-weight:700;
+  line-height:0.6;margin-bottom:10px;
+  opacity:0.45;
 }
-.motivasi-banner-quote{
-  font-size:14px;line-height:1.55;font-style:italic;
-  color:#E2E8F0;font-weight:400;
-  margin:0 0 10px;
-  transition:opacity 0.15s ease;
+.motivasi-splash-hint{
+  font-size:10px;color:#64748B;letter-spacing:1.5px;
+  text-transform:uppercase;font-weight:600;
+  opacity:0.7;
+  animation:splash-hint-fade 1.6s 0.6s ease-in infinite alternate;
 }
-.motivasi-banner-actions{
-  display:flex;justify-content:flex-end;
-}
-.motivasi-banner-shuffle{
-  background:rgba(255,255,255,0.1);
-  border:1px solid rgba(255,255,255,0.15);
-  color:#CBD5E1;
-  padding:5px 12px;border-radius:20px;
-  font-size:11px;font-weight:600;cursor:pointer;
-  display:inline-flex;align-items:center;gap:5px;
-  transition:all 0.15s;
-}
-.motivasi-banner-shuffle:hover,.motivasi-banner-shuffle:active{
-  background:rgba(255,255,255,0.18);color:#fff;
-}
-.motivasi-banner-shuffle .icon-rot{
-  display:inline-block;transition:transform 0.4s ease;
-}
-.motivasi-banner-shuffle:active .icon-rot{
-  transform:rotate(360deg);
+@keyframes splash-hint-fade{
+  from{opacity:0.4}
+  to{opacity:0.85}
 }
 
 /* ===== TIPS UNTUK STATUS (Detail Modal) ===== */
@@ -627,6 +625,16 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 </div>
 
+<!-- ========== SPLASH MOTIVASI (muncul saat login, auto-hide 2.5 detik) ========== -->
+<div class="motivasi-splash" id="motivasi-splash" onclick="hideMotivasiSplash()">
+  <div class="motivasi-splash-content">
+    <div class="motivasi-splash-icon">✨</div>
+    <div class="motivasi-splash-label">Kata Hari Ini</div>
+    <div class="motivasi-splash-quote" id="motivasi-splash-quote">&mdash;</div>
+    <div class="motivasi-splash-hint">Tap untuk lanjut</div>
+  </div>
+</div>
+
 <!-- ========== LAYAR APLIKASI ========== -->
 <div class="app-screen" id="screen-app">
   <div class="user-header">
@@ -922,6 +930,13 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
     <!-- Account settings -->
     <div class="profile-section">
       <div class="profile-section-title">⚙️ Pengaturan Akun</div>
+      <div class="profile-action-row" onclick="openMotivasiFromProfile()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">✨</span>
+          <span>Lihat Kata Hari Ini</span>
+        </div>
+        <span class="profile-action-arrow">›</span>
+      </div>
       <div class="profile-action-row" onclick="openChangePassword()">
         <div class="profile-action-label">
           <span class="profile-action-icon">🔐</span>
@@ -1985,9 +2000,11 @@ async function enterApp(){
 
   // Reset state Kata Hari Ini (fresh quote tiap login/buka aplikasi)
   _motivasiCurrentIdx = -1;
-  _motivasiBannerDismissed = false;
   _detailTipCurrentIdx = -1;
   _detailTipCurrentStatus = -1;
+
+  // Tampilkan splash motivasi (auto-hide 2.5 detik atau tap untuk skip)
+  showMotivasiSplash();
 
   // Render header user
   const av = $('user-avatar');
@@ -2068,12 +2085,12 @@ function renderSkeletonUI(){
 }
 
 // ============================================================
-// KATA HARI INI - Tips Strategi Target Market
+// KATA HARI INI - Splash motivasi (saat login) + Tips per status (detail target)
 // ============================================================
-let _motivasiCurrentIdx = -1;       // index quote terakhir di dashboard banner
-let _motivasiBannerDismissed = false; // user tap ✕, hide sampai reload
+let _motivasiCurrentIdx = -1;       // index quote terakhir splash
 let _detailTipCurrentIdx = -1;      // index tip terakhir di detail modal
 let _detailTipCurrentStatus = -1;   // status terakhir untuk tip
+let _splashAutoHideTimer = null;    // timer auto-hide splash
 
 // Pilih quote random dari array, hindari yang sama persis dengan sebelumnya
 function pickRandomQuote(arr, lastIdx){
@@ -2088,55 +2105,39 @@ function pickRandomQuote(arr, lastIdx){
   return { idx, text: arr[idx] };
 }
 
-// Render banner kata hari ini di dashboard
-function renderMotivasiBanner(){
-  if(_motivasiBannerDismissed) return '';
-  if(_motivasiCurrentIdx === -1){
-    const picked = pickRandomQuote(MOTIVASI_QUOTES, -1);
-    _motivasiCurrentIdx = picked.idx;
-  }
-  const quote = MOTIVASI_QUOTES[_motivasiCurrentIdx] || MOTIVASI_QUOTES[0];
-  return `
-    <div class="motivasi-banner" id="motivasi-banner">
-      <div class="motivasi-banner-head">
-        <div class="motivasi-banner-icon">✨</div>
-        <div class="motivasi-banner-label">Kata Hari Ini</div>
-        <button class="motivasi-banner-close" onclick="dismissMotivasiBanner()" aria-label="Tutup">×</button>
-      </div>
-      <p class="motivasi-banner-quote" id="motivasi-quote-text">"${esc(quote)}"</p>
-      <div class="motivasi-banner-actions">
-        <button class="motivasi-banner-shuffle" onclick="shuffleMotivasi()">
-          <span class="icon-rot">⟲</span>
-          <span>Kata Lain</span>
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-// Shuffle ke quote baru di banner dashboard
-function shuffleMotivasi(){
+// Tampilkan splash motivasi (full screen, 2.5 detik atau tap untuk skip)
+function showMotivasiSplash(){
   const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
   _motivasiCurrentIdx = picked.idx;
-  const el = $('motivasi-quote-text');
-  if(el){
-    el.style.opacity = '0';
-    setTimeout(() => {
-      el.textContent = `"${picked.text}"`;
-      el.style.opacity = '1';
-    }, 150);
-  }
+  const quoteEl = $('motivasi-splash-quote');
+  if(quoteEl) quoteEl.textContent = picked.text;
+  const splash = $('motivasi-splash');
+  if(!splash) return;
+  splash.classList.remove('fadeout');
+  splash.classList.add('show');
+  // Auto-hide setelah 2.5 detik
+  if(_splashAutoHideTimer) clearTimeout(_splashAutoHideTimer);
+  _splashAutoHideTimer = setTimeout(() => hideMotivasiSplash(), 2500);
 }
 
-// Dismiss banner sampai reload
-function dismissMotivasiBanner(){
-  _motivasiBannerDismissed = true;
-  const el = $('motivasi-banner');
-  if(el){
-    el.style.transition = 'opacity 0.2s';
-    el.style.opacity = '0';
-    setTimeout(() => { el.classList.add('hide'); }, 200);
+// Sembunyikan splash dengan fade-out
+function hideMotivasiSplash(){
+  const splash = $('motivasi-splash');
+  if(!splash || !splash.classList.contains('show')) return;
+  if(_splashAutoHideTimer){
+    clearTimeout(_splashAutoHideTimer);
+    _splashAutoHideTimer = null;
   }
+  splash.classList.add('fadeout');
+  setTimeout(() => {
+    splash.classList.remove('show');
+    splash.classList.remove('fadeout');
+  }, 500);
+}
+
+// Buka splash dari profile (untuk tombol "Lihat Kata Hari Ini")
+function openMotivasiFromProfile(){
+  showMotivasiSplash();
 }
 
 // ===== Tip per status untuk detail modal target =====
@@ -2245,7 +2246,6 @@ function renderTargetPasarDashboard(){
   filtered = filtered.slice().sort((a,b) => (parseInt(b.status)||0) - (parseInt(a.status)||0));
 
   let html = `
-    ${renderMotivasiBanner()}
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total target</div>
