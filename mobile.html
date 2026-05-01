@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#1C2B4A">
 <title>BM4 Mobile</title>
 <link rel="manifest" href="manifest.json?v=rc14">
+<!-- Leaflet untuk mini-map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 :root{
   --navy:#1C2B4A;
@@ -151,6 +154,159 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 /* Footer */
 .footer{font-size:10px;text-align:center;color:#94A3B8;padding:18px 16px}
 .footer a{color:#60A5FA;text-decoration:none}
+
+/* ============== MODAL TARGET FORM ============== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+  display:none;align-items:flex-end;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-sheet{
+  background:var(--bg);width:100%;max-width:620px;max-height:96vh;overflow:hidden;
+  border-radius:18px 18px 0 0;display:flex;flex-direction:column;
+  animation:slideUp .25s ease-out;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-head{
+  background:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.modal-head .back{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--text);background:none;border:none;padding:0;cursor:pointer;
+}
+.modal-head .title{flex:1;min-width:0}
+.modal-head .title h2{font-size:15px;font-weight:700;margin:0;line-height:1.2}
+.modal-head .title p{font-size:11px;color:var(--muted);margin:2px 0 0}
+.modal-body{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.modal-foot{
+  background:#fff;padding:10px 14px;border-top:1px solid var(--border);
+  display:flex;gap:8px;flex-shrink:0;
+}
+.modal-foot .btn{
+  flex:1;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:13px;
+  font-family:inherit;cursor:pointer;
+}
+.modal-foot .btn.cancel{background:#fff;color:var(--text);border:1px solid var(--border)}
+.modal-foot .btn.save{background:var(--navy);color:#fff;flex:2}
+.modal-foot .btn.save:disabled{opacity:.5}
+
+/* Form fields di modal */
+.field{margin-bottom:14px}
+.field label{
+  display:block;font-size:11px;font-weight:700;color:var(--muted);
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;
+}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;
+  font:inherit;font-size:14px;background:#fff;
+}
+.field textarea{min-height:70px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--accent);
+}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field .req{color:var(--danger)}
+.field .help{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* Mini-map dalam form */
+.mini-map-wrap{margin-bottom:14px}
+.mini-map-head{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+}
+.mini-map-head label{
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px;margin:0;
+}
+.mini-map-head .badge{
+  font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;
+}
+.mini-map-head .badge.ok{background:#D1FAE5;color:#065F46}
+.mini-map-head .badge.warn{background:#FEF3C7;color:#92400E}
+.mini-map{
+  height:200px;border-radius:10px;overflow:hidden;background:#E2E8F0;
+  border:1px solid var(--border);position:relative;z-index:1;
+}
+.mini-map.disabled{opacity:.5;pointer-events:none}
+.gps-row{display:flex;gap:6px;margin-top:8px}
+.gps-row .btn-gps{
+  flex:1;background:var(--navy);color:#fff;border:none;border-radius:10px;
+  padding:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;
+}
+.gps-row .btn-gps.loading{opacity:.7}
+.gps-row .btn-link{
+  background:#fff;color:var(--navy);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;
+}
+.coord-display{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;
+}
+.coord-display .coord{
+  background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:7px 9px;
+}
+.coord-display .coord .lbl{font-size:9px;color:#0F766E;font-weight:700;letter-spacing:.5px}
+.coord-display .coord .val{font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#134E4A;margin-top:2px}
+.coord-display .coord.empty{background:#FEF2F2;border-color:#FECACA}
+.coord-display .coord.empty .lbl{color:#991B1B}
+.coord-display .coord.empty .val{color:#991B1B}
+.coord-info{
+  background:#ECFDF5;border-radius:8px;padding:8px 10px;font-size:10px;color:#065F46;
+  margin-top:8px;
+}
+.coord-info.warn{background:#FEF3C7;color:#92400E}
+
+/* Smart input dialog */
+.smart-input-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.smart-input-overlay.show{display:flex}
+.smart-input-box{
+  background:#fff;border-radius:14px;padding:18px;max-width:380px;width:100%;
+}
+.smart-input-box h3{margin:0 0 4px;font-size:15px}
+.smart-input-box p{margin:0 0 12px;font-size:12px;color:var(--muted);line-height:1.5}
+.smart-input-box textarea{
+  width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;
+  padding:10px;font:inherit;font-size:13px;font-family:ui-monospace,monospace;resize:vertical;
+}
+.smart-input-box .btnrow{display:flex;gap:8px;margin-top:12px}
+.smart-input-box .btnrow button{
+  flex:1;border:none;border-radius:10px;padding:11px;font-weight:700;font-size:13px;
+  font-family:inherit;cursor:pointer;
+}
+.smart-input-box .btnrow .cancel{background:#F1F5F9;color:var(--text)}
+.smart-input-box .btnrow .ok{background:var(--navy);color:#fff}
+
+/* Save success dialog (Q3 — opsi C) */
+.save-success-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.save-success-overlay.show{display:flex}
+.save-success-box{
+  background:#fff;border-radius:14px;padding:22px 18px 16px;max-width:380px;width:100%;
+  text-align:center;
+}
+.save-success-box .icon-ok{
+  width:56px;height:56px;background:#D1FAE5;color:#059669;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:10px;
+}
+.save-success-box h3{margin:0 0 4px;font-size:16px}
+.save-success-box p{margin:0 0 16px;font-size:12px;color:var(--muted)}
+.save-success-box .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.save-success-box .btnrow button{
+  border:none;border-radius:10px;padding:12px 8px;font-weight:700;font-size:12px;
+  font-family:inherit;cursor:pointer;
+}
+.save-success-box .btnrow .again{background:var(--navy);color:#fff}
+.save-success-box .btnrow .back{background:#F1F5F9;color:var(--text)}
+
+/* Override Leaflet untuk mobile */
+.leaflet-container{font-family:inherit;font-size:11px}
+.leaflet-popup-content{margin:8px 10px;font-size:12px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -207,6 +363,120 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 
   <div class="footer">BM4 Mobile v14 &middot; <a href="index.html?desktop=1&v=rc14">Buka desktop &uarr;</a></div>
+</div>
+
+<!-- ========== MODAL FORM TARGET (tambah/edit) ========== -->
+<div class="modal-overlay" id="modal-target">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <button class="back" onclick="closeTargetModal()" title="Tutup">&larr;</button>
+      <div class="title">
+        <h2 id="modal-target-title">Tambah Target Baru</h2>
+        <p id="modal-target-sub">Proyek aktif</p>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nama target <span class="req">*</span></label>
+        <input type="text" id="tf-nama" placeholder="cth: PT Sample Industri" autocomplete="off">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Jenis</label>
+          <select id="tf-jenis">
+            <option value="pabrik">🏭 Pabrik</option>
+            <option value="perusahaan">🏢 Perusahaan</option>
+            <option value="kawasan">🏗️ Kawasan</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Karyawan</label>
+          <input type="number" id="tf-karyawan" placeholder="0" min="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <!-- Mini-map dengan GPS & Smart Input -->
+      <div class="mini-map-wrap">
+        <div class="mini-map-head">
+          <label>Lokasi di peta <span class="req">*</span></label>
+          <span class="badge warn" id="tf-coord-badge">Belum ada lokasi</span>
+        </div>
+        <div class="mini-map" id="tf-mini-map"></div>
+        <div class="gps-row">
+          <button type="button" class="btn-gps" onclick="useGpsForTarget()" id="tf-btn-gps">📍 Pakai GPS Saya</button>
+          <button type="button" class="btn-link" onclick="openSmartInput()" title="Paste link Google Maps">🔗</button>
+        </div>
+        <div class="coord-display">
+          <div class="coord empty" id="tf-coord-lat">
+            <div class="lbl">LAT</div>
+            <div class="val">—</div>
+          </div>
+          <div class="coord empty" id="tf-coord-lng">
+            <div class="lbl">LNG</div>
+            <div class="val">—</div>
+          </div>
+        </div>
+        <div class="coord-info warn" id="tf-coord-info">
+          ℹ️ Tap "Pakai GPS Saya" atau tap di peta untuk set lokasi
+        </div>
+      </div>
+
+      <div class="field">
+        <label>PIC / Kontak</label>
+        <input type="text" id="tf-pic" placeholder="cth: Bu Sari HRD - 0812-xxxx" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select id="tf-status">
+          <option value="0">🔍 Identifikasi</option>
+          <option value="1">📞 Kontak Awal</option>
+          <option value="2">🤝 Presentasi</option>
+          <option value="3">💬 Negosiasi</option>
+          <option value="4">✅ Deal</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Catatan</label>
+        <textarea id="tf-catatan" placeholder="cth: Pabrik tekstil di Subang utara..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn cancel" onclick="closeTargetModal()">Batal</button>
+      <button class="btn save" id="tf-btn-save" onclick="saveTargetForm()">Simpan Target</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL SMART INPUT (paste link Google Maps) ========== -->
+<div class="smart-input-overlay" id="smart-input">
+  <div class="smart-input-box">
+    <h3>Paste Lokasi</h3>
+    <p>Tempel link Google Maps, koordinat, atau plus code:<br>
+       <code style="font-size:11px;color:var(--muted)">-6.5169, 107.8017</code> atau
+       <code style="font-size:11px;color:var(--muted)">https://maps.app.goo.gl/...</code>
+    </p>
+    <textarea id="smart-input-text" placeholder="Paste di sini..."></textarea>
+    <div class="btnrow">
+      <button class="cancel" onclick="closeSmartInput()">Batal</button>
+      <button class="ok" onclick="parseSmartInput()">Pakai Lokasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL SAVE SUCCESS (Q3 opsi C) ========== -->
+<div class="save-success-overlay" id="save-success">
+  <div class="save-success-box">
+    <div class="icon-ok">✓</div>
+    <h3>Target Tersimpan</h3>
+    <p id="save-success-msg">Target market berhasil disimpan ke server.</p>
+    <div class="btnrow">
+      <button class="again" onclick="saveSuccessAddAgain()">+ Tambah Lagi</button>
+      <button class="back" onclick="saveSuccessClose()">Kembali</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -783,14 +1053,408 @@ function setFilter(f){
 }
 
 // ============================================================
-// PLACEHOLDER untuk Mini-Tahap 2 (form input target lengkap)
+// TARGET FORM MODAL — tambah & edit
 // ============================================================
+let editingTargetId = null;       // null = mode tambah, number = mode edit
+let tfMap = null;                 // Leaflet mini-map instance
+let tfMarker = null;              // Pin draggable
+let tfRefMarkers = [];            // Reference markers (target lain di proyek)
+let tfCoord = { lat: null, lng: null };
+let tfDirty = false;              // Apakah user sudah edit form
+let lastSavedWasNew = false;
+
 function openAddTarget(){
-  toast('Form input target dengan mini-map akan tersedia di update berikutnya', '');
+  editingTargetId = null;
+  tfDirty = false;
+  resetTargetForm();
+  $('modal-target-title').textContent = 'Tambah Target Baru';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-target-sub').textContent = 'Proyek: ' + (proj ? proj.nama : currentProyekId);
+  $('modal-target').classList.add('show');
+  setTimeout(() => initTargetMap(), 100);
 }
 
 function openEditTarget(id){
-  toast('Edit target akan tersedia di update berikutnya', '');
+  const t = tpTargets.find(x => parseInt(x.id) === parseInt(id));
+  if(!t){ toast('Target tidak ditemukan', 'err'); return; }
+  editingTargetId = parseInt(id);
+  tfDirty = false;
+  resetTargetForm();
+  $('tf-nama').value = t.nama || '';
+  $('tf-jenis').value = t.jenis || 'pabrik';
+  $('tf-karyawan').value = t.karyawan || '';
+  $('tf-pic').value = t.pic || '';
+  $('tf-status').value = String(parseInt(t.status) || 0);
+  $('tf-catatan').value = t.catatan || '';
+  if(!isNaN(parseFloat(t.lat)) && !isNaN(parseFloat(t.lng))){
+    setCoord(parseFloat(t.lat), parseFloat(t.lng), 'data');
+  }
+  $('modal-target-title').textContent = 'Edit Target';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-target-sub').textContent = (t.nama||'').slice(0,40) + ' · ' + (proj ? proj.kode||proj.id : '');
+  $('modal-target').classList.add('show');
+  setTimeout(() => initTargetMap(), 100);
+}
+
+function closeTargetModal(){
+  if(tfDirty){
+    if(!confirm('Ada perubahan yang belum disimpan. Yakin tutup?')) return;
+  }
+  $('modal-target').classList.remove('show');
+  if(tfMap){
+    try { tfMap.remove(); } catch(e){}
+    tfMap = null;
+    tfMarker = null;
+    tfRefMarkers = [];
+  }
+  editingTargetId = null;
+  tfDirty = false;
+  tfCoord = { lat: null, lng: null };
+}
+
+function resetTargetForm(){
+  $('tf-nama').value = '';
+  $('tf-jenis').value = 'pabrik';
+  $('tf-karyawan').value = '';
+  $('tf-pic').value = '';
+  $('tf-status').value = '0';
+  $('tf-catatan').value = '';
+  tfCoord = { lat: null, lng: null };
+  updateCoordDisplay();
+  $('tf-btn-save').disabled = false;
+  $('tf-btn-save').textContent = 'Simpan Target';
+  ['tf-nama','tf-jenis','tf-karyawan','tf-pic','tf-status','tf-catatan'].forEach(id => {
+    const el = $(id);
+    if(el && !el._dirtyHooked){
+      el.addEventListener('input', () => { tfDirty = true; });
+      el._dirtyHooked = true;
+    }
+  });
+}
+
+// ============================================================
+// MINI-MAP (Leaflet)
+// ============================================================
+function initTargetMap(){
+  const el = $('tf-mini-map');
+  if(!el) return;
+  if(el._leaflet_id){
+    try { el._leaflet_id = null; el.innerHTML = ''; } catch(e){}
+  }
+  let center, zoom;
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    center = [tfCoord.lat, tfCoord.lng]; zoom = 14;
+  } else {
+    const proj = proyekList.find(p => p.id === currentProyekId);
+    if(proj && !isNaN(parseFloat(proj.lat)) && !isNaN(parseFloat(proj.lng))){
+      center = [parseFloat(proj.lat), parseFloat(proj.lng)];
+    } else {
+      center = [-6.530, 107.740];
+    }
+    zoom = 12;
+  }
+  tfMap = L.map(el, {zoomControl:true, attributionControl:false}).setView(center, zoom);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(tfMap);
+  tfMap.on('click', e => setCoord(e.latlng.lat, e.latlng.lng, 'tap'));
+  renderRefMarkers();
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    placePin(tfCoord.lat, tfCoord.lng);
+  }
+  setTimeout(() => { if(tfMap) tfMap.invalidateSize(); }, 200);
+}
+
+function renderRefMarkers(){
+  if(!tfMap) return;
+  tfRefMarkers.forEach(m => tfMap.removeLayer(m));
+  tfRefMarkers = [];
+  const targets = getTargetsForCurrentProyek();
+  targets.forEach(t => {
+    if(editingTargetId !== null && parseInt(t.id) === editingTargetId) return;
+    const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+    if(isNaN(lat) || isNaN(lng)) return;
+    const icon = L.divIcon({
+      html: '<div style="width:10px;height:10px;background:#94A3B8;border-radius:50%;border:1.5px solid white;opacity:.7"></div>',
+      iconSize: [10,10], iconAnchor: [5,5], className: ''
+    });
+    const m = L.marker([lat,lng], {icon, interactive:false}).addTo(tfMap);
+    tfRefMarkers.push(m);
+  });
+}
+
+function placePin(lat, lng){
+  if(!tfMap) return;
+  if(tfMarker){
+    tfMarker.setLatLng([lat,lng]);
+  } else {
+    const icon = L.divIcon({
+      html: '<div style="width:24px;height:24px;background:#EF4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3)"></div>',
+      iconSize: [24,24], iconAnchor: [12,24], className: ''
+    });
+    tfMarker = L.marker([lat,lng], {icon, draggable:true}).addTo(tfMap);
+    tfMarker.on('dragend', e => {
+      const ll = e.target.getLatLng();
+      setCoord(ll.lat, ll.lng, 'drag');
+    });
+  }
+}
+
+function setCoord(lat, lng, source){
+  if(isNaN(lat) || isNaN(lng)) return;
+  tfCoord = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  tfDirty = true;
+  placePin(tfCoord.lat, tfCoord.lng);
+  if(tfMap){
+    tfMap.setView([tfCoord.lat, tfCoord.lng], Math.max(tfMap.getZoom(), 14));
+  }
+  updateCoordDisplay(source);
+}
+
+function updateCoordDisplay(source){
+  const latEl = $('tf-coord-lat');
+  const lngEl = $('tf-coord-lng');
+  const badge = $('tf-coord-badge');
+  const info = $('tf-coord-info');
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    latEl.classList.remove('empty');
+    lngEl.classList.remove('empty');
+    latEl.querySelector('.val').textContent = tfCoord.lat.toFixed(7);
+    lngEl.querySelector('.val').textContent = tfCoord.lng.toFixed(7);
+    badge.className = 'badge ok';
+    badge.textContent = '✓ Lokasi terisi';
+    info.className = 'coord-info';
+    const proj = proyekList.find(p => p.id === currentProyekId);
+    if(proj && !isNaN(parseFloat(proj.lat))){
+      const dist = haversine(parseFloat(proj.lat), parseFloat(proj.lng), tfCoord.lat, tfCoord.lng);
+      const sourceLabel = source === 'gps' ? 'GPS HP' : source === 'tap' ? 'tap di peta' : source === 'drag' ? 'drag pin' : source === 'paste' ? 'paste link' : 'data tersimpan';
+      info.textContent = '✓ Lokasi dari ' + sourceLabel + ' · ' + dist.toFixed(1) + ' km dari proyek';
+    } else {
+      info.textContent = '✓ Lokasi tersimpan';
+    }
+  } else {
+    latEl.classList.add('empty');
+    lngEl.classList.add('empty');
+    latEl.querySelector('.val').textContent = '—';
+    lngEl.querySelector('.val').textContent = '—';
+    badge.className = 'badge warn';
+    badge.textContent = 'Belum ada lokasi';
+    info.className = 'coord-info warn';
+    info.textContent = 'ℹ️ Tap "Pakai GPS Saya" atau tap di peta untuk set lokasi';
+  }
+}
+
+function haversine(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// ============================================================
+// GPS
+// ============================================================
+function useGpsForTarget(){
+  if(!navigator.geolocation){
+    toast('GPS tidak didukung di browser ini', 'err');
+    return;
+  }
+  const btn = $('tf-btn-gps');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Mengambil GPS...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 Pakai GPS Saya';
+      setCoord(pos.coords.latitude, pos.coords.longitude, 'gps');
+      toast('Lokasi GPS berhasil', 'ok');
+    },
+    err => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 Pakai GPS Saya';
+      let msg = 'GPS gagal';
+      if(err.code === 1) msg = 'Izin lokasi ditolak. Aktifkan di settings browser.';
+      else if(err.code === 2) msg = 'Posisi tidak tersedia. Coba di luar gedung.';
+      else if(err.code === 3) msg = 'GPS timeout. Coba lagi.';
+      toast(msg, 'err');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+// ============================================================
+// SMART INPUT
+// ============================================================
+function openSmartInput(){
+  $('smart-input-text').value = '';
+  $('smart-input').classList.add('show');
+  setTimeout(() => $('smart-input-text').focus(), 100);
+}
+
+function closeSmartInput(){
+  $('smart-input').classList.remove('show');
+}
+
+function parseSmartInput(){
+  const text = $('smart-input-text').value.trim();
+  if(!text){ toast('Tempelkan link atau koordinat dulu', 'err'); return; }
+  const parsed = parseLocationText(text);
+  if(!parsed){
+    toast('Format tidak dikenali. Coba link Google Maps atau koordinat', 'err');
+    return;
+  }
+  setCoord(parsed.lat, parsed.lng, 'paste');
+  closeSmartInput();
+  toast('Lokasi berhasil di-set', 'ok');
+}
+
+function parseLocationText(text){
+  text = String(text).trim();
+  // 1. Koordinat mentah: "-6.5169, 107.8017"
+  const coordMatch = text.match(/^(-?\d{1,3}\.\d+)[\s,]+(-?\d{1,3}\.\d+)$/);
+  if(coordMatch){
+    const lat = parseFloat(coordMatch[1]);
+    const lng = parseFloat(coordMatch[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 2. Google Maps: @lat,lng
+  const at = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(at){
+    const lat = parseFloat(at[1]), lng = parseFloat(at[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 3. !3d!4d format
+  const exclam = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if(exclam){
+    const lat = parseFloat(exclam[1]), lng = parseFloat(exclam[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 4. q= / ll= parameter
+  const qMatch = text.match(/[?&](?:q|ll|destination)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(qMatch){
+    const lat = parseFloat(qMatch[1]), lng = parseFloat(qMatch[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 5. Shortlink goo.gl — beri tahu user
+  if(/(?:goo\.gl|maps\.app\.goo\.gl)/i.test(text)){
+    toast('Link goo.gl perlu dibuka manual: tap link di WA, salin URL setelah redirect, baru paste lagi', '');
+    return null;
+  }
+  // 6. Fallback: cari pasangan angka koordinat di teks
+  const anyCoord = text.match(/(-?\d{1,3}\.\d{4,})\s*[,\s]\s*(-?\d{1,3}\.\d{4,})/);
+  if(anyCoord){
+    const lat = parseFloat(anyCoord[1]), lng = parseFloat(anyCoord[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  return null;
+}
+
+function isValidLatLng(lat, lng){
+  return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+// ============================================================
+// SAVE TARGET
+// ============================================================
+async function saveTargetForm(){
+  const nama = $('tf-nama').value.trim();
+  if(!nama){
+    toast('Nama target wajib diisi', 'err');
+    $('tf-nama').focus();
+    return;
+  }
+  if(tfCoord.lat === null || tfCoord.lng === null){
+    toast('Lokasi wajib diisi (GPS atau tap di peta)', 'err');
+    return;
+  }
+
+  const btn = $('tf-btn-save');
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    let newRows;
+    let isNew = (editingTargetId === null);
+
+    if(isNew){
+      const maxId = tpTargets.reduce((m, t) => Math.max(m, parseInt(t.id) || 0), 0);
+      const newId = maxId + 1;
+      const newRow = {
+        id: newId,
+        proyek: currentProyekId,
+        nama: nama,
+        jenis: $('tf-jenis').value,
+        lat: tfCoord.lat,
+        lng: tfCoord.lng,
+        karyawan: parseInt($('tf-karyawan').value) || 0,
+        pic: $('tf-pic').value.trim(),
+        lastcontact: today,
+        status: parseInt($('tf-status').value) || 0,
+        catatan: $('tf-catatan').value.trim()
+      };
+      newRows = tpTargets.concat([newRow]);
+    } else {
+      newRows = tpTargets.map(t => {
+        if(parseInt(t.id) === editingTargetId){
+          return Object.assign({}, t, {
+            nama: nama,
+            jenis: $('tf-jenis').value,
+            lat: tfCoord.lat,
+            lng: tfCoord.lng,
+            karyawan: parseInt($('tf-karyawan').value) || 0,
+            pic: $('tf-pic').value.trim(),
+            lastcontact: today,
+            status: parseInt($('tf-status').value) || 0,
+            catatan: $('tf-catatan').value.trim()
+          });
+        }
+        return t;
+      });
+    }
+
+    await gasRequest('saveTargetPasar', { rows: newRows });
+
+    tpTargets = newRows;
+    try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+
+    lastSavedWasNew = isNew;
+    tfDirty = false;
+    if(isNew){
+      $('save-success-msg').textContent = '"' + nama + '" berhasil disimpan ke server.';
+      $('save-success').classList.add('show');
+    } else {
+      closeTargetModal();
+      renderContent();
+      toast('Target "' + nama + '" diupdate', 'ok');
+    }
+  } catch(e){
+    console.error('[SaveTarget] error:', e);
+    toast(e.message || 'Gagal simpan target', 'err');
+    btn.disabled = false;
+    btn.textContent = 'Simpan Target';
+  }
+}
+
+function saveSuccessAddAgain(){
+  $('save-success').classList.remove('show');
+  editingTargetId = null;
+  resetTargetForm();
+  $('modal-target-title').textContent = 'Tambah Target Baru';
+  if(tfMap){
+    try { tfMap.remove(); } catch(e){}
+    tfMap = null;
+    tfMarker = null;
+    tfRefMarkers = [];
+  }
+  setTimeout(() => initTargetMap(), 100);
+  $('tf-nama').focus();
+}
+
+function saveSuccessClose(){
+  $('save-success').classList.remove('show');
+  closeTargetModal();
+  renderContent();
 }
 
 // ============================================================
