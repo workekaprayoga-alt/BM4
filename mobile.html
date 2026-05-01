@@ -68,6 +68,11 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .btn-logout{font-size:11px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:999px;cursor:pointer}
 .btn-logout:active{background:rgba(255,255,255,.2)}
 
+.user-header-clickable{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;padding:4px 6px;margin:-4px -6px;border-radius:10px;transition:background .15s}
+.user-header-clickable:active{background:rgba(255,255,255,.08)}
+.btn-profile{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+.btn-profile:active{background:rgba(255,255,255,.22)}
+
 .proyek-bar{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;margin-top:10px;display:flex;align-items:center;gap:8px}
 .proyek-bar label{font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 .proyek-bar select{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:6px 8px;font:inherit;font-size:12px}
@@ -144,6 +149,81 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .no-access .icon{font-size:48px;margin-bottom:12px}
 .no-access h2{font-size:16px;margin:0 0 8px}
 .no-access p{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}
+
+/* ===== PROFILE SCREEN ===== */
+.profile-overlay{position:fixed;inset:0;background:#F8FAFC;z-index:160;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.profile-overlay.show{display:flex}
+.profile-header{position:sticky;top:0;background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;display:flex;align-items:center;gap:12px;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.profile-header .back{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.profile-header .back:active{background:rgba(255,255,255,.22)}
+.profile-header h2{margin:0;font-size:16px;font-weight:700;flex:1}
+.profile-body{flex:1;padding:20px 16px calc(env(safe-area-inset-bottom, 0px) + 24px)}
+
+.profile-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 0 20px}
+.profile-avatar-wrap{position:relative;width:104px;height:104px;margin-bottom:12px}
+.profile-avatar{width:104px;height:104px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:36px;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-avatar-edit{position:absolute;bottom:2px;right:2px;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.profile-avatar-edit:active{transform:scale(.92)}
+.profile-name{font-size:18px;font-weight:700;color:var(--navy);margin:4px 0 6px}
+.profile-role-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;background:#E0F2FE;color:#0369A1}
+.profile-role-pill.bm{background:#DBEAFE;color:#1E40AF}
+.profile-role-pill.strategi{background:#D1FAE5;color:#065F46}
+.profile-role-pill.sales{background:#FEF3C7;color:#92400E}
+.profile-role-pill.konstruksi{background:#FCE7F3;color:#9D174D}
+.profile-username{font-size:11px;color:var(--muted);margin-top:6px}
+
+.profile-section{background:#fff;border-radius:14px;padding:14px 14px;margin-bottom:14px;border:1px solid #E2E8F0}
+.profile-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.profile-bio{font-size:13px;color:#334155;line-height:1.55;min-height:42px;padding:8px 10px;background:#F8FAFC;border-radius:10px;border:1px dashed #E2E8F0}
+.profile-bio.empty{color:#94A3B8;font-style:italic}
+.profile-bio-edit{margin-top:10px;display:none;flex-direction:column;gap:8px}
+.profile-bio-edit.show{display:flex}
+.profile-bio-edit textarea{width:100%;min-height:80px;padding:10px;border:1.5px solid #E2E8F0;border-radius:10px;font:inherit;font-size:13px;color:#0F172A;resize:vertical;box-sizing:border-box}
+.profile-bio-edit textarea:focus{outline:none;border-color:var(--accent)}
+.profile-bio-actions{display:flex;gap:8px;justify-content:flex-end}
+.profile-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:.15s}
+.profile-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.profile-btn.primary:active{background:#1D4ED8}
+.profile-btn.ghost{background:#fff;color:var(--accent);border-color:#CBD5E1}
+.profile-btn.ghost:active{background:#F1F5F9}
+.profile-btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.profile-btn.danger:active{background:#B91C1C}
+.profile-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.profile-stat{background:#F8FAFC;border-radius:10px;padding:12px;text-align:center;border:1px solid #E2E8F0}
+.profile-stat-num{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.profile-stat-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:6px}
+.profile-stat-sub{font-size:10px;color:#64748B;margin-top:3px}
+
+.profile-action-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1F5F9;cursor:pointer}
+.profile-action-row:last-child{border-bottom:none}
+.profile-action-row:active{background:#F8FAFC}
+.profile-action-label{display:flex;align-items:center;gap:10px;font-size:13px;color:#0F172A}
+.profile-action-icon{font-size:18px;width:24px;text-align:center}
+.profile-action-arrow{color:#CBD5E1;font-size:18px}
+
+/* Profile sub-modal (untuk ganti password) */
+.profile-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:170;display:none;align-items:flex-end;justify-content:center;padding:0}
+.profile-modal.show{display:flex}
+.profile-modal-card{background:#fff;border-top-left-radius:18px;border-top-right-radius:18px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:18px 18px calc(env(safe-area-inset-bottom, 0px) + 18px);box-shadow:0 -10px 30px rgba(0,0,0,.2);animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.profile-modal-card h3{margin:0 0 4px;font-size:15px;color:var(--navy)}
+.profile-modal-card p.sub{margin:0 0 14px;font-size:12px;color:var(--muted)}
+.profile-form-group{margin-bottom:12px}
+.profile-form-group label{display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.profile-form-group input{width:100%;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font:inherit;font-size:14px;color:#0F172A;box-sizing:border-box}
+.profile-form-group input:focus{outline:none;border-color:var(--accent)}
+.profile-form-group .hint{font-size:11px;color:var(--muted);margin-top:4px}
+.profile-form-group .err-msg{font-size:11px;color:var(--danger);margin-top:4px;display:none}
+.profile-form-group.has-error input{border-color:var(--danger)}
+.profile-form-group.has-error .err-msg{display:block}
+.profile-modal-actions{display:flex;gap:10px;margin-top:16px}
+.profile-modal-actions .profile-btn{flex:1;padding:11px}
+
+.profile-logout-btn{width:100%;margin-top:8px;padding:13px;background:#fff;color:var(--danger);border:1.5px solid var(--danger);border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.profile-logout-btn:active{background:#FEF2F2}
 
 /* Toast */
 .toast{position:fixed;left:16px;right:16px;bottom:16px;background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:.2s;z-index:200;font-size:13px;text-align:center}
@@ -445,12 +525,16 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 <div class="app-screen" id="screen-app">
   <div class="user-header">
     <div class="user-header-row">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div class="user-info">
-        <div class="user-name" id="user-name">-</div>
-        <div class="user-role" id="user-role">-</div>
+      <div class="user-header-clickable" onclick="openProfile()" role="button" tabindex="0" aria-label="Buka profil saya">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">-</div>
+          <div class="user-role" id="user-role">-</div>
+        </div>
       </div>
-      <button class="btn-logout" onclick="doLogout()">Keluar</button>
+      <button class="btn-profile" onclick="openProfile()" aria-label="Profil">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a8 8 0 0 1 16 0v1"></path></svg>
+      </button>
     </div>
     <div class="proyek-bar">
       <label>Proyek</label>
@@ -669,6 +753,113 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
     <div class="btnrow">
       <button class="again" onclick="saveSuccessAddAgain()">+ Tambah Lagi</button>
       <button class="back" onclick="saveSuccessClose()">Kembali</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PROFILE SCREEN ========== -->
+<div class="profile-overlay" id="screen-profile">
+  <div class="profile-header">
+    <button class="back" onclick="closeProfile()" aria-label="Kembali">&larr;</button>
+    <h2>Profil Saya</h2>
+  </div>
+  <div class="profile-body">
+    <!-- Hero -->
+    <div class="profile-hero">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-avatar-edit" onclick="document.getElementById('profile-foto-input').click()" title="Ganti foto">📷</div>
+        <input type="file" id="profile-foto-input" accept="image/*" style="display:none" onchange="onProfileFotoSelected(event)">
+      </div>
+      <div class="profile-name" id="profile-name">-</div>
+      <div class="profile-role-pill" id="profile-role-pill">-</div>
+      <div class="profile-username" id="profile-username">@username</div>
+    </div>
+
+    <!-- Bio -->
+    <div class="profile-section">
+      <div class="profile-section-title">📝 Bio / Kata Motivasi</div>
+      <div class="profile-bio" id="profile-bio-display"></div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="profile-btn ghost" id="profile-bio-edit-btn" onclick="profileBioEditOpen()">✏️ Edit Bio</button>
+      </div>
+      <div class="profile-bio-edit" id="profile-bio-edit">
+        <textarea id="profile-bio-input" maxlength="150" placeholder="Tulis kata motivasi atau deskripsi singkat tentang Anda..."></textarea>
+        <div style="font-size:10px;color:#94A3B8;text-align:right" id="profile-bio-counter">0/150</div>
+        <div class="profile-bio-actions">
+          <button class="profile-btn ghost" onclick="profileBioEditCancel()">Batal</button>
+          <button class="profile-btn primary" onclick="profileBioSave()">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="profile-section">
+      <div class="profile-section-title">📊 Statistik Saya</div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="stat-target-count">0</div>
+          <div class="profile-stat-label">Target di Proyek</div>
+          <div class="profile-stat-sub" id="stat-target-sub">proyek aktif</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="stat-last-login">-</div>
+          <div class="profile-stat-label">Login Terakhir</div>
+          <div class="profile-stat-sub" id="stat-last-login-sub">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account settings -->
+    <div class="profile-section">
+      <div class="profile-section-title">⚙️ Pengaturan Akun</div>
+      <div class="profile-action-row" onclick="openChangePassword()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">🔐</span>
+          <span>Ganti Password</span>
+        </div>
+        <span class="profile-action-arrow">›</span>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <button class="profile-logout-btn" onclick="profileLogoutClick()">
+      <span>🚪</span>
+      <span>Keluar dari Akun</span>
+    </button>
+
+    <div style="text-align:center;margin-top:18px;font-size:10px;color:#94A3B8">BM4 Mobile · v14</div>
+  </div>
+</div>
+
+<!-- ========== MODAL GANTI PASSWORD ========== -->
+<div class="profile-modal" id="modal-change-password">
+  <div class="profile-modal-card">
+    <h3>🔐 Ganti Password</h3>
+    <p class="sub">Masukkan password lama Anda untuk verifikasi keamanan, lalu password baru.</p>
+
+    <div class="profile-form-group" id="grp-pwd-old">
+      <label>Password Lama</label>
+      <input type="password" id="pwd-old" autocomplete="current-password" placeholder="••••••••">
+      <div class="err-msg">Password lama salah</div>
+    </div>
+
+    <div class="profile-form-group" id="grp-pwd-new">
+      <label>Password Baru</label>
+      <input type="password" id="pwd-new" autocomplete="new-password" placeholder="Minimal 8 karakter">
+      <div class="hint">Minimal 8 karakter</div>
+      <div class="err-msg">Password tidak valid</div>
+    </div>
+
+    <div class="profile-form-group" id="grp-pwd-confirm">
+      <label>Ulangi Password Baru</label>
+      <input type="password" id="pwd-confirm" autocomplete="new-password" placeholder="Ketik ulang password baru">
+      <div class="err-msg">Password tidak sama</div>
+    </div>
+
+    <div class="profile-modal-actions">
+      <button class="profile-btn ghost" onclick="closeChangePassword()">Batal</button>
+      <button class="profile-btn primary" id="btn-pwd-save" onclick="submitChangePassword()">💾 Ganti Password</button>
     </div>
   </div>
 </div>
@@ -986,6 +1177,400 @@ async function doLogout(){
   }
 }
 
+// ============================================================
+// [STEP 5] PROFILE MANAGEMENT
+// ============================================================
+const PROFILE_LS = {
+  BIO: 'bm4_mobile_bio_',     // + username
+  FOTO: 'bm4_mobile_foto_'    // + username (data URL)
+};
+
+function getProfileBio(){
+  if(!currentUser) return '';
+  // Prioritas: localStorage (yang user edit lokal) → currentUser.bio (dari server)
+  try {
+    const local = localStorage.getItem(PROFILE_LS.BIO + currentUser.username);
+    if(local !== null) return local;
+  } catch(e){}
+  return currentUser.bio || '';
+}
+function setProfileBio(text){
+  if(!currentUser) return;
+  try { localStorage.setItem(PROFILE_LS.BIO + currentUser.username, text || ''); } catch(e){}
+}
+function getProfileFoto(){
+  if(!currentUser) return '';
+  // Prioritas: localStorage → currentUser.foto (dari server saat login)
+  try {
+    const local = localStorage.getItem(PROFILE_LS.FOTO + currentUser.username);
+    if(local) return local;
+  } catch(e){}
+  if(currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
+    return currentUser.foto;
+  }
+  return '';
+}
+function setProfileFoto(dataUrl){
+  if(!currentUser) return;
+  try {
+    if(dataUrl) localStorage.setItem(PROFILE_LS.FOTO + currentUser.username, dataUrl);
+    else localStorage.removeItem(PROFILE_LS.FOTO + currentUser.username);
+  } catch(e){
+    toast('Gagal simpan foto (storage penuh?)', 'err');
+  }
+}
+
+function openProfile(){
+  if(!currentUser){ return; }
+  renderProfileScreen();
+  $('screen-profile').classList.add('show');
+}
+
+function closeProfile(){
+  // Tutup edit bio kalau lagi terbuka
+  profileBioEditCancel();
+  $('screen-profile').classList.remove('show');
+}
+
+function renderProfileScreen(){
+  if(!currentUser) return;
+
+  // Avatar
+  const avEl = $('profile-avatar');
+  const foto = getProfileFoto();
+  if(foto){
+    avEl.innerHTML = '<img src="'+foto+'" alt="Foto">';
+  } else {
+    const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+    avEl.textContent = initial;
+  }
+
+  // Sync header avatar juga
+  const headerAv = $('user-avatar');
+  if(headerAv){
+    if(foto){
+      headerAv.innerHTML = '<img src="'+foto+'" alt="Foto">';
+    } else {
+      const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+      headerAv.textContent = initial;
+    }
+  }
+
+  // Nama & role
+  $('profile-name').textContent = currentUser.nama || currentUser.username || '-';
+  $('profile-username').textContent = '@' + (currentUser.username || '');
+
+  const role = (currentUser.role || '').toLowerCase();
+  const roleLabels = {
+    bm: 'Branch Manager', owner: 'Owner', admin: 'Admin',
+    strategi: 'Strategi Promo', sales: 'Sales',
+    konstruksi: 'Konstruksi', legal: 'Legal',
+    finance: 'Finance', manager: 'Manager', viewer: 'Viewer'
+  };
+  const rolePill = $('profile-role-pill');
+  rolePill.textContent = roleLabels[role] || (currentUser.role || '-');
+  rolePill.className = 'profile-role-pill ' + role;
+
+  // Bio
+  const bio = getProfileBio();
+  const bioEl = $('profile-bio-display');
+  if(bio.trim()){
+    bioEl.textContent = bio;
+    bioEl.classList.remove('empty');
+  } else {
+    bioEl.textContent = 'Belum ada bio. Tap Edit untuk menulis.';
+    bioEl.classList.add('empty');
+  }
+
+  // Stats
+  renderProfileStats();
+}
+
+function renderProfileStats(){
+  // Target di proyek aktif
+  let count = 0;
+  try {
+    if(typeof getTargetsForCurrentProyek === 'function'){
+      count = getTargetsForCurrentProyek().length;
+    }
+  } catch(e){ count = 0; }
+  $('stat-target-count').textContent = count;
+
+  const proj = (typeof proyekList !== 'undefined') ? proyekList.find(p => p.id === currentProyekId) : null;
+  $('stat-target-sub').textContent = proj ? (proj.kode || proj.id) : 'proyek aktif';
+
+  // Last login — pakai loginAt dari currentUser kalau ada, atau "Sekarang"
+  const loginAt = currentUser && currentUser.loginAt ? new Date(currentUser.loginAt) : new Date();
+  const now = new Date();
+  const sameDay = loginAt.toDateString() === now.toDateString();
+  if(sameDay){
+    const hh = String(loginAt.getHours()).padStart(2,'0');
+    const mm = String(loginAt.getMinutes()).padStart(2,'0');
+    $('stat-last-login').textContent = hh+':'+mm;
+    $('stat-last-login-sub').textContent = 'Hari ini';
+  } else {
+    const days = Math.floor((now - loginAt) / 86400000);
+    $('stat-last-login').textContent = days <= 0 ? '-' : days;
+    $('stat-last-login-sub').textContent = days <= 0 ? '-' : 'hari lalu';
+  }
+}
+
+// ===== EDIT BIO =====
+function profileBioEditOpen(){
+  $('profile-bio-input').value = getProfileBio();
+  updateBioCounter();
+  $('profile-bio-edit').classList.add('show');
+  $('profile-bio-edit-btn').style.display = 'none';
+  setTimeout(() => $('profile-bio-input').focus(), 100);
+}
+function profileBioEditCancel(){
+  $('profile-bio-edit').classList.remove('show');
+  $('profile-bio-edit-btn').style.display = '';
+}
+async function profileBioSave(){
+  const text = ($('profile-bio-input').value || '').trim().slice(0, 150);
+  // Save ke localStorage dulu (instan)
+  setProfileBio(text);
+  // Update display
+  const bioEl = $('profile-bio-display');
+  if(text){
+    bioEl.textContent = text;
+    bioEl.classList.remove('empty');
+  } else {
+    bioEl.textContent = 'Belum ada bio. Tap Edit untuk menulis.';
+    bioEl.classList.add('empty');
+  }
+  profileBioEditCancel();
+  toast('Bio tersimpan');
+
+  // Background sync ke Sheets (tidak block UI)
+  try {
+    const result = await gasRequest('auth_update_profile', {
+      sessionToken: sessionToken,
+      profile: { bio: text }
+    });
+    if(result && result.success){
+      // Update currentUser in memory & localStorage
+      if(currentUser) currentUser.bio = text;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+      console.log('[Profile] bio synced to server');
+    }
+  } catch(err){
+    console.warn('[Profile] bio sync gagal (tetap tersimpan lokal):', err.message || err);
+    // Tidak tampil error ke user — bio sudah tersimpan di localStorage, sync nanti saat online
+  }
+}
+function updateBioCounter(){
+  const el = $('profile-bio-input');
+  if(!el) return;
+  const len = (el.value || '').length;
+  $('profile-bio-counter').textContent = len + '/150';
+  // Auto-trim kalau melebihi
+  if(len > 150){
+    el.value = el.value.slice(0, 150);
+    $('profile-bio-counter').textContent = '150/150';
+  }
+}
+// Bind counter event
+document.addEventListener('DOMContentLoaded', function(){
+  const bioInput = document.getElementById('profile-bio-input');
+  if(bioInput){
+    bioInput.addEventListener('input', updateBioCounter);
+  }
+});
+
+// ===== EDIT FOTO =====
+function onProfileFotoSelected(event){
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ''; // reset biar bisa pilih file sama lagi
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    toast('File harus berupa gambar', 'err');
+    return;
+  }
+  if(file.size > 8 * 1024 * 1024){
+    toast('Ukuran foto maks 8MB', 'err');
+    return;
+  }
+  toast('Memproses foto...');
+  // Compress lebih ringkas (240px, quality 0.78) — lebih kecil supaya hemat storage Sheets
+  compressImage(file, 240, 0.78).then(async dataUrl => {
+    setProfileFoto(dataUrl);
+    renderProfileScreen();
+    toast('Foto profil tersimpan');
+
+    // Background sync ke Sheets
+    try {
+      const result = await gasRequest('auth_update_profile', {
+        sessionToken: sessionToken,
+        profile: { foto: dataUrl }
+      });
+      if(result && result.success){
+        if(currentUser) currentUser.foto = dataUrl;
+        try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+        console.log('[Profile] foto synced to server (' + Math.round(dataUrl.length/1024) + ' KB)');
+      }
+    } catch(err){
+      console.warn('[Profile] foto sync gagal (tetap tersimpan lokal):', err.message || err);
+      // Tidak block UI — foto tetap tersimpan di localStorage
+    }
+  }).catch(err => {
+    console.error('[Profile] foto error:', err);
+    toast('Gagal proses foto: ' + (err.message||'unknown'), 'err');
+  });
+}
+
+// Compress image jadi square thumbnail
+function compressImage(file, maxSize, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Gagal baca file'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('File bukan gambar valid'));
+      img.onload = () => {
+        try {
+          // Crop ke square (center)
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+          const targetSize = Math.min(maxSize, size);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, targetSize, targetSize);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality || 0.85);
+          resolve(dataUrl);
+        } catch(e){ reject(e); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== GANTI PASSWORD =====
+function openChangePassword(){
+  // Reset form
+  $('pwd-old').value = '';
+  $('pwd-new').value = '';
+  $('pwd-confirm').value = '';
+  ['grp-pwd-old','grp-pwd-new','grp-pwd-confirm'].forEach(id => {
+    const el = $(id); if(el) el.classList.remove('has-error');
+  });
+  $('btn-pwd-save').disabled = false;
+  $('btn-pwd-save').textContent = '💾 Ganti Password';
+  $('modal-change-password').classList.add('show');
+  setTimeout(() => $('pwd-old').focus(), 150);
+}
+
+function closeChangePassword(){
+  $('modal-change-password').classList.remove('show');
+}
+
+async function submitChangePassword(){
+  const oldPwd = $('pwd-old').value;
+  const newPwd = $('pwd-new').value;
+  const confirmPwd = $('pwd-confirm').value;
+
+  // Reset error states
+  ['grp-pwd-old','grp-pwd-new','grp-pwd-confirm'].forEach(id => {
+    const el = $(id); if(el) el.classList.remove('has-error');
+  });
+
+  // Validasi
+  if(!oldPwd){
+    $('grp-pwd-old').classList.add('has-error');
+    $('grp-pwd-old').querySelector('.err-msg').textContent = 'Wajib diisi';
+    return;
+  }
+  if(!newPwd || newPwd.length < 8){
+    $('grp-pwd-new').classList.add('has-error');
+    $('grp-pwd-new').querySelector('.err-msg').textContent = 'Minimal 8 karakter';
+    return;
+  }
+  if(newPwd === oldPwd){
+    $('grp-pwd-new').classList.add('has-error');
+    $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda dari yang lama';
+    return;
+  }
+  if(newPwd !== confirmPwd){
+    $('grp-pwd-confirm').classList.add('has-error');
+    $('grp-pwd-confirm').querySelector('.err-msg').textContent = 'Password tidak sama';
+    return;
+  }
+
+  // Submit
+  const btn = $('btn-pwd-save');
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+
+  try {
+    // Endpoint Apps Script: 'auth_change_password' (snake_case)
+    const result = await gasRequest('auth_change_password', {
+      sessionToken: sessionToken,
+      oldPassword: oldPwd,
+      newPassword: newPwd,
+      deviceInfo: navigator.userAgent.substring(0, 200)
+    });
+
+    if(result && result.success){
+      closeChangePassword();
+      toast('✓ Password berhasil diganti', 'ok');
+    } else {
+      // Error response dari Apps Script — handle berdasarkan error code
+      const errCode = (result && result.error) || '';
+      const errMsg = (result && result.message) || (result && result.error) || 'Gagal mengganti password';
+
+      if(errCode === 'invalid_old_password'){
+        $('grp-pwd-old').classList.add('has-error');
+        $('grp-pwd-old').querySelector('.err-msg').textContent = 'Password lama salah';
+      } else if(errCode === 'weak_password'){
+        $('grp-pwd-new').classList.add('has-error');
+        $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password minimal 8 karakter';
+      } else if(errCode === 'same_password'){
+        $('grp-pwd-new').classList.add('has-error');
+        $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda';
+      } else {
+        toast(errMsg, 'err');
+      }
+      btn.disabled = false;
+      btn.textContent = '💾 Ganti Password';
+    }
+  } catch(err){
+    console.error('[ChangePwd] error:', err);
+    const msg = err.message || String(err);
+    // Cek pesan error untuk identifikasi tipe kesalahan
+    if(/invalid_old_password|password.*(lama|old).*(salah|invalid|wrong|incorrect)/i.test(msg)){
+      $('grp-pwd-old').classList.add('has-error');
+      $('grp-pwd-old').querySelector('.err-msg').textContent = 'Password lama salah';
+    } else if(/weak_password|minimal.*karakter/i.test(msg)){
+      $('grp-pwd-new').classList.add('has-error');
+      $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password minimal 8 karakter';
+    } else if(/same_password|tidak boleh sama/i.test(msg)){
+      $('grp-pwd-new').classList.add('has-error');
+      $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda';
+    } else if(/unauthorized|session/i.test(msg)){
+      toast('Sesi habis, silakan login ulang', 'err');
+      setTimeout(() => doLogout(), 1500);
+    } else {
+      toast('Gagal: ' + msg, 'err');
+    }
+    btn.disabled = false;
+    btn.textContent = '💾 Ganti Password';
+  }
+}
+
+// ===== LOGOUT DARI PROFILE =====
+function profileLogoutClick(){
+  if(!confirm('Yakin keluar dari akun ini?')) return;
+  closeProfile();
+  setTimeout(() => doLogout(), 200);
+}
+
 async function tryAutoLogin(){
   // Coba ambil token dari localStorage
   let savedToken = '';
@@ -1218,8 +1803,14 @@ async function enterApp(){
 
   // Render header user
   const av = $('user-avatar');
-  if(currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
-    av.innerHTML = `<img src="${currentUser.foto}" alt="">`;
+  // Cek foto dari Profile localStorage dulu (yang user upload sendiri), fallback ke currentUser.foto
+  let fotoSrc = '';
+  try { fotoSrc = localStorage.getItem('bm4_mobile_foto_' + currentUser.username) || ''; } catch(e){}
+  if(!fotoSrc && currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
+    fotoSrc = currentUser.foto;
+  }
+  if(fotoSrc){
+    av.innerHTML = `<img src="${fotoSrc}" alt="">`;
   } else {
     av.textContent = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
   }
