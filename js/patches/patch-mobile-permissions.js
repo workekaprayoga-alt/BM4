@@ -31,8 +31,14 @@
   ];
 
   const MODULES = [
-    { id: 'target_pasar', label: '🎯 Target Pasar', desc: 'List target market di mobile' },
-    { id: 'detail_target', label: '📍 Detail Target', desc: 'Modal detail + rute jalan' }
+    { id: 'target_pasar', label: '🎯 Target Pasar', desc: 'List target market di mobile (lihat, tambah, edit, hapus)' }
+    // Modul lain bisa ditambah di sini saat divisi terkait sudah dibangun di mobile.
+    // Contoh future:
+    // { id: 'crm_prospek', label: '👥 CRM Prospek', desc: 'Daftar prospek pembeli' },
+    // { id: 'crm_pipeline', label: '💼 Pipeline KPR', desc: 'Tracking proses KPR' },
+    // { id: 'konstruksi_progress', label: '🏗️ Progress Konstruksi', desc: '...' },
+    // { id: 'legal_dokumen', label: '⚖️ Dokumen Legal', desc: '...' },
+    // { id: 'finance_cashflow', label: '💰 Cashflow', desc: '...' }
   ];
 
   const ACTIONS = [
@@ -45,17 +51,11 @@
   // Default permissions saat reset
   const DEFAULT_PERMISSIONS = {
     'bm|target_pasar':       { view:true, create:true, edit:true, delete:true },
-    'bm|detail_target':      { view:true, create:true, edit:true, delete:true },
     'strategi|target_pasar': { view:true, create:true, edit:true, delete:false },
-    'strategi|detail_target':{ view:true, create:true, edit:true, delete:false },
     'sales|target_pasar':    { view:true, create:false, edit:false, delete:false },
-    'sales|detail_target':   { view:true, create:false, edit:false, delete:false },
     'konstruksi|target_pasar':  { view:false, create:false, edit:false, delete:false },
-    'konstruksi|detail_target': { view:false, create:false, edit:false, delete:false },
     'legal|target_pasar':    { view:false, create:false, edit:false, delete:false },
-    'legal|detail_target':   { view:false, create:false, edit:false, delete:false },
-    'finance|target_pasar':  { view:false, create:false, edit:false, delete:false },
-    'finance|detail_target': { view:false, create:false, edit:false, delete:false }
+    'finance|target_pasar':  { view:false, create:false, edit:false, delete:false }
   };
 
   // ============================================================
@@ -157,7 +157,8 @@
     const style = document.createElement('style');
     style.id = 'mobperm-style';
     style.textContent = `
-      .mobperm-wrap{padding:24px 28px;max-width:1100px;margin:0 auto;}
+      #pane-mobperm{height:100%;overflow-y:auto;}
+      .mobperm-wrap{padding:20px 28px 40px;max-width:1100px;margin:0 auto;}
       .mobperm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
       .mobperm-head h2{margin:4px 0 6px;font-size:22px;color:#0F172A;font-weight:700;}
       .mobperm-head p{margin:0;font-size:13px;color:#64748B;line-height:1.5;}
