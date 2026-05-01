@@ -811,8 +811,26 @@ async function gasRequest(action, payload, opts){
   return json;
 }
 
+// [PERF FIX] Flag debounce — biar toast "Sesi habis" hanya muncul 1x
+// walau ada 3 request paralel yang sama-sama unauthorized
+let _sessionRecoveryInProgress = false;
+let _sessionRecoveryFailed = false;
+
 // [PERF FIX] Coba recover session — verify ulang token, atau force logout kalau tidak bisa
 async function _tryRecoverSession(){
+  // Kalau recovery sudah pernah gagal di sesi ini, langsung return false (cegah spam)
+  if(_sessionRecoveryFailed) return false;
+  // Kalau sedang ada recovery jalan, tunggu hasilnya
+  if(_sessionRecoveryInProgress){
+    // Wait sampai selesai (max 5 detik)
+    for(let i = 0; i < 50; i++){
+      await new Promise(r => setTimeout(r, 100));
+      if(!_sessionRecoveryInProgress) return !_sessionRecoveryFailed;
+    }
+    return false;
+  }
+
+  _sessionRecoveryInProgress = true;
   try {
     // Coba verify token dulu — mungkin server butuh signal "saya online"
     const r = await fetch(GAS_URL, {
@@ -825,12 +843,16 @@ async function _tryRecoverSession(){
     if(json && json.success && json.user){
       currentUser = json.user;
       try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+      _sessionRecoveryInProgress = false;
       return true;
     }
   } catch(e){
     console.warn('[Recover] verify failed:', e.message);
   }
-  // Token sudah benar-benar invalid — clear & force re-login
+
+  // Token sudah benar-benar invalid — clear & force re-login (HANYA 1x)
+  _sessionRecoveryFailed = true;
+  _sessionRecoveryInProgress = false;
   console.warn('[Recover] token invalid, user perlu login ulang');
   toast('Sesi habis, silakan login ulang', 'err');
   setTimeout(() => {
@@ -844,6 +866,12 @@ async function _tryRecoverSession(){
     $('screen-login').style.display = '';
   }, 1500);
   return false;
+}
+
+// Reset flag recovery saat user login baru — supaya bisa recover lagi nanti
+function _resetRecoveryFlags(){
+  _sessionRecoveryInProgress = false;
+  _sessionRecoveryFailed = false;
 }
 
 async function gasGet(action, extraParams, opts){
@@ -905,6 +933,7 @@ async function doLogin(){
     // Sukses — simpan token & user
     sessionToken = r.sessionToken;
     currentUser = r.user;
+    _resetRecoveryFlags(); // [PERF FIX] reset flag biar bisa auto-recover lagi nanti
     try {
       // Pendekatan B: simpan di localStorage supaya persist sampai logout manual
       localStorage.setItem(LS.TOKEN, sessionToken);
@@ -945,12 +974,15 @@ async function doLogout(){
   $('login-password').value = '';
   toast('Berhasil keluar');
 
-  // 3. Server logout di background — tidak perlu ditunggu (fire-and-forget)
+  // 3. Server logout di background — pakai fetch LANGSUNG biar tidak trigger auto-recover
+  //    (user emang mau keluar, jangan tampilkan "sesi habis" alert)
   if(tokenToInvalidate){
-    gasRequest('auth_logout', {sessionToken: tokenToInvalidate}).catch(e => {
-      // Tidak perlu kasih tahu user — token sudah di-clear di local
-      console.warn('[Logout] server invalidate failed (ignored):', e.message);
-    });
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action: 'auth_logout', sessionToken: tokenToInvalidate }),
+      cache: 'no-store'
+    }).catch(() => {/* ignore — user sudah logout di local */});
   }
 }
 
