@@ -96,4 +96,11 @@ window.BM4_PATCHES = [
     css: null,
     dependsOn: []
   }
+{
+  id: 'patch-fix-proyek-sync',
+  file: 'js/patches/patch-fix-proyek-sync.js',
+  version: '1.0.0',
+  enabled: true,
+  dependsOn: []
+}
 ];
