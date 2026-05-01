@@ -2280,20 +2280,49 @@ function registerPWA(){
   });
 }
 
+// Helper: detect device type
+function _isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function _isInStandaloneMode(){
+  // Sudah di-install (dibuka dari home screen)
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
 function setupInstallPrompt(){
-  // Tampilkan banner kalau bisa install
+  // Skip kalau sudah di-install
+  if(_isInStandaloneMode()){
+    console.log('[PWA] Running as installed app');
+    return;
+  }
+
+  // Cek kalau user sudah dismiss banner sebelumnya (7 hari)
+  const dismissed = localStorage.getItem('bm4_pwa_install_dismissed');
+  if(dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000){
+    return;
+  }
+
+  // ────────────────────────────────────────
+  // ANDROID/Desktop Chrome — auto banner via beforeinstallprompt
+  // ────────────────────────────────────────
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     _pwaDeferredPrompt = e;
-
-    // Cek kalau user sudah dismiss banner sebelumnya
-    const dismissed = localStorage.getItem('bm4_pwa_install_dismissed');
-    if(dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000){
-      return; // dismissed dalam 7 hari terakhir, skip banner
-    }
-
-    showInstallBanner();
+    showInstallBanner('android');
   });
+
+  // ────────────────────────────────────────
+  // iOS — tampilkan banner manual (Apple block beforeinstallprompt)
+  // ────────────────────────────────────────
+  if(_isIOS()){
+    // Delay 5 detik supaya tidak mengganggu di awal
+    setTimeout(() => {
+      if(!_isInStandaloneMode()){
+        showInstallBanner('ios');
+      }
+    }, 5000);
+  }
 
   // Saat user sudah install (dari Chrome native prompt)
   window.addEventListener('appinstalled', () => {
@@ -2304,9 +2333,79 @@ function setupInstallPrompt(){
   });
 }
 
-function showInstallBanner(){
+function showInstallBanner(platform){
+  platform = platform || 'android';
   if(document.getElementById('pwa-install-banner')) return;
+  if(document.getElementById('pwa-ios-modal')) return;
 
+  // ────────────────────────────────────────
+  // iOS: Tampilkan modal instruksi (karena tidak bisa auto-install)
+  // ────────────────────────────────────────
+  if(platform === 'ios'){
+    const modal = document.createElement('div');
+    modal.id = 'pwa-ios-modal';
+    modal.style.cssText = `
+      position:fixed; bottom:16px; left:16px; right:16px;
+      background:linear-gradient(135deg, #1C2B4A 0%, #2D3F6B 100%);
+      color:white; border-radius:14px;
+      padding:16px; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      z-index:9999; font-family: inherit;
+      animation: pwaSlideUp 0.4s ease-out;
+    `;
+    modal.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;">
+        <div style="font-size:32px;flex-shrink:0;">📱</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Install BM4 ke iPhone</div>
+          <div style="font-size:11px;opacity:0.85;line-height:1.4;">
+            Akses lebih cepat, fullscreen, terlihat seperti app native.
+          </div>
+        </div>
+        <button id="pwa-ios-dismiss" style="
+          background:transparent; color:rgba(255,255,255,0.7); border:none;
+          padding:6px 8px; cursor:pointer; font-size:18px;
+          flex-shrink:0; line-height:1;
+        ">×</button>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:12px; font-size:11px; line-height:1.6;">
+        <div style="font-weight:700;margin-bottom:8px;color:#FCD34D;">Cara Install di iPhone:</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">1</span>
+          <span>Tap tombol <b>Share</b> di bawah Safari (kotak dengan panah ke atas <span style="font-size:14px;">⬆️</span>)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">2</span>
+          <span>Scroll ke bawah → tap <b>"Add to Home Screen"</b> / <b>"Tambahkan ke Layar Utama"</b></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">3</span>
+          <span>Tap <b>Add</b> → icon BM4 muncul di home screen ✨</span>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.15);color:#FCD34D;font-size:10px;font-style:italic;">
+          ⚠️ Pastikan buka di <b>Safari</b> (bukan Chrome iOS)
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    if(!document.getElementById('pwa-keyframes')){
+      const style = document.createElement('style');
+      style.id = 'pwa-keyframes';
+      style.textContent = `@keyframes pwaSlideUp { from { transform: translateY(120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+      document.head.appendChild(style);
+    }
+
+    document.getElementById('pwa-ios-dismiss').onclick = () => {
+      const m = document.getElementById('pwa-ios-modal');
+      if(m) m.remove();
+      localStorage.setItem('bm4_pwa_install_dismissed', String(Date.now()));
+    };
+    return;
+  }
+
+  // ────────────────────────────────────────
+  // ANDROID: Banner dengan tombol Install yang trigger native prompt
+  // ────────────────────────────────────────
   const banner = document.createElement('div');
   banner.id = 'pwa-install-banner';
   banner.style.cssText = `
@@ -2340,7 +2439,6 @@ function showInstallBanner(){
   `;
   document.body.appendChild(banner);
 
-  // Add animation keyframes if not exists
   if(!document.getElementById('pwa-keyframes')){
     const style = document.createElement('style');
     style.id = 'pwa-keyframes';
@@ -2368,6 +2466,8 @@ function showInstallBanner(){
 function hideInstallBanner(){
   const banner = document.getElementById('pwa-install-banner');
   if(banner) banner.remove();
+  const iosModal = document.getElementById('pwa-ios-modal');
+  if(iosModal) iosModal.remove();
 }
 
 // Trigger PWA setup
