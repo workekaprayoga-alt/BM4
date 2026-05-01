@@ -224,7 +224,8 @@ const LS = {
   USER: 'bm4_secure_user',
   PROYEK: 'bm4_proyek',
   LAST_PROYEK: 'bm4_mobile_last_proyek',
-  TP_TARGETS: 'bm4_tp_targets'
+  TP_TARGETS: 'bm4_tp_targets',
+  MOBILE_PERMISSIONS: 'bm4_mobile_permissions'
 };
 
 const PROYEK_DEFAULT = [
@@ -232,34 +233,50 @@ const PROYEK_DEFAULT = [
   {id:'dpr', nama:'Dirgantara Parahyangan Residence', kode:'DPR', area:'Subang'}
 ];
 
-// ===== PERMISSION MAP (Mini-Tahap 1A: hardcode) =====
-// Mini-Tahap 1B nanti akan dipindah ke Sheets, BM bisa atur sendiri.
-const MOBILE_PERMISSIONS = {
-  bm: {
-    role_label: 'Branch Manager',
-    modules: ['target_pasar'],
-    target_pasar: { view:true, create:true, edit:true, delete:true }
-  },
-  owner: {
-    role_label: 'Owner',
-    modules: ['target_pasar'],
-    target_pasar: { view:true, create:true, edit:true, delete:true }
-  },
-  admin: {
-    role_label: 'Admin',
-    modules: ['target_pasar'],
-    target_pasar: { view:true, create:true, edit:true, delete:true }
-  },
-  strategi: {
-    role_label: 'Strategi Promo',
-    modules: ['target_pasar'],
-    target_pasar: { view:true, create:true, edit:true, delete:false }
-  },
-  manager: { role_label:'Manager', modules:[] },
-  sales: { role_label:'Sales', modules:[] },
-  konstruksi: { role_label:'Konstruksi', modules:[] },
-  viewer: { role_label:'Viewer', modules:[] }
+// ===== ROLE LABELS (display name di header user) =====
+// Ini cuma untuk tampilan, bukan permission. Tidak perlu di Sheets.
+const ROLE_LABELS = {
+  bm: 'Branch Manager',
+  owner: 'Owner',
+  admin: 'Admin',
+  manager: 'Manager',
+  strategi: 'Strategi Promo',
+  sales: 'Sales',
+  konstruksi: 'Konstruksi',
+  viewer: 'Viewer'
 };
+
+// ===== MOBILE PERMISSIONS =====
+// Disimpan di Sheets, di-fetch saat login.
+// Default fallback (kalau Sheets kosong / offline) = role tidak punya akses.
+// Format: { 'role|module': {view, create, edit, delete} }
+let mobilePermissions = {};
+
+// Fallback default (sama dengan default seed di Apps Script).
+// Dipakai HANYA kalau fetch dari Sheets gagal total dan localStorage kosong.
+const PERMISSION_FALLBACK = {
+  'bm|target_pasar':       { view:true, create:true, edit:true, delete:true },
+  'owner|target_pasar':    { view:true, create:true, edit:true, delete:true },
+  'admin|target_pasar':    { view:true, create:true, edit:true, delete:true },
+  'strategi|target_pasar': { view:true, create:true, edit:true, delete:false }
+};
+
+function getPermissionFor(role, module){
+  const key = String(role||'').toLowerCase() + '|' + String(module||'').toLowerCase();
+  return mobilePermissions[key] || { view:false, create:false, edit:false, delete:false };
+}
+
+function getRoleModules(role){
+  const r = String(role||'').toLowerCase();
+  const modules = [];
+  Object.keys(mobilePermissions).forEach(k => {
+    const [keyRole, keyModule] = k.split('|');
+    if(keyRole === r && mobilePermissions[k].view){
+      modules.push(keyModule);
+    }
+  });
+  return modules;
+}
 
 const STATUS_LABELS = ['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
 const STATUS_ICONS  = ['🔍','📞','🤝','💬','✅'];
@@ -433,6 +450,51 @@ async function tryAutoLogin(){
 }
 
 // ============================================================
+// MOBILE PERMISSIONS (dynamic dari Sheets)
+// ============================================================
+async function loadMobilePermissions(){
+  // Coba dari Sheets dulu
+  try {
+    const r = await gasGet('getMobilePermissions');
+    if(r.success && Array.isArray(r.data)){
+      const map = {};
+      r.data.forEach(p => {
+        const role = String(p.role||'').toLowerCase();
+        const module = String(p.module||'').toLowerCase();
+        if(!role || !module) return;
+        map[role + '|' + module] = {
+          view: !!p.view,
+          create: !!p.create,
+          edit: !!p.edit,
+          delete: !!p.delete
+        };
+      });
+      mobilePermissions = map;
+      try { localStorage.setItem(LS.MOBILE_PERMISSIONS, JSON.stringify(map)); } catch(e){}
+      console.log('[Permissions] loaded from Sheets:', Object.keys(map).length, 'rules');
+      return;
+    }
+  } catch(e){
+    console.warn('[Permissions] load from Sheets failed:', e.message);
+  }
+  // Fallback: dari localStorage
+  try {
+    const saved = localStorage.getItem(LS.MOBILE_PERMISSIONS);
+    if(saved){
+      const obj = JSON.parse(saved);
+      if(obj && typeof obj === 'object'){
+        mobilePermissions = obj;
+        console.log('[Permissions] loaded from cache:', Object.keys(obj).length, 'rules');
+        return;
+      }
+    }
+  } catch(e){}
+  // Last fallback: hardcoded
+  mobilePermissions = Object.assign({}, PERMISSION_FALLBACK);
+  console.log('[Permissions] using hardcoded fallback');
+}
+
+// ============================================================
 // PROYEK LIST
 // ============================================================
 async function loadProyekList(){
@@ -558,10 +620,11 @@ async function enterApp(){
     av.textContent = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
   }
   $('user-name').textContent = currentUser.nama || currentUser.username;
-  const perm = MOBILE_PERMISSIONS[currentUser.role] || {};
-  $('user-role').textContent = perm.role_label || currentUser.role || '';
+  const roleKey = String(currentUser.role||'').toLowerCase();
+  $('user-role').textContent = ROLE_LABELS[roleKey] || currentUser.role || '';
 
-  // Load data sekuensial
+  // Load data sekuensial — permission DULU karena renderContent butuh
+  await loadMobilePermissions();
   await loadProyekList();
   renderProyekDropdown();
   await loadTpTargets();
@@ -573,12 +636,12 @@ async function enterApp(){
 // ============================================================
 function renderContent(){
   const role = currentUser.role || 'viewer';
-  const perm = MOBILE_PERMISSIONS[role];
-  if(!perm || !perm.modules || perm.modules.length === 0){
+  const modules = getRoleModules(role);
+  if(modules.length === 0){
     renderNoAccess();
     return;
   }
-  if(perm.modules.includes('target_pasar')){
+  if(modules.includes('target_pasar')){
     renderTargetPasarDashboard();
   } else {
     renderNoAccess();
@@ -599,7 +662,7 @@ function renderNoAccess(){
 
 function renderTargetPasarDashboard(){
   const role = currentUser.role;
-  const perm = (MOBILE_PERMISSIONS[role]||{}).target_pasar || {};
+  const perm = getPermissionFor(role, 'target_pasar');
   const targets = getTargetsForCurrentProyek();
   const proj = proyekList.find(p => p.id === currentProyekId);
 
