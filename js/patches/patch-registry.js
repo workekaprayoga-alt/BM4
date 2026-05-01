@@ -85,14 +85,22 @@ window.BM4_PATCHES = [
     file: 'js/patches/patch-009-rc-polish-guard.js',
     css: 'css/patches/patch-009-rc-polish-guard.css',
     dependsOn: []
-  }
-  ,
+  },
   {
     id: 'patch-010-map-route-performance',
     name: 'Map Route Performance Guard',
     version: '1.0.0',
     enabled: true,
     file: 'js/patches/patch-010-map-route-performance.js',
+    css: null,
+    dependsOn: []
+  },
+  {
+    id: 'patch-fix-proyek-sync',
+    name: 'Fix Proyek Sync ke Sheets',
+    version: '1.0.0',
+    enabled: true,
+    file: 'js/patches/patch-fix-proyek-sync.js',
     css: null,
     dependsOn: []
   }
