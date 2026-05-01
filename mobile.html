@@ -954,7 +954,18 @@ async function loadProyekList(){
     const r = await gasGet('getProyek');
     if(r.success && Array.isArray(r.data) && r.data.length > 0){
       proyekList = r.data.map(p => ({
-        id: p.id, nama: p.nama, kode: p.kode || p.id, area: p.area || ''
+        id: String(p.id || '').toLowerCase(),
+        nama: p.nama || '',
+        kode: (p.kode || p.id || '').toString().toUpperCase(),
+        area: p.area || '',
+        lat: parseFloat(p.lat) || 0,
+        lng: parseFloat(p.lng) || 0,
+        tipe: p.tipe || 'Mix-use',
+        unit: parseInt(p.unit) || 0,
+        developer: p.developer || '',
+        ikon: p.ikon || '🏘️',
+        warna: p.warna || '#3b82f6',
+        status: p.status || 'Aktif'
       }));
       try { localStorage.setItem(LS.PROYEK, JSON.stringify(proyekList)); } catch(e){}
       return;
