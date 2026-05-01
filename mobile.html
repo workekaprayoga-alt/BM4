@@ -866,19 +866,32 @@ async function doLogin(){
 
 async function doLogout(){
   if(!confirm('Yakin keluar dari akun ini?')) return;
-  // Coba logout di server, tapi tidak masalah kalau gagal (offline)
-  try { await gasRequest('auth_logout', {sessionToken}); } catch(e){}
+
+  // [PERF] Optimistic logout — UI berubah INSTAN, server logout jalan di background
+  const tokenToInvalidate = sessionToken; // simpan dulu untuk dipakai background
+
+  // 1. Clear state mobile dulu (instan)
   sessionToken = '';
   currentUser = null;
   try {
     localStorage.removeItem(LS.TOKEN);
     localStorage.removeItem(LS.USER);
   } catch(e){}
+
+  // 2. Pindah ke screen login (instan)
   $('screen-app').classList.remove('show');
   $('screen-login').style.display = '';
   $('login-username').value = '';
   $('login-password').value = '';
   toast('Berhasil keluar');
+
+  // 3. Server logout di background — tidak perlu ditunggu (fire-and-forget)
+  if(tokenToInvalidate){
+    gasRequest('auth_logout', {sessionToken: tokenToInvalidate}).catch(e => {
+      // Tidak perlu kasih tahu user — token sudah di-clear di local
+      console.warn('[Logout] server invalidate failed (ignored):', e.message);
+    });
+  }
 }
 
 async function tryAutoLogin(){
@@ -893,24 +906,23 @@ async function tryAutoLogin(){
 
   if(!savedToken || !savedUser) return false;
 
-  // Verify token ke server
+  // [PERF] Optimistic auto-login — pakai cache dulu, verify di background
   sessionToken = savedToken;
-  try {
-    const r = await gasRequest('auth_verify');
-    currentUser = r.user || savedUser;
-    // Update cached user (mungkin role/akses berubah)
-    try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
-    return true;
-  } catch(e){
-    console.warn('[AutoLogin] token invalid:', e.message);
-    sessionToken = '';
-    currentUser = null;
-    try {
-      localStorage.removeItem(LS.TOKEN);
-      localStorage.removeItem(LS.USER);
-    } catch(e){}
-    return false;
-  }
+  currentUser = savedUser;
+
+  // Background verify — tidak block UI
+  gasRequest('auth_verify').then(r => {
+    if(r && r.user){
+      currentUser = r.user;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+    }
+  }).catch(e => {
+    console.warn('[AutoLogin] background verify failed (will retry next time):', e.message);
+    // Tidak logout user — bisa jadi network glitch saja
+    // Kalau token beneran invalid, fetch berikutnya akan return error dan handle di sana
+  });
+
+  return true;
 }
 
 // ============================================================
