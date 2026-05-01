@@ -2243,6 +2243,137 @@ function saveSuccessClose(){
 // ============================================================
 // INIT
 // ============================================================
+// ============================================================
+// [PWA] Service Worker Registration + Install Prompt
+// ============================================================
+let _pwaDeferredPrompt = null;
+
+function registerPWA(){
+  if(!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => {
+      console.log('[PWA] Service worker registered:', reg.scope);
+
+      // Listen for updates
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if(!newSW) return;
+        newSW.addEventListener('statechange', () => {
+          if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+            // Update available — auto-apply
+            console.log('[PWA] Update available, applying...');
+            newSW.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    })
+    .catch(err => console.warn('[PWA] SW registration failed:', err));
+
+  // Listen for SW takeover
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(refreshing) return;
+    refreshing = true;
+    console.log('[PWA] New SW activated, reloading...');
+    window.location.reload();
+  });
+}
+
+function setupInstallPrompt(){
+  // Tampilkan banner kalau bisa install
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _pwaDeferredPrompt = e;
+
+    // Cek kalau user sudah dismiss banner sebelumnya
+    const dismissed = localStorage.getItem('bm4_pwa_install_dismissed');
+    if(dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000){
+      return; // dismissed dalam 7 hari terakhir, skip banner
+    }
+
+    showInstallBanner();
+  });
+
+  // Saat user sudah install (dari Chrome native prompt)
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App installed!');
+    hideInstallBanner();
+    _pwaDeferredPrompt = null;
+    if(typeof toast === 'function') toast('✓ BM4 berhasil di-install ke HP!', 'ok');
+  });
+}
+
+function showInstallBanner(){
+  if(document.getElementById('pwa-install-banner')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = `
+    position:fixed; bottom:16px; left:16px; right:16px;
+    background:linear-gradient(135deg, #1C2B4A 0%, #2D3F6B 100%);
+    color:white; border-radius:14px;
+    padding:14px 16px; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    z-index:9999; display:flex; gap:12px; align-items:center;
+    font-family: inherit;
+    animation: pwaSlideUp 0.4s ease-out;
+  `;
+  banner.innerHTML = `
+    <div style="font-size:32px;flex-shrink:0;">📱</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Install BM4 ke HP</div>
+      <div style="font-size:11px;opacity:0.85;line-height:1.4;">
+        Akses lebih cepat, fullscreen, bisa offline.
+      </div>
+    </div>
+    <button id="pwa-btn-install" style="
+      background:white; color:#1C2B4A; border:none;
+      padding:8px 14px; border-radius:8px; font-weight:700;
+      font-size:12px; cursor:pointer; font-family:inherit;
+      flex-shrink:0;
+    ">Install</button>
+    <button id="pwa-btn-dismiss" style="
+      background:transparent; color:rgba(255,255,255,0.7); border:none;
+      padding:6px 8px; cursor:pointer; font-size:18px;
+      flex-shrink:0; line-height:1;
+    ">×</button>
+  `;
+  document.body.appendChild(banner);
+
+  // Add animation keyframes if not exists
+  if(!document.getElementById('pwa-keyframes')){
+    const style = document.createElement('style');
+    style.id = 'pwa-keyframes';
+    style.textContent = `@keyframes pwaSlideUp { from { transform: translateY(120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+    document.head.appendChild(style);
+  }
+
+  document.getElementById('pwa-btn-install').onclick = async () => {
+    if(!_pwaDeferredPrompt) return;
+    _pwaDeferredPrompt.prompt();
+    const choice = await _pwaDeferredPrompt.userChoice;
+    console.log('[PWA] User choice:', choice.outcome);
+    if(choice.outcome === 'accepted'){
+      hideInstallBanner();
+    }
+    _pwaDeferredPrompt = null;
+  };
+
+  document.getElementById('pwa-btn-dismiss').onclick = () => {
+    hideInstallBanner();
+    localStorage.setItem('bm4_pwa_install_dismissed', String(Date.now()));
+  };
+}
+
+function hideInstallBanner(){
+  const banner = document.getElementById('pwa-install-banner');
+  if(banner) banner.remove();
+}
+
+// Trigger PWA setup
+registerPWA();
+setupInstallPrompt();
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Bind login form
   $('btn-login').addEventListener('click', doLogin);
