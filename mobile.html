@@ -58,7 +58,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .app-screen.show{display:block}
 
 /* Header user */
-.user-header{background:var(--navy);color:#fff;padding:14px 16px}
+.user-header{background:var(--navy);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .user-header-row{display:flex;align-items:center;gap:10px}
 .user-avatar{width:38px;height:38px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;overflow:hidden}
 .user-avatar img{width:100%;height:100%;object-fit:cover}
@@ -196,6 +196,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   font-size:19px;line-height:1.55;font-style:italic;
   color:#F1F5F9;font-weight:400;
   margin-bottom:28px;
+  transition:opacity 0.18s ease;
 }
 .motivasi-splash-quote::before{
   content:'\201C';
@@ -204,15 +205,39 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   line-height:0.6;margin-bottom:10px;
   opacity:0.45;
 }
-.motivasi-splash-hint{
-  font-size:10px;color:#64748B;letter-spacing:1.5px;
-  text-transform:uppercase;font-weight:600;
-  opacity:0.7;
-  animation:splash-hint-fade 1.6s 0.6s ease-in infinite alternate;
+.motivasi-splash-actions{
+  display:flex;gap:10px;align-items:center;justify-content:center;
+  margin-top:8px;
+  animation:splash-actions-in 0.6s 0.4s ease backwards;
 }
-@keyframes splash-hint-fade{
-  from{opacity:0.4}
-  to{opacity:0.85}
+@keyframes splash-actions-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.motivasi-splash-btn-primary{
+  background:#2563EB;color:#fff;border:none;
+  padding:11px 28px;border-radius:999px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  letter-spacing:0.3px;
+  box-shadow:0 4px 12px rgba(37,99,235,0.35);
+  transition:all 0.15s;
+}
+.motivasi-splash-btn-primary:active{
+  transform:scale(0.96);
+  background:#1D4ED8;
+}
+.motivasi-splash-btn-secondary{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#CBD5E1;
+  padding:10px 16px;border-radius:999px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:all 0.15s;
+}
+.motivasi-splash-btn-secondary:active{
+  background:rgba(255,255,255,0.18);
+  color:#fff;
 }
 
 /* ===== TIPS UNTUK STATUS (Detail Modal) ===== */
@@ -625,13 +650,20 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 </div>
 
-<!-- ========== SPLASH MOTIVASI (muncul saat login, auto-hide 2.5 detik) ========== -->
-<div class="motivasi-splash" id="motivasi-splash" onclick="hideMotivasiSplash()">
+<!-- ========== SPLASH MOTIVASI (muncul saat login, tap untuk lanjut) ========== -->
+<div class="motivasi-splash" id="motivasi-splash">
   <div class="motivasi-splash-content">
     <div class="motivasi-splash-icon">✨</div>
     <div class="motivasi-splash-label">Kata Hari Ini</div>
     <div class="motivasi-splash-quote" id="motivasi-splash-quote">&mdash;</div>
-    <div class="motivasi-splash-hint">Tap untuk lanjut</div>
+    <div class="motivasi-splash-actions">
+      <button class="motivasi-splash-btn-secondary" onclick="event.stopPropagation();shuffleSplashQuote()">
+        <span>⟲</span><span>Kata Lain</span>
+      </button>
+      <button class="motivasi-splash-btn-primary" onclick="event.stopPropagation();hideMotivasiSplash()">
+        Lanjut →
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2090,7 +2122,6 @@ function renderSkeletonUI(){
 let _motivasiCurrentIdx = -1;       // index quote terakhir splash
 let _detailTipCurrentIdx = -1;      // index tip terakhir di detail modal
 let _detailTipCurrentStatus = -1;   // status terakhir untuk tip
-let _splashAutoHideTimer = null;    // timer auto-hide splash
 
 // Pilih quote random dari array, hindari yang sama persis dengan sebelumnya
 function pickRandomQuote(arr, lastIdx){
@@ -2105,7 +2136,7 @@ function pickRandomQuote(arr, lastIdx){
   return { idx, text: arr[idx] };
 }
 
-// Tampilkan splash motivasi (full screen, 2.5 detik atau tap untuk skip)
+// Tampilkan splash motivasi (full screen, tap untuk lanjut — tidak auto-hide)
 function showMotivasiSplash(){
   const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
   _motivasiCurrentIdx = picked.idx;
@@ -2115,24 +2146,31 @@ function showMotivasiSplash(){
   if(!splash) return;
   splash.classList.remove('fadeout');
   splash.classList.add('show');
-  // Auto-hide setelah 2.5 detik
-  if(_splashAutoHideTimer) clearTimeout(_splashAutoHideTimer);
-  _splashAutoHideTimer = setTimeout(() => hideMotivasiSplash(), 2500);
 }
 
 // Sembunyikan splash dengan fade-out
 function hideMotivasiSplash(){
   const splash = $('motivasi-splash');
   if(!splash || !splash.classList.contains('show')) return;
-  if(_splashAutoHideTimer){
-    clearTimeout(_splashAutoHideTimer);
-    _splashAutoHideTimer = null;
-  }
   splash.classList.add('fadeout');
   setTimeout(() => {
     splash.classList.remove('show');
     splash.classList.remove('fadeout');
   }, 500);
+}
+
+// Shuffle ke quote lain (di splash, tanpa tutup)
+function shuffleSplashQuote(){
+  const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
+  _motivasiCurrentIdx = picked.idx;
+  const quoteEl = $('motivasi-splash-quote');
+  if(quoteEl){
+    quoteEl.style.opacity = '0';
+    setTimeout(() => {
+      quoteEl.textContent = picked.text;
+      quoteEl.style.opacity = '1';
+    }, 180);
+  }
 }
 
 // Buka splash dari profile (untuk tombol "Lihat Kata Hari Ini")
