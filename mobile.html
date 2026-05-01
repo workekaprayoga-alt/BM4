@@ -791,6 +791,19 @@ async function gasRequest(action, payload, opts){
   catch(e){ throw new Error('Server tidak respon JSON. Cek koneksi internet.'); }
   if(!json || json.success === false){
     const msg = (json && (json.message || json.error)) || 'Request gagal';
+
+    // [PERF FIX] Auto-recovery: kalau session unauthorized, coba re-login + retry sekali
+    const isUnauthorized = /unauthorized|session tidak/i.test(msg);
+    if(isUnauthorized && !opts._retried && action !== 'auth_login' && action !== 'auth_verify'){
+      console.warn('[gasRequest] session expired, attempting auto-recover...');
+      const recovered = await _tryRecoverSession();
+      if(recovered){
+        console.log('[gasRequest] session recovered, retrying:', action);
+        // Retry dengan flag _retried supaya tidak infinite loop
+        return gasRequest(action, payload, Object.assign({}, opts, { _retried: true }));
+      }
+    }
+
     const err = new Error(msg);
     err.response = json;
     throw err;
@@ -798,7 +811,43 @@ async function gasRequest(action, payload, opts){
   return json;
 }
 
-async function gasGet(action, extraParams){
+// [PERF FIX] Coba recover session — verify ulang token, atau force logout kalau tidak bisa
+async function _tryRecoverSession(){
+  try {
+    // Coba verify token dulu — mungkin server butuh signal "saya online"
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action: 'auth_verify', sessionToken: sessionToken }),
+      cache: 'no-store'
+    });
+    const json = await r.json();
+    if(json && json.success && json.user){
+      currentUser = json.user;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+      return true;
+    }
+  } catch(e){
+    console.warn('[Recover] verify failed:', e.message);
+  }
+  // Token sudah benar-benar invalid — clear & force re-login
+  console.warn('[Recover] token invalid, user perlu login ulang');
+  toast('Sesi habis, silakan login ulang', 'err');
+  setTimeout(() => {
+    sessionToken = '';
+    currentUser = null;
+    try {
+      localStorage.removeItem(LS.TOKEN);
+      localStorage.removeItem(LS.USER);
+    } catch(e){}
+    $('screen-app').classList.remove('show');
+    $('screen-login').style.display = '';
+  }, 1500);
+  return false;
+}
+
+async function gasGet(action, extraParams, opts){
+  opts = opts || {};
   const params = Object.assign({}, extraParams||{}, {action, _t:Date.now()});
   if(sessionToken) params.sessionToken = sessionToken;
   const url = GAS_URL + '?' + new URLSearchParams(params).toString();
@@ -808,6 +857,17 @@ async function gasGet(action, extraParams){
   catch(e){ throw new Error('Server tidak respon JSON.'); }
   if(!json || json.success === false){
     const msg = (json && (json.message || json.error)) || 'Request gagal';
+
+    // [PERF FIX] Auto-recovery sama seperti di gasRequest
+    const isUnauthorized = /unauthorized|session tidak/i.test(msg);
+    if(isUnauthorized && !opts._retried && action !== 'auth_login' && action !== 'auth_verify'){
+      console.warn('[gasGet] session expired, attempting auto-recover for:', action);
+      const recovered = await _tryRecoverSession();
+      if(recovered){
+        return gasGet(action, extraParams, Object.assign({}, opts, { _retried: true }));
+      }
+    }
+
     const err = new Error(msg);
     err.response = json;
     throw err;
