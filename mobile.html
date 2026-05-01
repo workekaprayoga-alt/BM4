@@ -317,6 +317,85 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 /* Override Leaflet untuk mobile */
 .leaflet-container{font-family:inherit;font-size:11px}
 .leaflet-popup-content{margin:8px 10px;font-size:12px;line-height:1.4}
+
+/* ============== MODAL DETAIL TARGET ============== */
+/* Pakai struktur sama dengan modal-overlay/sheet/head/body/foot */
+
+/* Hero section di atas detail — nama target, status badge */
+.detail-hero{
+  background:#fff;padding:14px;border-radius:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.detail-hero h3{margin:0;font-size:17px;font-weight:700;color:var(--text);line-height:1.3}
+.detail-hero .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.detail-hero .status-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.detail-hero .status-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;
+}
+
+/* Map container untuk detail — lebih tinggi karena ada rute */
+.detail-map-wrap{
+  background:#fff;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.detail-map{height:240px;background:#E2E8F0;position:relative;z-index:1}
+.detail-map.loading::after{
+  content:'⏳ Memuat peta...';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.85);font-size:12px;color:var(--muted);
+}
+
+/* Stats row di bawah peta — jarak, durasi */
+.detail-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:var(--border);
+}
+.detail-stat{
+  background:#fff;padding:11px 12px;text-align:center;
+}
+.detail-stat .lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.detail-stat .val{font-size:16px;font-weight:700;color:var(--text);margin-top:2px}
+.detail-stat .val.loading{color:var(--muted);font-size:13px;font-weight:500}
+.detail-stat .sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* Info card — PIC, kontak terakhir, catatan */
+.detail-info{
+  background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.detail-info-row{
+  display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);
+}
+.detail-info-row:last-child{border-bottom:none}
+.detail-info-row .ico{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.detail-info-row .body{flex:1;min-width:0}
+.detail-info-row .body .lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.detail-info-row .body .val{font-size:13px;color:var(--text);margin-top:2px;word-wrap:break-word}
+.detail-info-row .body .val.empty{color:var(--muted);font-style:italic}
+
+/* Quick actions — buka maps, telp, WA */
+.detail-actions{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;
+}
+.detail-actions .qa{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:11px 6px;text-align:center;cursor:pointer;
+  font-family:inherit;color:var(--text);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .15s;
+}
+.detail-actions .qa:active{background:#F0FDFA;border-color:var(--accent)}
+.detail-actions .qa.disabled{opacity:.45;cursor:not-allowed}
+.detail-actions .qa.disabled:active{background:#fff;border-color:var(--border)}
+.detail-actions .qa .ico{font-size:20px}
+.detail-actions .qa .lbl{font-size:11px;font-weight:700}
+
+/* Footer modal detail: tombol Tutup + Edit */
+.modal-foot.detail-foot{display:flex;gap:8px}
+.modal-foot.detail-foot .btn.close{background:#fff;color:var(--text);border:1px solid var(--border);flex:1}
+.modal-foot.detail-foot .btn.edit{background:var(--navy);color:#fff;flex:2}
+.modal-foot.detail-foot .btn.edit.hidden{display:none}
 </style>
 </head>
 <body>
@@ -373,6 +452,98 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 
   <div class="footer">BM4 Mobile v14 &middot; <a href="index.html?desktop=1&v=rc14">Buka desktop &uarr;</a></div>
+</div>
+
+<!-- ========== MODAL DETAIL TARGET (lihat detail dengan rute) ========== -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <button class="back" onclick="closeDetailModal()" title="Tutup">&larr;</button>
+      <div class="title">
+        <h2 id="modal-detail-title">Detail Target</h2>
+        <p id="modal-detail-sub">&mdash;</p>
+      </div>
+    </div>
+    <div class="modal-body">
+      <!-- Hero: nama, jenis, karyawan, status -->
+      <div class="detail-hero">
+        <h3 id="d-nama">Nama Target</h3>
+        <div class="meta" id="d-meta">&mdash;</div>
+        <div class="status-row">
+          <span class="status-pill" id="d-status">&mdash;</span>
+        </div>
+      </div>
+
+      <!-- Map dengan rute dari proyek ke target -->
+      <div class="detail-map-wrap">
+        <div class="detail-map loading" id="d-map"></div>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <div class="lbl">Jarak</div>
+            <div class="val loading" id="d-distance">Memuat...</div>
+            <div class="sub" id="d-distance-sub">via jalan</div>
+          </div>
+          <div class="detail-stat">
+            <div class="lbl">Estimasi</div>
+            <div class="val loading" id="d-duration">Memuat...</div>
+            <div class="sub">menit berkendara</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="detail-actions">
+        <div class="qa" id="d-act-maps" onclick="actionOpenMaps()">
+          <div class="ico">🗺️</div>
+          <div class="lbl">Buka Maps</div>
+        </div>
+        <div class="qa" id="d-act-call" onclick="actionCallPic()">
+          <div class="ico">📞</div>
+          <div class="lbl">Telepon</div>
+        </div>
+        <div class="qa" id="d-act-wa" onclick="actionWhatsAppPic()">
+          <div class="ico">💬</div>
+          <div class="lbl">WhatsApp</div>
+        </div>
+      </div>
+
+      <!-- Info detail -->
+      <div class="detail-info">
+        <div class="detail-info-row">
+          <div class="ico">📍</div>
+          <div class="body">
+            <div class="lbl">Koordinat</div>
+            <div class="val" id="d-coord">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">👤</div>
+          <div class="body">
+            <div class="lbl">PIC / Kontak</div>
+            <div class="val" id="d-pic">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">📅</div>
+          <div class="body">
+            <div class="lbl">Kontak Terakhir</div>
+            <div class="val" id="d-lastcontact">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">📝</div>
+          <div class="body">
+            <div class="lbl">Catatan</div>
+            <div class="val" id="d-catatan">&mdash;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot detail-foot">
+      <button class="btn close" onclick="closeDetailModal()">Tutup</button>
+      <button class="btn edit hidden" id="d-btn-edit" onclick="detailToEdit()">✏️ Edit Target</button>
+    </div>
+  </div>
 </div>
 
 <!-- ========== MODAL FORM TARGET (tambah/edit) ========== -->
@@ -460,15 +631,15 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 </div>
 
-<!-- ========== MODAL SMART INPUT (paste link Google Maps) ========== -->
+<!-- ========== MODAL SMART INPUT (paste koordinat) ========== -->
 <div class="smart-input-overlay" id="smart-input">
   <div class="smart-input-box">
-    <h3>Paste Lokasi</h3>
-    <p>Tempel link Google Maps, koordinat, atau plus code:<br>
-       <code style="font-size:11px;color:var(--muted)">-6.5169, 107.8017</code> atau
-       <code style="font-size:11px;color:var(--muted)">https://maps.app.goo.gl/...</code>
+    <h3>Paste Koordinat</h3>
+    <p>Format yang didukung:<br>
+       <b>Koordinat:</b> <code style="font-size:11px;color:var(--muted)">-6.5169, 107.8017</code><br>
+       <span style="font-size:10px;color:var(--muted)">URL panjang Google Maps juga bisa</span>
     </p>
-    <textarea id="smart-input-text" placeholder="Paste di sini..."></textarea>
+    <textarea id="smart-input-text" placeholder="Paste koordinat di sini..."></textarea>
     <div class="btnrow">
       <button class="cancel" onclick="closeSmartInput()">Batal</button>
       <button class="ok" onclick="parseSmartInput()">Pakai Lokasi</button>
@@ -1044,9 +1215,11 @@ function renderTargetCard(t, perm){
   if(t.jenis) meta.push(t.jenis);
   const meta1 = meta.join(' • ');
   const meta2 = t.pic ? 'PIC: ' + esc(t.pic) : '';
-  const onclick = perm.edit ? `onclick="openEditTarget(${parseInt(t.id)||0})"` : '';
+  // Tap card → buka detail (semua user yang punya view bisa buka detail)
+  // Edit hanya muncul sebagai tombol di dalam modal detail kalau perm.edit=true
+  const onclick = `onclick="openDetailTarget(${parseInt(t.id)||0})"`;
   return `
-    <div class="target-card s${s}" ${onclick}>
+    <div class="target-card s${s}" ${onclick} style="cursor:pointer">
       <div class="target-card-head">
         <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}</div>
         <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
@@ -1063,7 +1236,369 @@ function setFilter(f){
 }
 
 // ============================================================
-// TARGET FORM MODAL — tambah & edit
+// DETAIL MODAL — view target dengan rute via jalan
+// ============================================================
+let currentDetailTarget = null;     // target yang sedang ditampilkan
+let detailMap = null;               // Leaflet map instance untuk detail
+let detailRouteLayer = null;        // polyline rute jalan (yang biru)
+let detailRouteCache = {};          // cache hasil OSRM { 'lat1,lng1->lat2,lng2': {distance, duration} }
+
+function openDetailTarget(id){
+  const t = tpTargets.find(x => parseInt(x.id) === parseInt(id));
+  if(!t){
+    toast('Target tidak ditemukan', 'err');
+    return;
+  }
+  currentDetailTarget = t;
+
+  // Header
+  $('modal-detail-title').textContent = 'Detail Target';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-detail-sub').textContent = (proj ? proj.kode || proj.id : currentProyekId).toUpperCase();
+
+  // Hero: nama + meta
+  $('d-nama').textContent = t.nama || '(tanpa nama)';
+  const metaParts = [];
+  if(t.jenis) metaParts.push(_capitalize(t.jenis));
+  if(t.karyawan) metaParts.push(Number(t.karyawan).toLocaleString('id-ID') + ' karyawan');
+  $('d-meta').textContent = metaParts.length ? metaParts.join(' · ') : '—';
+
+  // Status pill
+  const s = parseInt(t.status) || 0;
+  const statusInfo = [
+    {ic:'🔍', lbl:'Identifikasi', bg:'#E0F2FE', col:'#075985'},
+    {ic:'📞', lbl:'Kontak Awal',  bg:'#FEF3C7', col:'#92400E'},
+    {ic:'🤝', lbl:'Presentasi',   bg:'#FED7AA', col:'#9A3412'},
+    {ic:'💬', lbl:'Negosiasi',    bg:'#DDD6FE', col:'#5B21B6'},
+    {ic:'✅', lbl:'Deal',         bg:'#D1FAE5', col:'#065F46'}
+  ][s] || {ic:'❓', lbl:'-', bg:'#E5E7EB', col:'#374151'};
+  const statusEl = $('d-status');
+  statusEl.textContent = statusInfo.ic + ' ' + statusInfo.lbl;
+  statusEl.style.background = statusInfo.bg;
+  statusEl.style.color = statusInfo.col;
+
+  // Info rows
+  const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+  if(!isNaN(lat) && !isNaN(lng)){
+    $('d-coord').textContent = lat.toFixed(7) + ', ' + lng.toFixed(7);
+    $('d-coord').classList.remove('empty');
+  } else {
+    $('d-coord').textContent = 'Belum ada koordinat';
+    $('d-coord').classList.add('empty');
+  }
+
+  if(t.pic){
+    $('d-pic').textContent = t.pic;
+    $('d-pic').classList.remove('empty');
+  } else {
+    $('d-pic').textContent = 'Belum diisi';
+    $('d-pic').classList.add('empty');
+  }
+
+  if(t.lastcontact){
+    $('d-lastcontact').textContent = formatDateID(t.lastcontact);
+    $('d-lastcontact').classList.remove('empty');
+  } else {
+    $('d-lastcontact').textContent = 'Belum ada';
+    $('d-lastcontact').classList.add('empty');
+  }
+
+  if(t.catatan){
+    $('d-catatan').textContent = t.catatan;
+    $('d-catatan').classList.remove('empty');
+  } else {
+    $('d-catatan').textContent = 'Belum ada catatan';
+    $('d-catatan').classList.add('empty');
+  }
+
+  // Reset stats ke loading
+  $('d-distance').textContent = 'Memuat...';
+  $('d-distance').classList.add('loading');
+  $('d-duration').textContent = 'Memuat...';
+  $('d-duration').classList.add('loading');
+
+  // Quick actions: enable/disable berdasarkan data
+  setupDetailActions(t);
+
+  // Edit button: muncul kalau permission edit=true
+  const role = currentUser.role;
+  const perm = getPermissionFor(role, 'target_pasar');
+  const editBtn = $('d-btn-edit');
+  if(perm.edit){
+    editBtn.classList.remove('hidden');
+  } else {
+    editBtn.classList.add('hidden');
+  }
+
+  // Show modal
+  $('modal-detail').classList.add('show');
+  // Init map setelah modal visible
+  setTimeout(() => initDetailMap(t), 120);
+}
+
+function closeDetailModal(){
+  $('modal-detail').classList.remove('show');
+  // Cleanup map
+  if(detailMap){
+    try { detailMap.remove(); } catch(e){}
+    detailMap = null;
+    detailRouteLayer = null;
+  }
+  currentDetailTarget = null;
+}
+
+function detailToEdit(){
+  if(!currentDetailTarget) return;
+  const id = parseInt(currentDetailTarget.id);
+  // Tutup detail dulu
+  closeDetailModal();
+  // Buka edit
+  setTimeout(() => openEditTarget(id), 200);
+}
+
+function setupDetailActions(t){
+  const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+  const hasCoord = !isNaN(lat) && !isNaN(lng);
+  const phone = extractPhone(t.pic || '');
+
+  // Buka Maps button
+  const mapsBtn = $('d-act-maps');
+  if(hasCoord){
+    mapsBtn.classList.remove('disabled');
+    mapsBtn.dataset.lat = lat;
+    mapsBtn.dataset.lng = lng;
+  } else {
+    mapsBtn.classList.add('disabled');
+  }
+
+  // Telepon button
+  const callBtn = $('d-act-call');
+  if(phone){
+    callBtn.classList.remove('disabled');
+    callBtn.dataset.phone = phone;
+  } else {
+    callBtn.classList.add('disabled');
+  }
+
+  // WhatsApp button — pakai phone yang sama
+  const waBtn = $('d-act-wa');
+  if(phone){
+    waBtn.classList.remove('disabled');
+    waBtn.dataset.phone = phone;
+    waBtn.dataset.name = t.nama || '';
+  } else {
+    waBtn.classList.add('disabled');
+  }
+}
+
+function actionOpenMaps(){
+  const btn = $('d-act-maps');
+  if(btn.classList.contains('disabled')) return;
+  const lat = btn.dataset.lat, lng = btn.dataset.lng;
+  // Format intent yang di-handle Google Maps di Android & iOS
+  const url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+  window.open(url, '_blank');
+}
+
+function actionCallPic(){
+  const btn = $('d-act-call');
+  if(btn.classList.contains('disabled')){
+    toast('Nomor telepon tidak ditemukan di kontak', '');
+    return;
+  }
+  const phone = btn.dataset.phone;
+  window.location.href = 'tel:' + phone;
+}
+
+function actionWhatsAppPic(){
+  const btn = $('d-act-wa');
+  if(btn.classList.contains('disabled')){
+    toast('Nomor WhatsApp tidak ditemukan di kontak', '');
+    return;
+  }
+  const phone = btn.dataset.phone;
+  // Format WA: harus pakai 62 di depan untuk Indonesia
+  let waPhone = phone.replace(/[^\d]/g, '');
+  if(waPhone.startsWith('0')) waPhone = '62' + waPhone.slice(1);
+  else if(!waPhone.startsWith('62')) waPhone = '62' + waPhone;
+  const targetName = btn.dataset.name || '';
+  const text = encodeURIComponent('Halo, saya dari tim ' + (currentUser.nama || currentUser.username) + ' BM4 Property. Mau follow-up terkait ' + targetName + '.');
+  const url = 'https://wa.me/' + waPhone + '?text=' + text;
+  window.open(url, '_blank');
+}
+
+// Helper: extract nomor telepon dari string PIC
+// "Pak Hendra - 0812-3456-7890" → "081234567890"
+// "Bu Sari HRD 0814 1234 5678" → "081412345678"
+function extractPhone(text){
+  if(!text) return '';
+  // Cari urutan digit (boleh diselingi - atau spasi) yang panjangnya 9-13 digit
+  const matches = String(text).match(/[\d][\d\s\-]{7,16}\d/g);
+  if(!matches) return '';
+  for(const m of matches){
+    const digits = m.replace(/[^\d]/g, '');
+    if(digits.length >= 9 && digits.length <= 14){
+      return digits;
+    }
+  }
+  return '';
+}
+
+function formatDateID(dateStr){
+  if(!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return String(dateStr);
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  } catch(e){ return String(dateStr); }
+}
+
+function _capitalize(s){
+  if(!s) return '';
+  return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+}
+
+// ============================================================
+// DETAIL MAP — pin proyek + pin target + rute jalan via OSRM
+// ============================================================
+function initDetailMap(target){
+  const mapEl = $('d-map');
+  if(!mapEl) return;
+  // Cleanup container
+  if(mapEl._leaflet_id){
+    try { mapEl._leaflet_id = null; mapEl.innerHTML = ''; } catch(e){}
+  }
+  mapEl.classList.add('loading');
+
+  const tLat = parseFloat(target.lat), tLng = parseFloat(target.lng);
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  const pLat = proj ? parseFloat(proj.lat) : NaN;
+  const pLng = proj ? parseFloat(proj.lng) : NaN;
+
+  if(isNaN(tLat) || isNaN(tLng)){
+    mapEl.classList.remove('loading');
+    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94A3B8;font-size:12px;padding:14px;text-align:center">Target belum punya koordinat<br>Edit target untuk set lokasi</div>';
+    $('d-distance').textContent = '—';
+    $('d-distance').classList.remove('loading');
+    $('d-duration').textContent = '—';
+    $('d-duration').classList.remove('loading');
+    return;
+  }
+
+  detailMap = L.map(mapEl, {zoomControl:true, attributionControl:false}).setView([tLat, tLng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(detailMap);
+
+  // Pin target (merah, drop pin shape)
+  const targetIcon = L.divIcon({
+    html: '<div style="width:28px;height:28px;background:#EF4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;"><span style="transform:rotate(45deg)">⭐</span></div>',
+    iconSize: [28,28], iconAnchor: [14,28], className: ''
+  });
+  L.marker([tLat,tLng], {icon: targetIcon}).addTo(detailMap)
+    .bindPopup('<b>' + _esc(target.nama || 'Target') + '</b>');
+
+  // Pin proyek (kalau ada)
+  if(!isNaN(pLat) && !isNaN(pLng)){
+    const projectIcon = L.divIcon({
+      html: '<div style="width:32px;height:32px;background:#1C2B4A;border-radius:8px;border:2.5px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">🏠</div>',
+      iconSize: [32,32], iconAnchor: [16,16], className: ''
+    });
+    L.marker([pLat,pLng], {icon: projectIcon}).addTo(detailMap)
+      .bindPopup('<b>' + _esc(proj.nama) + '</b><br><span style="color:#666">Proyek aktif</span>');
+
+    // Fit bounds: tampilkan kedua pin
+    const bounds = L.latLngBounds([[tLat,tLng], [pLat,pLng]]);
+    detailMap.fitBounds(bounds, {padding:[40,40]});
+
+    // Fetch rute via OSRM
+    fetchRoute(pLat, pLng, tLat, tLng);
+  } else {
+    // Tidak ada koord proyek — fokus ke target saja
+    detailMap.setView([tLat,tLng], 14);
+    $('d-distance').textContent = '—';
+    $('d-distance-sub').textContent = 'proyek tidak punya koordinat';
+    $('d-distance').classList.remove('loading');
+    $('d-duration').textContent = '—';
+    $('d-duration').classList.remove('loading');
+  }
+
+  setTimeout(() => {
+    mapEl.classList.remove('loading');
+    if(detailMap) detailMap.invalidateSize();
+  }, 200);
+}
+
+// Fetch route dari OSRM gratis public server
+async function fetchRoute(fromLat, fromLng, toLat, toLng){
+  const cacheKey = fromLat.toFixed(5) + ',' + fromLng.toFixed(5) + '->' + toLat.toFixed(5) + ',' + toLng.toFixed(5);
+  // Cek cache
+  if(detailRouteCache[cacheKey]){
+    applyRoute(detailRouteCache[cacheKey]);
+    return;
+  }
+  // OSRM expects lng,lat (bukan lat,lng — ini gotcha umum)
+  const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+  try {
+    const r = await fetch(url, { method: 'GET' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if(!data.routes || !data.routes.length) throw new Error('No route found');
+    const route = data.routes[0];
+    const result = {
+      distance: route.distance,           // meter
+      duration: route.duration,           // detik
+      geometry: route.geometry,           // GeoJSON LineString
+    };
+    detailRouteCache[cacheKey] = result;
+    applyRoute(result);
+  } catch(e){
+    console.error('[OSRM] route fetch failed:', e);
+    // Fallback: pakai jarak haversine
+    const distKm = haversine(fromLat, fromLng, toLat, toLng);
+    $('d-distance').textContent = distKm.toFixed(1) + ' km';
+    $('d-distance').classList.remove('loading');
+    $('d-distance-sub').textContent = 'garis lurus (rute tidak tersedia)';
+    $('d-duration').textContent = '~' + Math.round(distKm * 2) + ' menit';
+    $('d-duration').classList.remove('loading');
+  }
+}
+
+function applyRoute(route){
+  // Distance
+  const distKm = (route.distance / 1000);
+  $('d-distance').textContent = distKm.toFixed(1) + ' km';
+  $('d-distance').classList.remove('loading');
+  $('d-distance-sub').textContent = 'via jalan';
+
+  // Duration
+  const durMin = Math.round(route.duration / 60);
+  $('d-duration').textContent = durMin + ' min';
+  $('d-duration').classList.remove('loading');
+
+  // Draw polyline
+  if(detailMap && route.geometry && route.geometry.coordinates){
+    if(detailRouteLayer){
+      try { detailMap.removeLayer(detailRouteLayer); } catch(e){}
+    }
+    // GeoJSON koordinat: [lng, lat], Leaflet butuh [lat, lng] — convert
+    const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+    detailRouteLayer = L.polyline(latlngs, {
+      color: '#3B82F6',
+      weight: 4,
+      opacity: 0.75,
+      lineCap: 'round'
+    }).addTo(detailMap);
+    // Fit bounds termasuk rute (lebih akurat dari pin saja)
+    detailMap.fitBounds(detailRouteLayer.getBounds(), {padding:[30,30]});
+  }
+}
+
+function _esc(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// EDIT TARGET (dipanggil dari detail modal kalau perm.edit=true)
 // ============================================================
 let editingTargetId = null;       // null = mode tambah, number = mode edit
 let tfMap = null;                 // Leaflet mini-map instance
@@ -1370,14 +1905,16 @@ async function parseLocationText(text){
     const shortUrl = shortMatch[0];
     try {
       const res = await gasGet('resolveShortUrl', { url: shortUrl });
+      console.log('[resolveShortUrl] response:', res);
       if(res.success && isValidLatLng(res.lat, res.lng)){
         return { lat: parseFloat(res.lat), lng: parseFloat(res.lng) };
       }
-      console.warn('[resolveShortUrl] failed:', res);
+      // Gagal — kasih instruksi jelas
+      toast('Link pendek tidak terbaca. Coba: GPS, tap di peta, atau paste koordinat (-6.xx, 107.xx)', 'err');
     } catch(e){
       console.error('[resolveShortUrl] error:', e);
+      toast('Gagal proses link. Coba GPS atau tap di peta', 'err');
     }
-    // Kalau gagal, return null biar caller kasih pesan
     return null;
   }
   // 6. Fallback: cari pasangan angka koordinat di teks
