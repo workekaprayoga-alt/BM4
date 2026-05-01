@@ -396,6 +396,19 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .modal-foot.detail-foot .btn.close{background:#fff;color:var(--text);border:1px solid var(--border);flex:1}
 .modal-foot.detail-foot .btn.edit{background:var(--navy);color:#fff;flex:2}
 .modal-foot.detail-foot .btn.edit.hidden{display:none}
+
+/* [PERF] Skeleton loading UI */
+.skeleton-wrap{padding:16px;display:flex;flex-direction:column;gap:12px}
+.skel-card{
+  height:96px;border-radius:14px;
+  background:linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+  background-size:200% 100%;
+  animation:skel-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skel-shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
 </style>
 </head>
 <body>
@@ -903,8 +916,24 @@ async function tryAutoLogin(){
 // ============================================================
 // MOBILE PERMISSIONS (dynamic dari Sheets)
 // ============================================================
+// [PERF] Load cache permissions dulu (instan), return true kalau sukses
+function loadMobilePermissionsFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.MOBILE_PERMISSIONS);
+    if(saved){
+      const obj = JSON.parse(saved);
+      if(obj && typeof obj === 'object' && Object.keys(obj).length > 0){
+        mobilePermissions = obj;
+        console.log('[Permissions] loaded from cache:', Object.keys(obj).length, 'rules');
+        return true;
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
+// [PERF] Fetch fresh permissions dari Sheets (untuk background refresh)
 async function loadMobilePermissions(){
-  // Coba dari Sheets dulu
   try {
     const r = await gasGet('getMobilePermissions');
     if(r.success && Array.isArray(r.data)){
@@ -923,31 +952,42 @@ async function loadMobilePermissions(){
       mobilePermissions = map;
       try { localStorage.setItem(LS.MOBILE_PERMISSIONS, JSON.stringify(map)); } catch(e){}
       console.log('[Permissions] loaded from Sheets:', Object.keys(map).length, 'rules');
-      return;
+      return true;
     }
   } catch(e){
     console.warn('[Permissions] load from Sheets failed:', e.message);
   }
   // Fallback: dari localStorage
-  try {
-    const saved = localStorage.getItem(LS.MOBILE_PERMISSIONS);
-    if(saved){
-      const obj = JSON.parse(saved);
-      if(obj && typeof obj === 'object'){
-        mobilePermissions = obj;
-        console.log('[Permissions] loaded from cache:', Object.keys(obj).length, 'rules');
-        return;
-      }
-    }
-  } catch(e){}
+  if(loadMobilePermissionsFromCache()) return false;
   // Last fallback: hardcoded
   mobilePermissions = Object.assign({}, PERMISSION_FALLBACK);
   console.log('[Permissions] using hardcoded fallback');
+  return false;
 }
 
 // ============================================================
 // PROYEK LIST
 // ============================================================
+// [PERF] Load cache proyek dulu (instan)
+function loadProyekListFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.PROYEK);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr) && arr.length > 0){
+        // Validasi: pastikan punya lat/lng
+        const valid = arr.filter(p => p && p.id);
+        if(valid.length > 0){
+          proyekList = valid;
+          console.log('[Proyek] loaded from cache:', valid.length, 'proyek');
+          return true;
+        }
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
 async function loadProyekList(){
   // Coba dari Sheets dulu (kalau online)
   try {
@@ -968,24 +1008,17 @@ async function loadProyekList(){
         status: p.status || 'Aktif'
       }));
       try { localStorage.setItem(LS.PROYEK, JSON.stringify(proyekList)); } catch(e){}
-      return;
+      console.log('[Proyek] loaded from Sheets:', proyekList.length, 'proyek');
+      return true;
     }
   } catch(e){
     console.warn('[Proyek] load from Sheets failed, fallback to local:', e.message);
   }
   // Fallback: dari localStorage
-  try {
-    const saved = localStorage.getItem(LS.PROYEK);
-    if(saved){
-      const arr = JSON.parse(saved);
-      if(Array.isArray(arr) && arr.length > 0){
-        proyekList = arr;
-        return;
-      }
-    }
-  } catch(e){}
+  if(loadProyekListFromCache()) return false;
   // Last fallback: default
   proyekList = PROYEK_DEFAULT.slice();
+  return false;
 }
 
 function renderProyekDropdown(){
@@ -1013,8 +1046,25 @@ function renderProyekDropdown(){
 // ============================================================
 // TARGET PASAR DATA
 // ============================================================
+// [PERF] Load cache target dulu (instan)
+function loadTpTargetsFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.TP_TARGETS);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr)){
+        tpTargets = arr.map(t => Object.assign({}, t, {
+          proyek: String(t.proyek || 'gwc').toLowerCase()
+        }));
+        console.log('[TP] loaded from cache:', tpTargets.length, 'targets');
+        return true;
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
 async function loadTpTargets(){
-  showSyncState('Memuat data...', 'loading');
   try {
     const r = await gasGet('getTargetPasar');
     if(r.success && Array.isArray(r.data)){
@@ -1032,28 +1082,16 @@ async function loadTpTargets(){
         catatan: row.catatan || ''
       }));
       try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
-      showSyncState('');
-      return;
+      console.log('[TP] loaded from Sheets:', tpTargets.length, 'targets');
+      return true;
     }
   } catch(e){
     console.warn('[TP] load from Sheets failed:', e.message);
-    showSyncState('Offline - pakai data lokal', 'err');
-    setTimeout(() => showSyncState(''), 3000);
   }
   // Fallback localStorage
-  try {
-    const saved = localStorage.getItem(LS.TP_TARGETS);
-    if(saved){
-      const arr = JSON.parse(saved);
-      if(Array.isArray(arr)){
-        tpTargets = arr.map(t => Object.assign({}, t, {
-          proyek: String(t.proyek || 'gwc').toLowerCase()
-        }));
-        return;
-      }
-    }
-  } catch(e){}
+  if(loadTpTargetsFromCache()) return false;
   tpTargets = [];
+  return false;
 }
 
 function getTargetsForCurrentProyek(){
@@ -1085,12 +1123,65 @@ async function enterApp(){
   const roleKey = String(currentUser.role||'').toLowerCase();
   $('user-role').textContent = ROLE_LABELS[roleKey] || currentUser.role || '';
 
-  // Load data sekuensial — permission DULU karena renderContent butuh
-  await loadMobilePermissions();
-  await loadProyekList();
-  renderProyekDropdown();
-  await loadTpTargets();
-  renderContent();
+  // ════════════════════════════════════════════════════════
+  // [PERF] PHASE 1: Tampilkan dari cache DULU (instan!)
+  // ════════════════════════════════════════════════════════
+  const cachePerm = loadMobilePermissionsFromCache();
+  const cacheProyek = loadProyekListFromCache();
+  const cacheTp = loadTpTargetsFromCache();
+
+  if(cachePerm && cacheProyek){
+    // Punya cache lengkap → render instan
+    renderProyekDropdown();
+    renderContent();
+    showSyncState('Memperbarui data...', 'loading');
+  } else {
+    // Cache tidak ada / pertama kali → tampilkan skeleton
+    renderSkeletonUI();
+    showSyncState('Memuat...', 'loading');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // [PERF] PHASE 2: Background refresh — semua paralel!
+  // ════════════════════════════════════════════════════════
+  try {
+    const results = await Promise.allSettled([
+      loadMobilePermissions(),
+      loadProyekList(),
+      loadTpTargets()
+    ]);
+
+    // Cek hasil — kalau ada yang sukses, refresh UI
+    const anySuccess = results.some(r => r.status === 'fulfilled' && r.value === true);
+    if(anySuccess){
+      renderProyekDropdown();
+      renderContent();
+    }
+    showSyncState('Tersinkron', 'ok');
+    setTimeout(() => showSyncState(''), 2000);
+  } catch(e){
+    console.warn('[enterApp] background refresh error:', e);
+    showSyncState('Offline - pakai data lokal', 'err');
+    setTimeout(() => showSyncState(''), 3000);
+    // Walau error, tetap render dari cache
+    if(!cachePerm || !cacheProyek){
+      renderProyekDropdown();
+      renderContent();
+    }
+  }
+}
+
+// [PERF] Skeleton UI saat cache kosong (first-time login)
+function renderSkeletonUI(){
+  const main = $('content-area');
+  if(!main) return;
+  main.innerHTML = `
+    <div class="skeleton-wrap">
+      <div class="skel-card"></div>
+      <div class="skel-card"></div>
+      <div class="skel-card"></div>
+    </div>
+  `;
 }
 
 // ============================================================
