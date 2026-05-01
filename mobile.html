@@ -150,6 +150,112 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .no-access h2{font-size:16px;margin:0 0 8px}
 .no-access p{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}
 
+/* ===== KATA HARI INI - BANNER (Dashboard) ===== */
+.motivasi-banner{
+  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 100%);
+  color:#fff;
+  border-radius:14px;
+  padding:14px 16px;
+  margin:14px 16px 0;
+  position:relative;
+  box-shadow:0 4px 12px rgba(28,43,74,0.18);
+  animation:motivasi-fade-in 0.4s ease;
+}
+@keyframes motivasi-fade-in{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.motivasi-banner.hide{display:none}
+.motivasi-banner-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+}
+.motivasi-banner-icon{
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(96,165,250,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;
+}
+.motivasi-banner-label{
+  font-size:10px;font-weight:700;letter-spacing:1.4px;
+  color:#93C5FD;text-transform:uppercase;
+  flex:1;
+}
+.motivasi-banner-close{
+  background:none;border:none;color:rgba(255,255,255,0.5);
+  font-size:18px;cursor:pointer;padding:0;line-height:1;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;transition:all 0.15s;
+}
+.motivasi-banner-close:hover,.motivasi-banner-close:active{
+  background:rgba(255,255,255,0.1);color:#fff;
+}
+.motivasi-banner-quote{
+  font-size:14px;line-height:1.55;font-style:italic;
+  color:#E2E8F0;font-weight:400;
+  margin:0 0 10px;
+  transition:opacity 0.15s ease;
+}
+.motivasi-banner-actions{
+  display:flex;justify-content:flex-end;
+}
+.motivasi-banner-shuffle{
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#CBD5E1;
+  padding:5px 12px;border-radius:20px;
+  font-size:11px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:all 0.15s;
+}
+.motivasi-banner-shuffle:hover,.motivasi-banner-shuffle:active{
+  background:rgba(255,255,255,0.18);color:#fff;
+}
+.motivasi-banner-shuffle .icon-rot{
+  display:inline-block;transition:transform 0.4s ease;
+}
+.motivasi-banner-shuffle:active .icon-rot{
+  transform:rotate(360deg);
+}
+
+/* ===== TIPS UNTUK STATUS (Detail Modal) ===== */
+.detail-tip-card{
+  margin:12px 16px 0;
+  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 100%);
+  color:#fff;
+  border-radius:12px;
+  padding:12px 14px;
+  position:relative;
+}
+.detail-tip-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+}
+.detail-tip-icon{
+  font-size:14px;
+}
+.detail-tip-label{
+  font-size:9px;font-weight:700;letter-spacing:1.3px;
+  color:#93C5FD;text-transform:uppercase;
+  flex:1;
+}
+.detail-tip-quote{
+  font-size:13px;line-height:1.5;font-style:italic;
+  color:#E2E8F0;margin:0 0 8px;
+  transition:opacity 0.15s ease;
+}
+.detail-tip-foot{
+  font-size:10px;color:#94A3B8;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding-top:6px;margin-top:6px;
+}
+.detail-tip-status{font-weight:600;color:#CBD5E1}
+.detail-tip-shuffle{
+  background:none;border:none;color:#93C5FD;
+  font-size:10px;font-weight:600;cursor:pointer;
+  padding:0;display:inline-flex;align-items:center;gap:4px;
+}
+.detail-tip-shuffle:active{opacity:0.6}
+
 /* ===== PROFILE SCREEN ===== */
 .profile-overlay{position:fixed;inset:0;background:#F8FAFC;z-index:160;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .profile-overlay.show{display:flex}
@@ -571,6 +677,9 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
         </div>
       </div>
 
+      <!-- Tip strategi sesuai status (di-inject dinamis) -->
+      <div id="d-tip-container"></div>
+
       <!-- Map dengan rute dari proyek ke target -->
       <div class="detail-map-wrap">
         <div class="detail-map loading" id="d-map"></div>
@@ -936,6 +1045,79 @@ function getRoleModules(role){
 const STATUS_LABELS = ['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
 const STATUS_ICONS  = ['🔍','📞','🤝','💬','✅'];
 const STATUS_COLORS = ['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'];
+
+// ===== KATA HARI INI - Tips Strategi Target Market (umum, untuk banner dashboard) =====
+const MOTIVASI_QUOTES = [
+  "Setiap closing adalah cerita baru yang layak dirayakan.",
+  "Pasar tidak pernah tidur — yang tidur hanyalah kesempatan yang terlewat.",
+  "Target market yang baik bukan yang paling besar, tapi yang paling siap.",
+  "Data dingin akan menjadi deal panas di tangan sales yang sabar.",
+  "Follow-up bukan mengganggu — tidak follow-up baru kerugian.",
+  "Kenali calon klien sebelum mereka mengenal produkmu.",
+  "Satu target yang dikejar serius, lebih berharga dari sepuluh yang setengah hati.",
+  "Jaringan dibangun dari kunjungan, bukan dari kontak yang tersimpan.",
+  "Tugas kita bukan memaksa beli, tapi memastikan mereka tidak kehilangan kesempatan.",
+  "Properti tidak dijual lewat brosur — tapi lewat kepercayaan yang kamu bangun.",
+  "Hari ini kalah negosiasi, besok bisa menang relasi. Tetap rapi.",
+  "Sales yang menang bukan yang paling pintar bicara, tapi paling pandai mendengar.",
+  "Setiap 'tidak' hari ini adalah informasi untuk 'iya' di kemudian hari.",
+  "Konsistensi mengalahkan keberuntungan — selalu, dalam jangka panjang.",
+  "Pipeline yang sehat hari ini adalah closing bulan depan.",
+  "Jangan kejar penjualan — kejar pemecahan masalah klien, sales akan mengikuti.",
+  "Kualitas data target = kualitas pipeline = kualitas closing.",
+  "Lapangan tidak pernah berbohong. Yang berbohong adalah asumsi dari balik meja.",
+  "Closing besar selalu dimulai dari obrolan kecil yang terus dijaga.",
+  "Pesaing bisa meniru produk, tapi tidak bisa meniru hubungan yang kamu bangun."
+];
+
+// ===== TIPS PER-STATUS (untuk detail modal target) =====
+const TIPS_BY_STATUS = {
+  0: [ // Identifikasi
+    "Sebelum follow-up, pastikan kamu paham struktur perusahaan dan siapa decision maker-nya.",
+    "Target dengan 500+ karyawan biasanya butuh approach via direksi, bukan HRD.",
+    "Riset 5 menit di Google bisa menghemat 50 menit basa-basi saat meeting.",
+    "Kunjungan langsung ke lokasi target sering memberi info yang tidak ada di internet.",
+    "Catat semua detail kecil — nama satpam, jam ramai, akses parkir. Semua berguna nanti.",
+    "Identifikasi yang lemah = pipeline yang berlubang. Investasi waktu di tahap ini.",
+    "Cari tahu siapa kompetitor yang sudah masuk — itu intel berharga untuk strategi."
+  ],
+  1: [ // Kontak Awal
+    "First call: 80% mendengar, 20% bicara. Itu rumusnya.",
+    "Tujuan kontak awal bukan menjual — tapi mendapat izin untuk pertemuan berikutnya.",
+    "Sebut nama klien minimal 2x di awal percakapan. Bangun rasa dihargai.",
+    "Kontak via WhatsApp lebih intim daripada email — tapi tetap profesional.",
+    "Jangan kirim brosur di kontak awal — kirim pertanyaan yang menunjukkan kamu paham bisnis mereka.",
+    "Catat jam berapa klien aktif merespon. Itu pola yang berharga.",
+    "Tutup kontak awal dengan komitmen kecil: 'boleh saya kirim info menarik via WA besok?'"
+  ],
+  2: [ // Presentasi
+    "Presentasi yang bagus dimulai dari mendengar masalah klien, bukan menampilkan produk.",
+    "Materi presentasi: 30% produk, 70% benefit untuk bisnis klien.",
+    "Bawa case study dari klien serupa — bukti lebih kuat dari janji.",
+    "Latihan dulu sebelum presentasi penting. Confidence terlihat dari persiapan.",
+    "Akhiri presentasi dengan pertanyaan terbuka, bukan 'jadi gimana, mau beli?'",
+    "Visual sederhana > slide penuh teks. Mata klien capek baca.",
+    "Setelah presentasi, kirim ringkasan 1 halaman dalam 24 jam. Profesionalisme terasa."
+  ],
+  3: [ // Negosiasi
+    "Negosiasi bukan soal siapa menang — soal mencari titik di mana keduanya menang.",
+    "Jangan turun harga dulu. Tambah value dulu. Diskon adalah opsi terakhir.",
+    "Jika klien diam lama, jangan panik isi kekosongan. Diam lebih kuat daripada bicara.",
+    "Tahu kapan harus 'walk away' — itu kekuatan, bukan kelemahan.",
+    "Selalu siapkan plan B sebelum masuk ruangan negosiasi.",
+    "Negosiasi via chat berisiko salah paham. Telepon atau ketemu langsung.",
+    "Closing biasanya terjadi pada follow-up ke-5 sampai ke-7. Jangan menyerah di ke-3."
+  ],
+  4: [ // Deal
+    "Deal selesai bukan akhir — itu awal hubungan jangka panjang.",
+    "Klien yang puas adalah sumber rujukan terbaik — minta referral dengan elegan.",
+    "Follow-up pasca-deal sama pentingnya dengan follow-up pra-deal.",
+    "Catat tanggal-tanggal penting klien (anniversary, ultah). Sentuhan kecil = relasi panjang.",
+    "Cross-sell hanya berhasil jika kamu sudah deliver janji yang pertama.",
+    "Klien yang sudah deal adalah aset, bukan tiket. Rawat seperti kebun, bukan target.",
+    "Testimoni dari klien deal = senjata terkuat untuk closing target berikutnya."
+  ]
+};
 
 // ===== State =====
 let currentUser = null;
@@ -1801,6 +1983,12 @@ async function enterApp(){
   $('screen-login').style.display = 'none';
   $('screen-app').classList.add('show');
 
+  // Reset state Kata Hari Ini (fresh quote tiap login/buka aplikasi)
+  _motivasiCurrentIdx = -1;
+  _motivasiBannerDismissed = false;
+  _detailTipCurrentIdx = -1;
+  _detailTipCurrentStatus = -1;
+
   // Render header user
   const av = $('user-avatar');
   // Cek foto dari Profile localStorage dulu (yang user upload sendiri), fallback ke currentUser.foto
@@ -1880,6 +2068,131 @@ function renderSkeletonUI(){
 }
 
 // ============================================================
+// KATA HARI INI - Tips Strategi Target Market
+// ============================================================
+let _motivasiCurrentIdx = -1;       // index quote terakhir di dashboard banner
+let _motivasiBannerDismissed = false; // user tap ✕, hide sampai reload
+let _detailTipCurrentIdx = -1;      // index tip terakhir di detail modal
+let _detailTipCurrentStatus = -1;   // status terakhir untuk tip
+
+// Pilih quote random dari array, hindari yang sama persis dengan sebelumnya
+function pickRandomQuote(arr, lastIdx){
+  if(!arr || arr.length === 0) return { idx: -1, text: '' };
+  if(arr.length === 1) return { idx: 0, text: arr[0] };
+  let idx;
+  let tries = 0;
+  do {
+    idx = Math.floor(Math.random() * arr.length);
+    tries++;
+  } while(idx === lastIdx && tries < 8);
+  return { idx, text: arr[idx] };
+}
+
+// Render banner kata hari ini di dashboard
+function renderMotivasiBanner(){
+  if(_motivasiBannerDismissed) return '';
+  if(_motivasiCurrentIdx === -1){
+    const picked = pickRandomQuote(MOTIVASI_QUOTES, -1);
+    _motivasiCurrentIdx = picked.idx;
+  }
+  const quote = MOTIVASI_QUOTES[_motivasiCurrentIdx] || MOTIVASI_QUOTES[0];
+  return `
+    <div class="motivasi-banner" id="motivasi-banner">
+      <div class="motivasi-banner-head">
+        <div class="motivasi-banner-icon">✨</div>
+        <div class="motivasi-banner-label">Kata Hari Ini</div>
+        <button class="motivasi-banner-close" onclick="dismissMotivasiBanner()" aria-label="Tutup">×</button>
+      </div>
+      <p class="motivasi-banner-quote" id="motivasi-quote-text">"${esc(quote)}"</p>
+      <div class="motivasi-banner-actions">
+        <button class="motivasi-banner-shuffle" onclick="shuffleMotivasi()">
+          <span class="icon-rot">⟲</span>
+          <span>Kata Lain</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// Shuffle ke quote baru di banner dashboard
+function shuffleMotivasi(){
+  const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
+  _motivasiCurrentIdx = picked.idx;
+  const el = $('motivasi-quote-text');
+  if(el){
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = `"${picked.text}"`;
+      el.style.opacity = '1';
+    }, 150);
+  }
+}
+
+// Dismiss banner sampai reload
+function dismissMotivasiBanner(){
+  _motivasiBannerDismissed = true;
+  const el = $('motivasi-banner');
+  if(el){
+    el.style.transition = 'opacity 0.2s';
+    el.style.opacity = '0';
+    setTimeout(() => { el.classList.add('hide'); }, 200);
+  }
+}
+
+// ===== Tip per status untuk detail modal target =====
+function renderDetailTipCard(status){
+  const s = parseInt(status);
+  if(isNaN(s) || s < 0 || s > 4) return '';
+  const tips = TIPS_BY_STATUS[s];
+  if(!tips || tips.length === 0) return '';
+
+  // Reset index kalau status berbeda dari sebelumnya
+  if(_detailTipCurrentStatus !== s){
+    _detailTipCurrentIdx = -1;
+    _detailTipCurrentStatus = s;
+  }
+  const picked = pickRandomQuote(tips, _detailTipCurrentIdx);
+  _detailTipCurrentIdx = picked.idx;
+
+  const lbl = STATUS_LABELS[s] || '-';
+  const ic = STATUS_ICONS[s] || '💡';
+  return `
+    <div class="detail-tip-card" id="detail-tip-card" data-status="${s}">
+      <div class="detail-tip-head">
+        <span class="detail-tip-icon">💡</span>
+        <span class="detail-tip-label">Tip Strategi</span>
+      </div>
+      <p class="detail-tip-quote" id="detail-tip-quote">"${esc(picked.text)}"</p>
+      <div class="detail-tip-foot">
+        <span class="detail-tip-status">${ic} Fase: ${esc(lbl)}</span>
+        <button class="detail-tip-shuffle" onclick="shuffleDetailTip()">⟲ Tip lain</button>
+      </div>
+    </div>
+  `;
+}
+
+// Shuffle tip di detail modal
+function shuffleDetailTip(){
+  const card = $('detail-tip-card');
+  if(!card) return;
+  const s = parseInt(card.getAttribute('data-status'));
+  if(isNaN(s)) return;
+  const tips = TIPS_BY_STATUS[s];
+  if(!tips || tips.length === 0) return;
+
+  const picked = pickRandomQuote(tips, _detailTipCurrentIdx);
+  _detailTipCurrentIdx = picked.idx;
+  const el = $('detail-tip-quote');
+  if(el){
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = `"${picked.text}"`;
+      el.style.opacity = '1';
+    }, 150);
+  }
+}
+
+// ============================================================
 // CONTENT RENDERING (dinamis sesuai role)
 // ============================================================
 function renderContent(){
@@ -1932,6 +2245,7 @@ function renderTargetPasarDashboard(){
   filtered = filtered.slice().sort((a,b) => (parseInt(b.status)||0) - (parseInt(a.status)||0));
 
   let html = `
+    ${renderMotivasiBanner()}
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total target</div>
@@ -2073,6 +2387,12 @@ function openDetailTarget(id){
   statusEl.textContent = statusInfo.ic + ' ' + statusInfo.lbl;
   statusEl.style.background = statusInfo.bg;
   statusEl.style.color = statusInfo.col;
+
+  // Render tip strategi sesuai status target
+  const tipContainer = $('d-tip-container');
+  if(tipContainer){
+    tipContainer.innerHTML = renderDetailTipCard(s);
+  }
 
   // Info rows
   const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
