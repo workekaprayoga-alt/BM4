@@ -103,5 +103,14 @@ window.BM4_PATCHES = [
     file: 'js/patches/patch-fix-proyek-sync.js',
     css: null,
     dependsOn: []
+  },
+  {
+    id: 'patch-mobile-permissions',
+    name: 'Mobile Permissions Panel (Step 3)',
+    version: '1.0.0',
+    enabled: true,
+    file: 'js/patches/patch-mobile-permissions.js',
+    css: null,
+    dependsOn: []
   }
 ];
