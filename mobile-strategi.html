@@ -1,0 +1,4331 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#1C2B4A">
+<title>BM4 Strategi & Promo · Mobile</title>
+<link rel="manifest" href="manifest.json?v=rc14">
+<!-- Leaflet untuk mini-map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root{
+  --navy:#1C2B4A;
+  --accent:#2563EB;
+  --bg:#F2F1EE;
+  --surface:#fff;
+  --text:#1C1C1A;
+  --muted:#64748B;
+  --border:rgba(0,0,0,.08);
+  --danger:#DC2626;
+  --ok:#059669;
+  --warn:#F59E0B;
+  --purple:#7C3AED;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ============== LOADING SCREEN ============== */
+.boot-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#1C2B4A 0%,#0F1A35 100%);color:#fff;padding:24px}
+.boot-screen .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px}
+.boot-screen p{font-size:13px;opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============== LOGIN SCREEN ============== */
+.login-screen{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px;background:linear-gradient(180deg,#1C2B4A 0%,#0F1A35 100%)}
+.login-box{background:#fff;border-radius:20px;padding:28px 22px;max-width:380px;width:100%;margin:0 auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .icon{width:56px;height:56px;background:var(--navy);color:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin-bottom:10px}
+.login-logo h1{font-size:18px;margin:0;color:var(--text)}
+.login-logo p{font-size:12px;color:var(--muted);margin:4px 0 0}
+.login-box label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.login-box input{width:100%;border:1px solid var(--border);border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;background:#FAFAF8}
+.login-box input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-box .btn-login{width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:14px;margin-top:18px;cursor:pointer}
+.login-box .btn-login:disabled{opacity:.6}
+.login-box .btn-login:active{transform:scale(.98)}
+.login-box .err{background:#FEF2F2;color:var(--danger);font-size:12px;padding:10px 12px;border-radius:10px;margin-top:14px;display:none;border:1px solid #FECACA}
+.login-box .err.show{display:block}
+.login-box .info{font-size:11px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+.login-box .info a{color:var(--accent);text-decoration:none}
+.login-box .loader{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px}
+.login-box .btn-login.loading .loader{display:inline-block}
+
+/* ============== APP SCREEN ============== */
+.app-screen{display:none}
+.app-screen.show{display:block}
+
+/* Header user */
+.user-header{background:var(--navy);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.user-header-row{display:flex;align-items:center;gap:10px}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:14px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:#94A3B8;margin-top:2px}
+.btn-logout{font-size:11px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:999px;cursor:pointer}
+.btn-logout:active{background:rgba(255,255,255,.2)}
+
+.user-header-clickable{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;padding:4px 6px;margin:-4px -6px;border-radius:10px;transition:background .15s}
+.user-header-clickable:active{background:rgba(255,255,255,.08)}
+.btn-profile{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+.btn-profile:active{background:rgba(255,255,255,.22)}
+
+.proyek-bar{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;margin-top:10px;display:flex;align-items:center;gap:8px}
+.proyek-bar label{font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.proyek-bar select{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:6px 8px;font:inherit;font-size:12px}
+.proyek-bar select option{background:var(--navy);color:#fff}
+
+/* Sync indicator */
+.sync-state{padding:6px 10px;font-size:11px;text-align:center;color:#94A3B8;background:rgba(0,0,0,.04)}
+.sync-state.loading{color:var(--accent)}
+.sync-state.err{color:var(--danger);background:#FEF2F2}
+
+/* Content wrapper */
+.content{padding:12px;max-width:620px;margin:0 auto}
+
+/* Stats card grid */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 12px}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:2px}
+.stat-value{font-size:22px;font-weight:700;line-height:1.1}
+.stat-value.warn{color:var(--warn)}
+.stat-value.ok{color:var(--ok)}
+
+/* Pipeline bar */
+.pipeline-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.pipeline-card .label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.pipeline-bar{display:flex;gap:3px;height:6px;border-radius:999px;overflow:hidden;margin-bottom:8px;background:#F1F5F9}
+.pipeline-bar .seg{height:100%}
+.pipeline-bar .seg.s0{background:#94A3B8}
+.pipeline-bar .seg.s1{background:#3B82F6}
+.pipeline-bar .seg.s2{background:#F59E0B}
+.pipeline-bar .seg.s3{background:#EC4899}
+.pipeline-bar .seg.s4{background:#10B981}
+.pipeline-legend{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:10px;color:var(--muted)}
+.pipeline-legend .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+
+/* Action button */
+.btn-primary{width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:13px;margin-bottom:10px;cursor:pointer}
+.btn-primary:active{transform:scale(.99)}
+
+/* List header */
+.list-header{display:flex;justify-content:space-between;align-items:center;margin:6px 4px 8px}
+.list-header .title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.list-header .count{font-size:11px;color:var(--muted)}
+
+/* Target card */
+/* ===== Swipe Card untuk Quick Update Status ===== */
+.swipe-card-wrap{
+  position:relative;
+  margin-bottom:8px;
+  border-radius:10px;
+  overflow:hidden;
+  background:#10B981;
+}
+.swipe-action{
+  position:absolute;
+  top:0;left:0;bottom:0;
+  display:flex;align-items:center;
+  padding:0 18px;
+  color:#fff;
+  font-weight:600;font-size:12px;
+  width:100%;
+  pointer-events:none;
+  gap:8px;
+}
+.swipe-action-right{
+  background:linear-gradient(90deg, #10B981 0%, #059669 100%);
+  justify-content:flex-start;
+}
+.swipe-action .swipe-icon{font-size:16px}
+.swipe-action .swipe-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:4px;
+}
+.swipe-action .swipe-label::before{
+  content:'→ ';opacity:0.8;
+}
+.swipe-card{
+  position:relative;
+  margin-bottom:0 !important;
+  background:#fff;
+  transition:transform 0.2s ease;
+  z-index:2;
+  touch-action:pan-y;
+}
+.swipe-card.swiping{transition:none}
+.swipe-card.snap-back{transition:transform 0.25s ease}
+
+.target-card{background:#fff;border:1px solid var(--border);border-left:3px solid #94A3B8;border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.target-card.s0{border-left-color:#94A3B8}
+.target-card.s1{border-left-color:#3B82F6}
+.target-card.s2{border-left-color:#F59E0B}
+.target-card.s3{border-left-color:#EC4899}
+.target-card.s4{border-left-color:#10B981}
+.target-card-head{display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:5px}
+.target-card-name{font-weight:700;font-size:13px;line-height:1.3;flex:1}
+
+/* ===== Reminder Follow-up Stagnant ===== */
+.target-card.stagnant{
+  border-left-color:#DC2626 !important;
+  box-shadow:0 0 0 1px rgba(220,38,38,0.08), 0 1px 4px rgba(0,0,0,0.04);
+}
+.target-reminder-badge{
+  display:inline-flex;align-items:center;
+  background:rgba(220,38,38,0.1);
+  color:#DC2626;
+  border-radius:10px;
+  padding:1px 6px;
+  font-size:10px;
+  font-weight:700;
+  margin-left:6px;
+  vertical-align:middle;
+  letter-spacing:0.3px;
+}
+.reminder-banner{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border:1px solid rgba(220,38,38,0.2);
+  border-radius:12px;
+  padding:10px 12px 10px 14px;
+  margin:0 0 10px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+  transition:transform 0.1s;
+}
+.reminder-banner:active{transform:scale(0.99)}
+.reminder-banner-icon{
+  font-size:20px;flex-shrink:0;
+  filter:drop-shadow(0 1px 1px rgba(220,38,38,0.2));
+}
+.reminder-banner-content{flex:1;min-width:0}
+.reminder-banner-title{
+  font-size:12px;font-weight:700;
+  color:#991B1B;
+  margin-bottom:1px;
+}
+.reminder-banner-sub{
+  font-size:11px;
+  color:#7F1D1D;
+  opacity:0.85;
+}
+.reminder-banner-arrow{
+  color:#DC2626;
+  font-size:16px;font-weight:700;
+  flex-shrink:0;
+  opacity:0.6;
+}
+.target-card-badge{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+.target-card-badge.s0{background:#F1F5F9;color:#475569}
+.target-card-badge.s1{background:#DBEAFE;color:#1E40AF}
+.target-card-badge.s2{background:#FEF3C7;color:#92400E}
+.target-card-badge.s3{background:#FCE7F3;color:#9F1239}
+.target-card-badge.s4{background:#D1FAE5;color:#065F46}
+.target-card-meta{font-size:11px;color:var(--muted);line-height:1.5}
+
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted)}
+.empty-state .icon{font-size:36px;margin-bottom:8px;opacity:.5}
+.empty-state p{font-size:13px;margin:4px 0}
+.empty-state .hint{font-size:11px;margin-top:8px}
+
+/* Filter pills */
+.filter-pills{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 0 6px;margin-bottom:10px;-webkit-overflow-scrolling:touch;align-items:center}
+.filter-pills::-webkit-scrollbar{display:none}
+.pill-filter{background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--muted);cursor:pointer}
+.pill-filter.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* ===== Sticky Search + Filter Bar ===== */
+.sticky-filter-bar{
+  position:sticky;
+  top:62px;
+  background:var(--bg);
+  z-index:30;
+  margin:0 -16px 12px;
+  padding:10px 16px 12px;
+  box-shadow:0 4px 8px -4px rgba(0,0,0,.06);
+}
+.sticky-filter-bar .filter-pills{margin-bottom:8px}
+.sticky-filter-bar .filter-pills:last-child{margin-bottom:0}
+.search-box{
+  background:#fff;border:1px solid var(--border);
+  border-radius:999px;
+  padding:8px 12px;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+  transition:border-color .15s, box-shadow .15s;
+}
+.search-box:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+}
+.search-box .search-icon{
+  font-size:13px;flex-shrink:0;opacity:0.6;
+}
+.search-box input{
+  flex:1;border:none;background:none;outline:none;
+  font-size:13px;color:var(--text);
+  padding:0;min-width:0;
+  font-family:inherit;
+}
+.search-box input::placeholder{color:#94A3B8}
+.search-box .search-clear{
+  background:rgba(0,0,0,0.06);border:none;color:#64748B;
+  width:20px;height:20px;border-radius:50%;
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.search-box .search-clear:active{background:rgba(0,0,0,0.12)}
+
+/* Filter aktif chip (untuk filter stagnant) */
+.active-filter-chip{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border:1px solid rgba(220,38,38,0.25);
+  border-radius:999px;
+  padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+  font-size:12px;font-weight:600;color:#991B1B;
+}
+.active-filter-chip span{flex:1}
+.active-filter-chip button{
+  background:rgba(220,38,38,0.15);
+  border:none;color:#DC2626;
+  width:20px;height:20px;border-radius:50%;
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.active-filter-chip button:active{background:rgba(220,38,38,0.25)}
+
+/* Filter pills jenis (baris kedua) */
+.filter-pills-jenis{margin-bottom:0;padding-bottom:6px}
+.pill-jenis{
+  background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:6px 12px;
+  font-size:11px;font-weight:500;
+  white-space:nowrap;color:var(--muted);cursor:pointer;
+  flex-shrink:0;
+  line-height:1.3;
+}
+.pill-jenis.active{
+  background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;
+}
+.filter-pills::-webkit-scrollbar{display:none}
+.pill-filter{background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--muted);cursor:pointer}
+.pill-filter.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* No-access placeholder */
+.no-access{padding:40px 20px;text-align:center}
+.no-access .icon{font-size:48px;margin-bottom:12px}
+.no-access h2{font-size:16px;margin:0 0 8px}
+.no-access p{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}
+
+/* ===== KATA HARI INI - SPLASH (saat login, full screen 2.5 detik) ===== */
+.motivasi-splash{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 60%, #0F1A2E 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 28px;
+  cursor:pointer;
+  animation:splash-in 0.5s ease;
+}
+.motivasi-splash.show{display:flex}
+.motivasi-splash.fadeout{
+  animation:splash-out 0.5s ease forwards;
+}
+@keyframes splash-in{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes splash-out{
+  from{opacity:1}
+  to{opacity:0;visibility:hidden}
+}
+.motivasi-splash-content{
+  max-width:340px;width:100%;text-align:center;
+  animation:splash-content-in 0.7s 0.15s ease backwards;
+}
+@keyframes splash-content-in{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.motivasi-splash-icon{
+  font-size:38px;margin-bottom:18px;
+  animation:splash-icon-pulse 2s ease-in-out infinite;
+}
+@keyframes splash-icon-pulse{
+  0%,100%{transform:scale(1);opacity:0.95}
+  50%{transform:scale(1.08);opacity:1}
+}
+.motivasi-splash-label{
+  font-size:11px;font-weight:700;letter-spacing:2.5px;
+  color:#93C5FD;text-transform:uppercase;
+  margin-bottom:22px;
+}
+.motivasi-splash-quote{
+  font-size:19px;line-height:1.55;font-style:italic;
+  color:#F1F5F9;font-weight:400;
+  margin-bottom:28px;
+  transition:opacity 0.18s ease;
+}
+.motivasi-splash-quote::before{
+  content:'\201C';
+  display:block;font-size:36px;color:#60A5FA;
+  font-style:normal;font-weight:700;
+  line-height:0.6;margin-bottom:10px;
+  opacity:0.45;
+}
+.motivasi-splash-actions{
+  display:flex;gap:10px;align-items:center;justify-content:center;
+  margin-top:8px;
+  animation:splash-actions-in 0.6s 0.4s ease backwards;
+}
+@keyframes splash-actions-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.motivasi-splash-btn-primary{
+  background:#2563EB;color:#fff;border:none;
+  padding:11px 28px;border-radius:999px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  letter-spacing:0.3px;
+  box-shadow:0 4px 12px rgba(37,99,235,0.35);
+  transition:all 0.15s;
+}
+.motivasi-splash-btn-primary:active{
+  transform:scale(0.96);
+  background:#1D4ED8;
+}
+.motivasi-splash-btn-secondary{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#CBD5E1;
+  padding:10px 16px;border-radius:999px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:all 0.15s;
+}
+.motivasi-splash-btn-secondary:active{
+  background:rgba(255,255,255,0.18);
+  color:#fff;
+}
+
+/* ===== TIPS UNTUK STATUS (Detail Modal) ===== */
+.detail-tip-card{
+  margin:12px 16px 0;
+  background:linear-gradient(135deg, #1C2B4A 0%, #2A3D6B 100%);
+  color:#fff;
+  border-radius:12px;
+  padding:12px 14px;
+  position:relative;
+}
+.detail-tip-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+}
+.detail-tip-icon{
+  font-size:14px;
+}
+.detail-tip-label{
+  font-size:9px;font-weight:700;letter-spacing:1.3px;
+  color:#93C5FD;text-transform:uppercase;
+  flex:1;
+}
+.detail-tip-quote{
+  font-size:13px;line-height:1.5;font-style:italic;
+  color:#E2E8F0;margin:0 0 8px;
+  transition:opacity 0.15s ease;
+}
+.detail-tip-foot{
+  font-size:10px;color:#94A3B8;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding-top:6px;margin-top:6px;
+}
+.detail-tip-status{font-weight:600;color:#CBD5E1}
+.detail-tip-shuffle{
+  background:none;border:none;color:#93C5FD;
+  font-size:10px;font-weight:600;cursor:pointer;
+  padding:0;display:inline-flex;align-items:center;gap:4px;
+}
+.detail-tip-shuffle:active{opacity:0.6}
+
+/* ===== PROFILE SCREEN ===== */
+.profile-overlay{position:fixed;inset:0;background:#F8FAFC;z-index:160;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.profile-overlay.show{display:flex}
+.profile-header{position:sticky;top:0;background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;display:flex;align-items:center;gap:12px;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.profile-header .back{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.profile-header .back:active{background:rgba(255,255,255,.22)}
+.profile-header h2{margin:0;font-size:16px;font-weight:700;flex:1}
+.profile-body{flex:1;padding:20px 16px calc(env(safe-area-inset-bottom, 0px) + 24px)}
+
+.profile-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 0 20px}
+.profile-avatar-wrap{position:relative;width:104px;height:104px;margin-bottom:12px}
+.profile-avatar{width:104px;height:104px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:36px;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-avatar-edit{position:absolute;bottom:2px;right:2px;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.profile-avatar-edit:active{transform:scale(.92)}
+.profile-name{font-size:18px;font-weight:700;color:var(--navy);margin:4px 0 6px}
+.profile-role-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;background:#E0F2FE;color:#0369A1}
+.profile-role-pill.bm{background:#DBEAFE;color:#1E40AF}
+.profile-role-pill.strategi{background:#D1FAE5;color:#065F46}
+.profile-role-pill.sales{background:#FEF3C7;color:#92400E}
+.profile-role-pill.konstruksi{background:#FCE7F3;color:#9D174D}
+.profile-username{font-size:11px;color:var(--muted);margin-top:6px}
+
+.profile-section{background:#fff;border-radius:14px;padding:14px 14px;margin-bottom:14px;border:1px solid #E2E8F0}
+.profile-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.profile-bio{font-size:13px;color:#334155;line-height:1.55;min-height:42px;padding:8px 10px;background:#F8FAFC;border-radius:10px;border:1px dashed #E2E8F0}
+.profile-bio.empty{color:#94A3B8;font-style:italic}
+.profile-bio-edit{margin-top:10px;display:none;flex-direction:column;gap:8px}
+.profile-bio-edit.show{display:flex}
+.profile-bio-edit textarea{width:100%;min-height:80px;padding:10px;border:1.5px solid #E2E8F0;border-radius:10px;font:inherit;font-size:13px;color:#0F172A;resize:vertical;box-sizing:border-box}
+.profile-bio-edit textarea:focus{outline:none;border-color:var(--accent)}
+.profile-bio-actions{display:flex;gap:8px;justify-content:flex-end}
+.profile-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:.15s}
+.profile-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.profile-btn.primary:active{background:#1D4ED8}
+.profile-btn.ghost{background:#fff;color:var(--accent);border-color:#CBD5E1}
+.profile-btn.ghost:active{background:#F1F5F9}
+.profile-btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.profile-btn.danger:active{background:#B91C1C}
+.profile-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.profile-stat{background:#F8FAFC;border-radius:10px;padding:12px;text-align:center;border:1px solid #E2E8F0}
+.profile-stat-num{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.profile-stat-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:6px}
+.profile-stat-sub{font-size:10px;color:#64748B;margin-top:3px}
+
+.profile-action-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1F5F9;cursor:pointer}
+.profile-action-row:last-child{border-bottom:none}
+.profile-action-row:active{background:#F8FAFC}
+.profile-action-label{display:flex;align-items:center;gap:10px;font-size:13px;color:#0F172A}
+.profile-action-icon{font-size:18px;width:24px;text-align:center}
+.profile-action-arrow{color:#CBD5E1;font-size:18px}
+
+/* Profile sub-modal (untuk ganti password) */
+.profile-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:170;display:none;align-items:flex-end;justify-content:center;padding:0}
+.profile-modal.show{display:flex}
+.profile-modal-card{background:#fff;border-top-left-radius:18px;border-top-right-radius:18px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:18px 18px calc(env(safe-area-inset-bottom, 0px) + 18px);box-shadow:0 -10px 30px rgba(0,0,0,.2);animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.profile-modal-card h3{margin:0 0 4px;font-size:15px;color:var(--navy)}
+.profile-modal-card p.sub{margin:0 0 14px;font-size:12px;color:var(--muted)}
+.profile-form-group{margin-bottom:12px}
+.profile-form-group label{display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.profile-form-group input{width:100%;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font:inherit;font-size:14px;color:#0F172A;box-sizing:border-box}
+.profile-form-group input:focus{outline:none;border-color:var(--accent)}
+.profile-form-group .hint{font-size:11px;color:var(--muted);margin-top:4px}
+.profile-form-group .err-msg{font-size:11px;color:var(--danger);margin-top:4px;display:none}
+.profile-form-group.has-error input{border-color:var(--danger)}
+.profile-form-group.has-error .err-msg{display:block}
+.profile-modal-actions{display:flex;gap:10px;margin-top:16px}
+
+/* Reminder Setting Options */
+.reminder-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(90px, 1fr));
+  gap:8px;
+  margin:14px 0 10px;
+}
+.reminder-option-btn{
+  background:#fff;
+  border:2px solid #E2E8F0;
+  border-radius:10px;
+  padding:10px 6px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:2px;
+  cursor:pointer;
+  font-size:13px;font-weight:700;color:#1C1C1A;
+  transition:all 0.15s;
+}
+.reminder-option-btn small{
+  font-size:9px;font-weight:500;color:#94A3B8;
+  letter-spacing:0.2px;
+}
+.reminder-option-btn:hover,.reminder-option-btn:active{
+  border-color:#94A3B8;
+  background:#F8FAFC;
+}
+.reminder-option-btn.active{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border-color:#DC2626;
+  color:#991B1B;
+}
+.reminder-option-btn.active small{color:#7F1D1D}
+.reminder-info{
+  font-size:11px;color:#94A3B8;
+  background:#F8FAFC;padding:8px 10px;border-radius:8px;
+  margin:8px 0 0;line-height:1.5;
+}
+.profile-modal-actions .profile-btn{flex:1;padding:11px}
+
+.profile-logout-btn{width:100%;margin-top:8px;padding:13px;background:#fff;color:var(--danger);border:1.5px solid var(--danger);border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.profile-logout-btn:active{background:#FEF2F2}
+
+/* Toast */
+.toast{position:fixed;left:16px;right:16px;bottom:16px;background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:.2s;z-index:200;font-size:13px;text-align:center}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--ok)}
+.toast.err{background:var(--danger)}
+
+/* Footer */
+.footer{font-size:10px;text-align:center;color:#94A3B8;padding:18px 16px}
+.footer a{color:#60A5FA;text-decoration:none}
+
+/* ============== MODAL TARGET FORM ============== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+  display:none;align-items:flex-end;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-sheet{
+  background:var(--bg);width:100%;max-width:620px;
+  height:100vh;height:100dvh; /* dvh = dynamic viewport, exclude URL bar di mobile */
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  animation:slideUp .25s ease-out;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-head{
+  background:var(--navy);color:#fff;
+  /* Padding top dengan safe-area untuk Notch/Dynamic Island */
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 14px 14px;
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+.modal-head .back{
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:#fff;background:rgba(255,255,255,.12);
+  border:none;border-radius:10px;padding:0;cursor:pointer;flex-shrink:0;
+}
+.modal-head .back:active{background:rgba(255,255,255,.25)}
+.modal-head .title{flex:1;min-width:0}
+.modal-head .title h2{font-size:15px;font-weight:700;margin:0;line-height:1.2;color:#fff}
+.modal-head .title p{font-size:11px;color:rgba(255,255,255,.7);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-body{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.modal-foot{
+  background:#fff;
+  padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 10px);
+  border-top:1px solid var(--border);
+  display:flex;gap:8px;flex-shrink:0;
+}
+.modal-foot .btn{
+  flex:1;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:13px;
+  font-family:inherit;cursor:pointer;
+}
+.modal-foot .btn.cancel{background:#fff;color:var(--text);border:1px solid var(--border)}
+.modal-foot .btn.save{background:var(--navy);color:#fff;flex:2}
+.modal-foot .btn.save:disabled{opacity:.5}
+
+/* Form fields di modal */
+.field{margin-bottom:14px}
+.field label{
+  display:block;font-size:11px;font-weight:700;color:var(--muted);
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;
+}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;
+  font:inherit;font-size:14px;background:#fff;
+}
+.field textarea{min-height:70px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--accent);
+}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field .req{color:var(--danger)}
+.field .help{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* Mini-map dalam form */
+.mini-map-wrap{margin-bottom:14px}
+.mini-map-head{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+}
+.mini-map-head label{
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px;margin:0;
+}
+.mini-map-head .badge{
+  font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;
+}
+.mini-map-head .badge.ok{background:#D1FAE5;color:#065F46}
+.mini-map-head .badge.warn{background:#FEF3C7;color:#92400E}
+.mini-map{
+  height:200px;border-radius:10px;overflow:hidden;background:#E2E8F0;
+  border:1px solid var(--border);position:relative;z-index:1;
+}
+.mini-map.disabled{opacity:.5;pointer-events:none}
+.gps-row{display:flex;gap:6px;margin-top:8px}
+.gps-row .btn-gps{
+  flex:1;background:var(--navy);color:#fff;border:none;border-radius:10px;
+  padding:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;
+}
+.gps-row .btn-gps.loading{opacity:.7}
+.gps-row .btn-link{
+  background:#fff;color:var(--navy);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;
+}
+.coord-display{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;
+}
+.coord-display .coord{
+  background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:7px 9px;
+}
+.coord-display .coord .lbl{font-size:9px;color:#0F766E;font-weight:700;letter-spacing:.5px}
+.coord-display .coord .val{font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#134E4A;margin-top:2px}
+.coord-display .coord.empty{background:#FEF2F2;border-color:#FECACA}
+.coord-display .coord.empty .lbl{color:#991B1B}
+.coord-display .coord.empty .val{color:#991B1B}
+.coord-info{
+  background:#ECFDF5;border-radius:8px;padding:8px 10px;font-size:10px;color:#065F46;
+  margin-top:8px;
+}
+.coord-info.warn{background:#FEF3C7;color:#92400E}
+
+/* Smart input dialog */
+.smart-input-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.smart-input-overlay.show{display:flex}
+.smart-input-box{
+  background:#fff;border-radius:14px;padding:18px;max-width:380px;width:100%;
+}
+.smart-input-box h3{margin:0 0 4px;font-size:15px}
+.smart-input-box p{margin:0 0 12px;font-size:12px;color:var(--muted);line-height:1.5}
+.smart-input-box textarea{
+  width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;
+  padding:10px;font:inherit;font-size:13px;font-family:ui-monospace,monospace;resize:vertical;
+}
+.smart-input-box .btnrow{display:flex;gap:8px;margin-top:12px}
+.smart-input-box .btnrow button{
+  flex:1;border:none;border-radius:10px;padding:11px;font-weight:700;font-size:13px;
+  font-family:inherit;cursor:pointer;
+}
+.smart-input-box .btnrow .cancel{background:#F1F5F9;color:var(--text)}
+.smart-input-box .btnrow .ok{background:var(--navy);color:#fff}
+
+/* Save success dialog (Q3 — opsi C) */
+.save-success-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.save-success-overlay.show{display:flex}
+.save-success-box{
+  background:#fff;border-radius:14px;padding:22px 18px 16px;max-width:380px;width:100%;
+  text-align:center;
+}
+.save-success-box .icon-ok{
+  width:56px;height:56px;background:#D1FAE5;color:#059669;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:10px;
+}
+.save-success-box h3{margin:0 0 4px;font-size:16px}
+.save-success-box p{margin:0 0 16px;font-size:12px;color:var(--muted)}
+.save-success-box .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.save-success-box .btnrow button{
+  border:none;border-radius:10px;padding:12px 8px;font-weight:700;font-size:12px;
+  font-family:inherit;cursor:pointer;
+}
+.save-success-box .btnrow .again{background:var(--navy);color:#fff}
+.save-success-box .btnrow .back{background:#F1F5F9;color:var(--text)}
+
+/* Override Leaflet untuk mobile */
+.leaflet-container{font-family:inherit;font-size:11px}
+.leaflet-popup-content{margin:8px 10px;font-size:12px;line-height:1.4}
+
+/* ============== MODAL DETAIL TARGET ============== */
+/* Pakai struktur sama dengan modal-overlay/sheet/head/body/foot */
+
+/* Hero section di atas detail — nama target, status badge */
+.detail-hero{
+  background:#fff;padding:14px;border-radius:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.detail-hero h3{margin:0;font-size:17px;font-weight:700;color:var(--text);line-height:1.3}
+.detail-hero .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.detail-hero .status-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.detail-hero .status-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;
+}
+
+/* Map container untuk detail — lebih tinggi karena ada rute */
+.detail-map-wrap{
+  background:#fff;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.detail-map{height:240px;background:#E2E8F0;position:relative;z-index:1}
+.detail-map.loading::after{
+  content:'⏳ Memuat peta...';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.85);font-size:12px;color:var(--muted);
+}
+
+/* Stats row di bawah peta — jarak, durasi */
+.detail-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:var(--border);
+}
+.detail-stat{
+  background:#fff;padding:11px 12px;text-align:center;
+}
+.detail-stat .lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.detail-stat .val{font-size:16px;font-weight:700;color:var(--text);margin-top:2px}
+.detail-stat .val.loading{color:var(--muted);font-size:13px;font-weight:500}
+.detail-stat .sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* Info card — PIC, kontak terakhir, catatan */
+.detail-info{
+  background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+
+/* Aktivitas section di detail modal */
+.aktivitas-section{
+  background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.aktivitas-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid #F1F5F9;
+}
+.aktivitas-title{
+  font-size:13px;font-weight:700;color:var(--navy);
+}
+.aktivitas-count{
+  font-size:10px;color:var(--muted);
+  background:#F1F5F9;padding:2px 8px;border-radius:10px;
+}
+.aktivitas-empty{
+  font-size:12px;color:var(--muted);
+  background:#F8FAFC;padding:10px 12px;border-radius:8px;
+  text-align:center;line-height:1.5;
+}
+.aktivitas-list{
+  display:flex;flex-direction:column;gap:8px;
+}
+.aktivitas-item{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:8px 0;
+  border-bottom:1px solid #F8FAFC;
+}
+.aktivitas-item:last-child{border-bottom:none}
+.aktivitas-icon{
+  font-size:14px;flex-shrink:0;
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  background:#F1F5F9;border-radius:50%;
+}
+.aktivitas-body{flex:1;min-width:0}
+.aktivitas-desc{
+  font-size:12px;font-weight:600;color:var(--text);
+  line-height:1.4;
+}
+.aktivitas-meta{
+  font-size:10px;color:var(--muted);
+  margin-top:2px;
+}
+.aktivitas-more{
+  background:none;border:none;
+  color:var(--accent);font-size:11px;font-weight:600;
+  padding:8px 0 0;cursor:pointer;width:100%;
+  text-align:center;
+}
+.aktivitas-more:active{opacity:0.7}
+.detail-info-row{
+  display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);
+}
+.detail-info-row:last-child{border-bottom:none}
+.detail-info-row .ico{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.detail-info-row .body{flex:1;min-width:0}
+.detail-info-row .body .lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.detail-info-row .body .val{font-size:13px;color:var(--text);margin-top:2px;word-wrap:break-word}
+.detail-info-row .body .val.empty{color:var(--muted);font-style:italic}
+
+/* Quick actions — buka maps, telp, WA */
+.detail-actions{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;
+}
+.detail-actions .qa{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:11px 6px;text-align:center;cursor:pointer;
+  font-family:inherit;color:var(--text);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .15s;
+}
+.detail-actions .qa:active{background:#F0FDFA;border-color:var(--accent)}
+.detail-actions .qa.disabled{opacity:.45;cursor:not-allowed}
+.detail-actions .qa.disabled:active{background:#fff;border-color:var(--border)}
+.detail-actions .qa .ico{font-size:20px}
+.detail-actions .qa .lbl{font-size:11px;font-weight:700}
+
+/* Footer modal detail: tombol Tutup + Edit */
+.modal-foot.detail-foot{display:flex;gap:8px}
+.modal-foot.detail-foot .btn.close{background:#fff;color:var(--text);border:1px solid var(--border);flex:1}
+.modal-foot.detail-foot .btn.edit{background:var(--navy);color:#fff;flex:2}
+.modal-foot.detail-foot .btn.edit.hidden{display:none}
+
+/* [PERF] Skeleton loading UI */
+.skeleton-wrap{padding:16px;display:flex;flex-direction:column;gap:12px}
+.skel-card{
+  height:96px;border-radius:14px;
+  background:linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+  background-size:200% 100%;
+  animation:skel-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skel-shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== LAYAR LOADING (auto-login check) ========== -->
+<div class="boot-screen" id="screen-boot">
+  <div class="spinner"></div>
+  <p>Memuat...</p>
+</div>
+
+<!-- ========== LAYAR LOGIN ========== -->
+<div class="login-screen" id="screen-login" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">B4</div>
+      <h1>BM4 Mobile</h1>
+      <p id="login-divisi-label">Masuk dengan akun tim kamu</p>
+    </div>
+    <label>Username</label>
+    <input type="text" id="login-username" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="contoh: strategi1">
+    <label>Password</label>
+    <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
+    <div class="err" id="login-err">Username atau password salah.</div>
+    <button class="btn-login" id="btn-login"><span class="loader"></span><span class="btn-label">Masuk</span></button>
+    <div class="info">
+      Login pertama butuh internet.<br>
+      Belum punya akun? Hubungi BM kamu.<br>
+      <a href="index.html?desktop=1&v=rc14">Buka versi desktop ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SPLASH MOTIVASI (muncul saat login, tap untuk lanjut) ========== -->
+<div class="motivasi-splash" id="motivasi-splash">
+  <div class="motivasi-splash-content">
+    <div class="motivasi-splash-icon">✨</div>
+    <div class="motivasi-splash-label">Kata Hari Ini</div>
+    <div class="motivasi-splash-quote" id="motivasi-splash-quote">&mdash;</div>
+    <div class="motivasi-splash-actions">
+      <button class="motivasi-splash-btn-secondary" onclick="event.stopPropagation();shuffleSplashQuote()">
+        <span>⟲</span><span>Kata Lain</span>
+      </button>
+      <button class="motivasi-splash-btn-primary" onclick="event.stopPropagation();hideMotivasiSplash()">
+        Lanjut →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== LAYAR APLIKASI ========== -->
+<div class="app-screen" id="screen-app">
+  <div class="user-header">
+    <div class="user-header-row">
+      <div class="user-header-clickable" onclick="openProfile()" role="button" tabindex="0" aria-label="Buka profil saya">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">-</div>
+          <div class="user-role" id="user-role">-</div>
+        </div>
+      </div>
+      <button class="btn-profile" onclick="openProfile()" aria-label="Profil">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a8 8 0 0 1 16 0v1"></path></svg>
+      </button>
+    </div>
+    <div class="proyek-bar">
+      <label>Proyek</label>
+      <select id="proyek-select"></select>
+    </div>
+  </div>
+
+  <div class="sync-state" id="sync-state" style="display:none"></div>
+
+  <div class="content" id="content-area">
+    <!-- Konten dinamis sesuai role -->
+  </div>
+
+  <div class="footer">BM4 Mobile v14 &middot; <a href="index.html?desktop=1&v=rc14">Buka desktop &uarr;</a></div>
+</div>
+
+<!-- ========== MODAL DETAIL TARGET (lihat detail dengan rute) ========== -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <button class="back" onclick="closeDetailModal()" title="Tutup">&larr;</button>
+      <div class="title">
+        <h2 id="modal-detail-title">Detail Target</h2>
+        <p id="modal-detail-sub">&mdash;</p>
+      </div>
+    </div>
+    <div class="modal-body">
+      <!-- Hero: nama, jenis, karyawan, status -->
+      <div class="detail-hero">
+        <h3 id="d-nama">Nama Target</h3>
+        <div class="meta" id="d-meta">&mdash;</div>
+        <div class="status-row">
+          <span class="status-pill" id="d-status">&mdash;</span>
+        </div>
+      </div>
+
+      <!-- Tip strategi sesuai status (di-inject dinamis) -->
+      <div id="d-tip-container"></div>
+
+      <!-- Map dengan rute dari proyek ke target -->
+      <div class="detail-map-wrap">
+        <div class="detail-map loading" id="d-map"></div>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <div class="lbl">Jarak</div>
+            <div class="val loading" id="d-distance">Memuat...</div>
+            <div class="sub" id="d-distance-sub">via jalan</div>
+          </div>
+          <div class="detail-stat">
+            <div class="lbl">Estimasi</div>
+            <div class="val loading" id="d-duration">Memuat...</div>
+            <div class="sub">menit berkendara</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="detail-actions">
+        <div class="qa" id="d-act-maps" onclick="actionOpenMaps()">
+          <div class="ico">🗺️</div>
+          <div class="lbl">Buka Maps</div>
+        </div>
+        <div class="qa" id="d-act-call" onclick="actionCallPic()">
+          <div class="ico">📞</div>
+          <div class="lbl">Telepon</div>
+        </div>
+        <div class="qa" id="d-act-wa" onclick="actionWhatsAppPic()">
+          <div class="ico">💬</div>
+          <div class="lbl">WhatsApp</div>
+        </div>
+      </div>
+
+      <!-- Info detail -->
+      <div class="detail-info">
+        <div class="detail-info-row">
+          <div class="ico">📍</div>
+          <div class="body">
+            <div class="lbl">Koordinat</div>
+            <div class="val" id="d-coord">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">👤</div>
+          <div class="body">
+            <div class="lbl">PIC / Kontak</div>
+            <div class="val" id="d-pic">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">📅</div>
+          <div class="body">
+            <div class="lbl">Kontak Terakhir</div>
+            <div class="val" id="d-lastcontact">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">📝</div>
+          <div class="body">
+            <div class="lbl">Catatan</div>
+            <div class="val" id="d-catatan">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riwayat aktivitas -->
+      <div id="d-aktivitas-container"></div>
+    </div>
+    <div class="modal-foot detail-foot">
+      <button class="btn close" onclick="closeDetailModal()">Tutup</button>
+      <button class="btn edit hidden" id="d-btn-edit" onclick="detailToEdit()">✏️ Edit Target</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL FORM TARGET (tambah/edit) ========== -->
+<div class="modal-overlay" id="modal-target">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <button class="back" onclick="closeTargetModal()" title="Tutup">&larr;</button>
+      <div class="title">
+        <h2 id="modal-target-title">Tambah Target Baru</h2>
+        <p id="modal-target-sub">Proyek aktif</p>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nama target <span class="req">*</span></label>
+        <input type="text" id="tf-nama" placeholder="cth: PT Sample Industri" autocomplete="off">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Jenis</label>
+          <select id="tf-jenis">
+            <option value="pabrik">🏭 Pabrik</option>
+            <option value="perusahaan">🏢 Perusahaan</option>
+            <option value="kawasan">🏗️ Kawasan</option>
+            <option value="dinas">🏛️ Dinas</option>
+            <option value="sekolah">🏫 Sekolah</option>
+            <option value="lainnya">📍 Lainnya</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Karyawan</label>
+          <input type="number" id="tf-karyawan" placeholder="0" min="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <!-- Mini-map dengan GPS & Smart Input -->
+      <div class="mini-map-wrap">
+        <div class="mini-map-head">
+          <label>Lokasi di peta <span class="req">*</span></label>
+          <span class="badge warn" id="tf-coord-badge">Belum ada lokasi</span>
+        </div>
+        <div class="mini-map" id="tf-mini-map"></div>
+        <div class="gps-row">
+          <button type="button" class="btn-gps" onclick="useGpsForTarget()" id="tf-btn-gps">📍 Pakai GPS Saya</button>
+          <button type="button" class="btn-link" onclick="openSmartInput()" title="Paste link Google Maps">🔗</button>
+        </div>
+        <div class="coord-display">
+          <div class="coord empty" id="tf-coord-lat">
+            <div class="lbl">LAT</div>
+            <div class="val">—</div>
+          </div>
+          <div class="coord empty" id="tf-coord-lng">
+            <div class="lbl">LNG</div>
+            <div class="val">—</div>
+          </div>
+        </div>
+        <div class="coord-info warn" id="tf-coord-info">
+          ℹ️ Tap "Pakai GPS Saya" atau tap di peta untuk set lokasi
+        </div>
+      </div>
+
+      <div class="field">
+        <label>PIC / Kontak</label>
+        <input type="text" id="tf-pic" placeholder="cth: Bu Sari HRD - 0812-xxxx" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select id="tf-status">
+          <option value="0">🔍 Identifikasi</option>
+          <option value="1">📞 Kontak Awal</option>
+          <option value="2">🤝 Presentasi</option>
+          <option value="3">💬 Negosiasi</option>
+          <option value="4">✅ Deal</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Catatan</label>
+        <textarea id="tf-catatan" placeholder="cth: Pabrik tekstil di Subang utara..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn cancel" onclick="closeTargetModal()">Batal</button>
+      <button class="btn save" id="tf-btn-save" onclick="saveTargetForm()">Simpan Target</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL SMART INPUT (paste koordinat) ========== -->
+<div class="smart-input-overlay" id="smart-input">
+  <div class="smart-input-box">
+    <h3>Paste Koordinat</h3>
+    <p>Format yang didukung:<br>
+       <b>Koordinat:</b> <code style="font-size:11px;color:var(--muted)">-6.5169, 107.8017</code><br>
+       <span style="font-size:10px;color:var(--muted)">URL panjang Google Maps juga bisa</span>
+    </p>
+    <textarea id="smart-input-text" placeholder="Paste koordinat di sini..."></textarea>
+    <div class="btnrow">
+      <button class="cancel" onclick="closeSmartInput()">Batal</button>
+      <button class="ok" onclick="parseSmartInput()">Pakai Lokasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL SAVE SUCCESS (Q3 opsi C) ========== -->
+<div class="save-success-overlay" id="save-success">
+  <div class="save-success-box">
+    <div class="icon-ok">✓</div>
+    <h3>Target Tersimpan</h3>
+    <p id="save-success-msg">Target market berhasil disimpan ke server.</p>
+    <div class="btnrow">
+      <button class="again" onclick="saveSuccessAddAgain()">+ Tambah Lagi</button>
+      <button class="back" onclick="saveSuccessClose()">Kembali</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PROFILE SCREEN ========== -->
+<div class="profile-overlay" id="screen-profile">
+  <div class="profile-header">
+    <button class="back" onclick="closeProfile()" aria-label="Kembali">&larr;</button>
+    <h2>Profil Saya</h2>
+  </div>
+  <div class="profile-body">
+    <!-- Hero -->
+    <div class="profile-hero">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-avatar-edit" onclick="document.getElementById('profile-foto-input').click()" title="Ganti foto">📷</div>
+        <input type="file" id="profile-foto-input" accept="image/*" style="display:none" onchange="onProfileFotoSelected(event)">
+      </div>
+      <div class="profile-name" id="profile-name">-</div>
+      <div class="profile-role-pill" id="profile-role-pill">-</div>
+      <div class="profile-username" id="profile-username">@username</div>
+    </div>
+
+    <!-- Bio -->
+    <div class="profile-section">
+      <div class="profile-section-title">📝 Bio / Kata Motivasi</div>
+      <div class="profile-bio" id="profile-bio-display"></div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="profile-btn ghost" id="profile-bio-edit-btn" onclick="profileBioEditOpen()">✏️ Edit Bio</button>
+      </div>
+      <div class="profile-bio-edit" id="profile-bio-edit">
+        <textarea id="profile-bio-input" maxlength="150" placeholder="Tulis kata motivasi atau deskripsi singkat tentang Anda..."></textarea>
+        <div style="font-size:10px;color:#94A3B8;text-align:right" id="profile-bio-counter">0/150</div>
+        <div class="profile-bio-actions">
+          <button class="profile-btn ghost" onclick="profileBioEditCancel()">Batal</button>
+          <button class="profile-btn primary" onclick="profileBioSave()">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="profile-section">
+      <div class="profile-section-title">📊 Statistik Saya</div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="stat-target-count">0</div>
+          <div class="profile-stat-label">Target di Proyek</div>
+          <div class="profile-stat-sub" id="stat-target-sub">proyek aktif</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="stat-last-login">-</div>
+          <div class="profile-stat-label">Login Terakhir</div>
+          <div class="profile-stat-sub" id="stat-last-login-sub">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account settings -->
+    <div class="profile-section">
+      <div class="profile-section-title">⚙️ Pengaturan Akun</div>
+      <div class="profile-action-row" onclick="openMotivasiFromProfile()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">✨</span>
+          <span>Lihat Kata Hari Ini</span>
+        </div>
+        <span class="profile-action-arrow">›</span>
+      </div>
+      <div class="profile-action-row" onclick="openReminderSetting()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">⏰</span>
+          <span>Reminder follow-up</span>
+        </div>
+        <span class="profile-action-arrow" id="reminder-setting-value">7 hari ›</span>
+      </div>
+      <div class="profile-action-row" onclick="openChangePassword()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">🔐</span>
+          <span>Ganti Password</span>
+        </div>
+        <span class="profile-action-arrow">›</span>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <button class="profile-logout-btn" onclick="profileLogoutClick()">
+      <span>🚪</span>
+      <span>Keluar dari Akun</span>
+    </button>
+
+    <div style="text-align:center;margin-top:18px;font-size:10px;color:#94A3B8">BM4 Mobile · v14</div>
+  </div>
+</div>
+
+<!-- ========== MODAL GANTI PASSWORD ========== -->
+<div class="profile-modal" id="modal-change-password">
+  <div class="profile-modal-card">
+    <h3>🔐 Ganti Password</h3>
+    <p class="sub">Masukkan password lama Anda untuk verifikasi keamanan, lalu password baru.</p>
+
+    <div class="profile-form-group" id="grp-pwd-old">
+      <label>Password Lama</label>
+      <input type="password" id="pwd-old" autocomplete="current-password" placeholder="••••••••">
+      <div class="err-msg">Password lama salah</div>
+    </div>
+
+    <div class="profile-form-group" id="grp-pwd-new">
+      <label>Password Baru</label>
+      <input type="password" id="pwd-new" autocomplete="new-password" placeholder="Minimal 8 karakter">
+      <div class="hint">Minimal 8 karakter</div>
+      <div class="err-msg">Password tidak valid</div>
+    </div>
+
+    <div class="profile-form-group" id="grp-pwd-confirm">
+      <label>Ulangi Password Baru</label>
+      <input type="password" id="pwd-confirm" autocomplete="new-password" placeholder="Ketik ulang password baru">
+      <div class="err-msg">Password tidak sama</div>
+    </div>
+
+    <div class="profile-modal-actions">
+      <button class="profile-btn ghost" onclick="closeChangePassword()">Batal</button>
+      <button class="profile-btn primary" id="btn-pwd-save" onclick="submitChangePassword()">💾 Ganti Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL SETTING REMINDER FOLLOW-UP ========== -->
+<div class="profile-modal" id="modal-reminder-setting">
+  <div class="profile-modal-card">
+    <h3>⏰ Reminder Follow-up</h3>
+    <p class="sub">Atur berapa hari target dianggap "stagnan" dan butuh follow-up. Default 7 hari.</p>
+
+    <div class="reminder-options">
+      <button class="reminder-option-btn" data-days="3">3 hari<small>Sangat ketat</small></button>
+      <button class="reminder-option-btn" data-days="7">7 hari<small>Direkomendasikan</small></button>
+      <button class="reminder-option-btn" data-days="10">10 hari<small>Standar</small></button>
+      <button class="reminder-option-btn" data-days="14">14 hari<small>Santai</small></button>
+      <button class="reminder-option-btn" data-days="30">30 hari<small>Bulanan</small></button>
+    </div>
+
+    <p class="reminder-info">Target dengan status <b>Deal</b> tidak akan dihitung stagnan.</p>
+
+    <div class="profile-modal-actions">
+      <button class="profile-btn ghost" onclick="closeReminderSetting()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// BM4 Mobile v14 — Login via Apps Script (Mini-Tahap 1A revisi)
+// ============================================================
+
+// ===== CONFIG (sinkron dengan desktop) =====
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyPm0hR8SqqI572qjkaZ97PERPocBcE7ydhRcjoY_hve1qI6PItWMJeZ94kwG_q_gHpaw/exec';
+
+// ===== ACTIVE MODULE (per file mobile, ganti per divisi) =====
+// File ini = mobile-strategi.html → modul aktif: target_pasar (Strategi Promo)
+// File mobile-estate.html → ACTIVE_MODULE = 'estate'
+// File mobile-sales.html → ACTIVE_MODULE = 'sales'
+// dst.
+const ACTIVE_MODULE = 'target_pasar';
+const ACTIVE_DIVISI_NAME = 'Strategi & Promo';
+const ACTIVE_DIVISI_ICON = '🎯';
+
+const LS = {
+  TOKEN: 'bm4_secure_session_token',
+  USER: 'bm4_secure_user',
+  PROYEK: 'bm4_proyek',
+  LAST_PROYEK: 'bm4_mobile_last_proyek',
+  TP_TARGETS: 'bm4_tp_targets',
+  MOBILE_PERMISSIONS: 'bm4_mobile_permissions',
+  REMINDER_DAYS: 'bm4_reminder_threshold_days'
+};
+
+// Default threshold reminder (hari)
+const REMINDER_DEFAULT_DAYS = 7;
+
+function getReminderThreshold(){
+  try {
+    const v = parseInt(localStorage.getItem(LS.REMINDER_DAYS));
+    if(!isNaN(v) && v >= 1 && v <= 60) return v;
+  } catch(e){}
+  return REMINDER_DEFAULT_DAYS;
+}
+function setReminderThreshold(days){
+  const v = Math.max(1, Math.min(60, parseInt(days) || REMINDER_DEFAULT_DAYS));
+  try { localStorage.setItem(LS.REMINDER_DAYS, String(v)); } catch(e){}
+  return v;
+}
+
+// Hitung hari sejak last update target
+function daysSinceContact(t){
+  if(!t) return 0;
+  const dateStr = t.lastcontact || t.updated_at || t.created_at || '';
+  if(!dateStr) return 999; // tidak ada tanggal = anggap sangat lama
+  const lastDate = new Date(dateStr);
+  if(isNaN(lastDate.getTime())) return 999;
+  const today = new Date();
+  const diffMs = today - lastDate;
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+// Cek apakah target stagnan (status bukan Deal & melewati threshold)
+function isTargetStagnant(t, threshold){
+  const s = parseInt(t.status) || 0;
+  if(s === 4) return false; // Deal = tidak perlu follow-up
+  const th = threshold || getReminderThreshold();
+  return daysSinceContact(t) >= th;
+}
+
+// ===== Riwayat Aktivitas Target (localStorage cache) =====
+// Format: { 'targetId': [{ ts, type, desc, by }] }
+const LS_AKTIVITAS = 'bm4_target_aktivitas';
+
+function _loadAllAktivitas(){
+  try {
+    const raw = localStorage.getItem(LS_AKTIVITAS);
+    if(!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch(e){ return {}; }
+}
+
+function _saveAllAktivitas(data){
+  try {
+    localStorage.setItem(LS_AKTIVITAS, JSON.stringify(data));
+  } catch(e){ console.warn('[aktivitas] save failed:', e); }
+}
+
+// Tambahkan aktivitas baru ke target
+function addAktivitas(targetId, type, desc){
+  if(!targetId) return;
+  const all = _loadAllAktivitas();
+  const key = String(targetId);
+  if(!all[key]) all[key] = [];
+  all[key].unshift({
+    ts: new Date().toISOString(),
+    type: type || 'update',
+    desc: desc || '',
+    by: (currentUser && currentUser.username) ? currentUser.username : '-'
+  });
+  // Limit per target: max 50 entry biar localStorage tidak bengkak
+  if(all[key].length > 50) all[key] = all[key].slice(0, 50);
+  _saveAllAktivitas(all);
+}
+
+// Ambil aktivitas untuk target tertentu (sorted: terbaru di atas)
+function getAktivitas(targetId){
+  if(!targetId) return [];
+  const all = _loadAllAktivitas();
+  return all[String(targetId)] || [];
+}
+
+// Format relative time: "2 jam lalu", "3 hari lalu"
+function formatRelativeTime(isoStr){
+  if(!isoStr) return '-';
+  const date = new Date(isoStr);
+  if(isNaN(date.getTime())) return '-';
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+  if(diffMin < 1) return 'baru saja';
+  if(diffMin < 60) return diffMin + ' menit lalu';
+  if(diffHour < 24) return diffHour + ' jam lalu';
+  if(diffDay < 30) return diffDay + ' hari lalu';
+  // Format tanggal
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Icon per tipe aktivitas
+function aktivitasIcon(type){
+  const map = {
+    'status_update': '🔄',
+    'edit': '✏️',
+    'create': '✨',
+    'note': '📝',
+    'update': '🔃'
+  };
+  return map[type] || '📌';
+}
+
+// Render section riwayat untuk detail modal
+function renderAktivitasSection(targetId){
+  const list = getAktivitas(targetId);
+  if(!list || list.length === 0){
+    return `
+      <div class="aktivitas-section">
+        <div class="aktivitas-head">
+          <span class="aktivitas-title">📜 Riwayat Aktivitas</span>
+        </div>
+        <div class="aktivitas-empty">Belum ada riwayat tercatat. Aktivitas akan muncul saat ada perubahan status atau edit target.</div>
+      </div>
+    `;
+  }
+  // Maksimal tampilkan 8 entri pertama, sisanya pakai "lihat semua"
+  const visible = list.slice(0, 8);
+  const hasMore = list.length > 8;
+  const items = visible.map(a => `
+    <div class="aktivitas-item">
+      <div class="aktivitas-icon">${aktivitasIcon(a.type)}</div>
+      <div class="aktivitas-body">
+        <div class="aktivitas-desc">${esc(a.desc || a.type)}</div>
+        <div class="aktivitas-meta">${formatRelativeTime(a.ts)} ${a.by && a.by !== '-' ? '· oleh ' + esc(a.by) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="aktivitas-section">
+      <div class="aktivitas-head">
+        <span class="aktivitas-title">📜 Riwayat Aktivitas</span>
+        <span class="aktivitas-count">${list.length} entri</span>
+      </div>
+      <div class="aktivitas-list">${items}</div>
+      ${hasMore ? `<button class="aktivitas-more" onclick="showAllAktivitas(${targetId})">Lihat semua ${list.length} aktivitas →</button>` : ''}
+    </div>
+  `;
+}
+
+// Tampilkan semua aktivitas (untuk button "lihat semua")
+function showAllAktivitas(targetId){
+  const list = getAktivitas(targetId);
+  const allItems = list.map(a => `
+    <div class="aktivitas-item">
+      <div class="aktivitas-icon">${aktivitasIcon(a.type)}</div>
+      <div class="aktivitas-body">
+        <div class="aktivitas-desc">${esc(a.desc || a.type)}</div>
+        <div class="aktivitas-meta">${formatRelativeTime(a.ts)} ${a.by && a.by !== '-' ? '· oleh ' + esc(a.by) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  const container = $('d-aktivitas-container');
+  if(container){
+    container.innerHTML = `
+      <div class="aktivitas-section">
+        <div class="aktivitas-head">
+          <span class="aktivitas-title">📜 Riwayat Aktivitas (semua)</span>
+          <span class="aktivitas-count">${list.length} entri</span>
+        </div>
+        <div class="aktivitas-list">${allItems}</div>
+      </div>
+    `;
+  }
+}
+
+const PROYEK_DEFAULT = [
+  {id:'gwc', nama:'Griya Wijaya Cibogo', kode:'GWC', area:'Cibogo, Subang'},
+  {id:'dpr', nama:'Dirgantara Parahyangan Residence', kode:'DPR', area:'Subang'}
+];
+
+// ===== ROLE LABELS (display name di header user) =====
+// Ini cuma untuk tampilan, bukan permission. Tidak perlu di Sheets.
+const ROLE_LABELS = {
+  bm: 'Branch Manager',
+  owner: 'Owner',
+  admin: 'Admin',
+  manager: 'Manager',
+  strategi: 'Strategi Promo',
+  sales: 'Sales',
+  konstruksi: 'Konstruksi',
+  viewer: 'Viewer'
+};
+
+// ===== MOBILE PERMISSIONS =====
+// Disimpan di Sheets, di-fetch saat login.
+// Default fallback (kalau Sheets kosong / offline) = role tidak punya akses.
+// Format: { 'role|module': {view, create, edit, delete} }
+let mobilePermissions = {};
+
+// Fallback default (sama dengan default seed di Apps Script).
+// Dipakai HANYA kalau fetch dari Sheets gagal total dan localStorage kosong.
+const PERMISSION_FALLBACK = {
+  'bm|target_pasar':       { view:true, create:true, edit:true, delete:true },
+  'owner|target_pasar':    { view:true, create:true, edit:true, delete:true },
+  'admin|target_pasar':    { view:true, create:true, edit:true, delete:true },
+  'strategi|target_pasar': { view:true, create:true, edit:true, delete:false }
+};
+
+function getPermissionFor(role, module){
+  const key = String(role||'').toLowerCase() + '|' + String(module||'').toLowerCase();
+  return mobilePermissions[key] || { view:false, create:false, edit:false, delete:false };
+}
+
+function getRoleModules(role){
+  const r = String(role||'').toLowerCase();
+  const modules = [];
+  Object.keys(mobilePermissions).forEach(k => {
+    const [keyRole, keyModule] = k.split('|');
+    if(keyRole === r && mobilePermissions[k].view){
+      modules.push(keyModule);
+    }
+  });
+  return modules;
+}
+
+const STATUS_LABELS = ['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
+const STATUS_ICONS  = ['🔍','📞','🤝','💬','✅'];
+const STATUS_COLORS = ['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'];
+
+// ===== JENIS PERUSAHAAN (untuk filter & dropdown form) =====
+const JENIS_LIST = [
+  { id: 'pabrik',     label: 'Pabrik',     icon: '🏭' },
+  { id: 'dinas',      label: 'Dinas',      icon: '🏛️' },
+  { id: 'sekolah',    label: 'Sekolah',    icon: '🏫' },
+  { id: 'perusahaan', label: 'Perusahaan', icon: '🏢' },
+  { id: 'kawasan',    label: 'Kawasan',    icon: '🏗️' },
+  { id: 'lainnya',    label: 'Lainnya',    icon: '📍' }
+];
+function getJenisMeta(id){
+  const j = JENIS_LIST.find(x => x.id === String(id||'').toLowerCase());
+  return j || { id: 'lainnya', label: 'Lainnya', icon: '📍' };
+}
+
+// ===== KATA HARI INI - Tips Strategi Target Market (umum, untuk banner dashboard) =====
+const MOTIVASI_QUOTES = [
+  "Setiap closing adalah cerita baru yang layak dirayakan.",
+  "Pasar tidak pernah tidur — yang tidur hanyalah kesempatan yang terlewat.",
+  "Target market yang baik bukan yang paling besar, tapi yang paling siap.",
+  "Data dingin akan menjadi deal panas di tangan sales yang sabar.",
+  "Follow-up bukan mengganggu — tidak follow-up baru kerugian.",
+  "Kenali calon klien sebelum mereka mengenal produkmu.",
+  "Satu target yang dikejar serius, lebih berharga dari sepuluh yang setengah hati.",
+  "Jaringan dibangun dari kunjungan, bukan dari kontak yang tersimpan.",
+  "Tugas kita bukan memaksa beli, tapi memastikan mereka tidak kehilangan kesempatan.",
+  "Properti tidak dijual lewat brosur — tapi lewat kepercayaan yang kamu bangun.",
+  "Hari ini kalah negosiasi, besok bisa menang relasi. Tetap rapi.",
+  "Sales yang menang bukan yang paling pintar bicara, tapi paling pandai mendengar.",
+  "Setiap 'tidak' hari ini adalah informasi untuk 'iya' di kemudian hari.",
+  "Konsistensi mengalahkan keberuntungan — selalu, dalam jangka panjang.",
+  "Pipeline yang sehat hari ini adalah closing bulan depan.",
+  "Jangan kejar penjualan — kejar pemecahan masalah klien, sales akan mengikuti.",
+  "Kualitas data target = kualitas pipeline = kualitas closing.",
+  "Lapangan tidak pernah berbohong. Yang berbohong adalah asumsi dari balik meja.",
+  "Closing besar selalu dimulai dari obrolan kecil yang terus dijaga.",
+  "Pesaing bisa meniru produk, tapi tidak bisa meniru hubungan yang kamu bangun."
+];
+
+// ===== TIPS PER-STATUS (untuk detail modal target) =====
+const TIPS_BY_STATUS = {
+  0: [ // Identifikasi
+    "Sebelum follow-up, pastikan kamu paham struktur perusahaan dan siapa decision maker-nya.",
+    "Target dengan 500+ karyawan biasanya butuh approach via direksi, bukan HRD.",
+    "Riset 5 menit di Google bisa menghemat 50 menit basa-basi saat meeting.",
+    "Kunjungan langsung ke lokasi target sering memberi info yang tidak ada di internet.",
+    "Catat semua detail kecil — nama satpam, jam ramai, akses parkir. Semua berguna nanti.",
+    "Identifikasi yang lemah = pipeline yang berlubang. Investasi waktu di tahap ini.",
+    "Cari tahu siapa kompetitor yang sudah masuk — itu intel berharga untuk strategi."
+  ],
+  1: [ // Kontak Awal
+    "First call: 80% mendengar, 20% bicara. Itu rumusnya.",
+    "Tujuan kontak awal bukan menjual — tapi mendapat izin untuk pertemuan berikutnya.",
+    "Sebut nama klien minimal 2x di awal percakapan. Bangun rasa dihargai.",
+    "Kontak via WhatsApp lebih intim daripada email — tapi tetap profesional.",
+    "Jangan kirim brosur di kontak awal — kirim pertanyaan yang menunjukkan kamu paham bisnis mereka.",
+    "Catat jam berapa klien aktif merespon. Itu pola yang berharga.",
+    "Tutup kontak awal dengan komitmen kecil: 'boleh saya kirim info menarik via WA besok?'"
+  ],
+  2: [ // Presentasi
+    "Presentasi yang bagus dimulai dari mendengar masalah klien, bukan menampilkan produk.",
+    "Materi presentasi: 30% produk, 70% benefit untuk bisnis klien.",
+    "Bawa case study dari klien serupa — bukti lebih kuat dari janji.",
+    "Latihan dulu sebelum presentasi penting. Confidence terlihat dari persiapan.",
+    "Akhiri presentasi dengan pertanyaan terbuka, bukan 'jadi gimana, mau beli?'",
+    "Visual sederhana > slide penuh teks. Mata klien capek baca.",
+    "Setelah presentasi, kirim ringkasan 1 halaman dalam 24 jam. Profesionalisme terasa."
+  ],
+  3: [ // Negosiasi
+    "Negosiasi bukan soal siapa menang — soal mencari titik di mana keduanya menang.",
+    "Jangan turun harga dulu. Tambah value dulu. Diskon adalah opsi terakhir.",
+    "Jika klien diam lama, jangan panik isi kekosongan. Diam lebih kuat daripada bicara.",
+    "Tahu kapan harus 'walk away' — itu kekuatan, bukan kelemahan.",
+    "Selalu siapkan plan B sebelum masuk ruangan negosiasi.",
+    "Negosiasi via chat berisiko salah paham. Telepon atau ketemu langsung.",
+    "Closing biasanya terjadi pada follow-up ke-5 sampai ke-7. Jangan menyerah di ke-3."
+  ],
+  4: [ // Deal
+    "Deal selesai bukan akhir — itu awal hubungan jangka panjang.",
+    "Klien yang puas adalah sumber rujukan terbaik — minta referral dengan elegan.",
+    "Follow-up pasca-deal sama pentingnya dengan follow-up pra-deal.",
+    "Catat tanggal-tanggal penting klien (anniversary, ultah). Sentuhan kecil = relasi panjang.",
+    "Cross-sell hanya berhasil jika kamu sudah deliver janji yang pertama.",
+    "Klien yang sudah deal adalah aset, bukan tiket. Rawat seperti kebun, bukan target.",
+    "Testimoni dari klien deal = senjata terkuat untuk closing target berikutnya."
+  ]
+};
+
+// ===== State =====
+let currentUser = null;
+let sessionToken = '';
+let proyekList = [];
+let currentProyekId = 'gwc';
+let tpTargets = [];
+let activeFilter = 'all';
+let activeJenis = 'all';        // filter jenis: 'all' atau 'pabrik'/'dinas'/dst
+let searchQuery = '';            // pencarian nama / PIC
+
+// ============================================================
+// Helpers
+// ============================================================
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg, kind){
+  const t=$('toast');
+  t.textContent=msg;
+  t.className='toast show '+(kind||'');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function showSyncState(msg, kind){
+  const el=$('sync-state');
+  if(!msg){el.style.display='none';return;}
+  el.textContent=msg;
+  el.className='sync-state '+(kind||'');
+  el.style.display='block';
+}
+
+// ============================================================
+// Apps Script request helper
+// ============================================================
+async function gasRequest(action, payload, opts){
+  opts = opts || {};
+  const body = Object.assign({ action }, payload || {});
+  if(sessionToken && !opts.noToken) body.sessionToken = sessionToken;
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body),
+    cache: 'no-store'
+  });
+  let json;
+  try { json = await res.json(); }
+  catch(e){ throw new Error('Server tidak respon JSON. Cek koneksi internet.'); }
+  if(!json || json.success === false){
+    const msg = (json && (json.message || json.error)) || 'Request gagal';
+
+    // [PERF FIX] Auto-recovery: kalau session unauthorized, coba re-login + retry sekali
+    const isUnauthorized = /unauthorized|session tidak/i.test(msg);
+    if(isUnauthorized && !opts._retried && action !== 'auth_login' && action !== 'auth_verify'){
+      console.warn('[gasRequest] session expired, attempting auto-recover...');
+      const recovered = await _tryRecoverSession();
+      if(recovered){
+        console.log('[gasRequest] session recovered, retrying:', action);
+        // Retry dengan flag _retried supaya tidak infinite loop
+        return gasRequest(action, payload, Object.assign({}, opts, { _retried: true }));
+      }
+    }
+
+    const err = new Error(msg);
+    err.response = json;
+    throw err;
+  }
+  return json;
+}
+
+// [PERF FIX] Flag debounce — biar toast "Sesi habis" hanya muncul 1x
+// walau ada 3 request paralel yang sama-sama unauthorized
+let _sessionRecoveryInProgress = false;
+let _sessionRecoveryFailed = false;
+
+// [PERF FIX] Coba recover session — verify ulang token, atau force logout kalau tidak bisa
+async function _tryRecoverSession(){
+  // Kalau recovery sudah pernah gagal di sesi ini, langsung return false (cegah spam)
+  if(_sessionRecoveryFailed) return false;
+  // Kalau sedang ada recovery jalan, tunggu hasilnya
+  if(_sessionRecoveryInProgress){
+    // Wait sampai selesai (max 5 detik)
+    for(let i = 0; i < 50; i++){
+      await new Promise(r => setTimeout(r, 100));
+      if(!_sessionRecoveryInProgress) return !_sessionRecoveryFailed;
+    }
+    return false;
+  }
+
+  _sessionRecoveryInProgress = true;
+  try {
+    // Coba verify token dulu — mungkin server butuh signal "saya online"
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action: 'auth_verify', sessionToken: sessionToken }),
+      cache: 'no-store'
+    });
+    const json = await r.json();
+    if(json && json.success && json.user){
+      currentUser = json.user;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+      _sessionRecoveryInProgress = false;
+      return true;
+    }
+  } catch(e){
+    console.warn('[Recover] verify failed:', e.message);
+  }
+
+  // Token sudah benar-benar invalid — clear & force re-login (HANYA 1x)
+  _sessionRecoveryFailed = true;
+  _sessionRecoveryInProgress = false;
+  console.warn('[Recover] token invalid, user perlu login ulang');
+  toast('Sesi habis, silakan login ulang', 'err');
+  setTimeout(() => {
+    sessionToken = '';
+    currentUser = null;
+    try {
+      localStorage.removeItem(LS.TOKEN);
+      localStorage.removeItem(LS.USER);
+    } catch(e){}
+    $('screen-app').classList.remove('show');
+    $('screen-login').style.display = '';
+  }, 1500);
+  return false;
+}
+
+// Reset flag recovery saat user login baru — supaya bisa recover lagi nanti
+function _resetRecoveryFlags(){
+  _sessionRecoveryInProgress = false;
+  _sessionRecoveryFailed = false;
+}
+
+async function gasGet(action, extraParams, opts){
+  opts = opts || {};
+  const params = Object.assign({}, extraParams||{}, {action, _t:Date.now()});
+  if(sessionToken) params.sessionToken = sessionToken;
+  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url, {cache:'no-store'});
+  let json;
+  try { json = await res.json(); }
+  catch(e){ throw new Error('Server tidak respon JSON.'); }
+  if(!json || json.success === false){
+    const msg = (json && (json.message || json.error)) || 'Request gagal';
+
+    // [PERF FIX] Auto-recovery sama seperti di gasRequest
+    const isUnauthorized = /unauthorized|session tidak/i.test(msg);
+    if(isUnauthorized && !opts._retried && action !== 'auth_login' && action !== 'auth_verify'){
+      console.warn('[gasGet] session expired, attempting auto-recover for:', action);
+      const recovered = await _tryRecoverSession();
+      if(recovered){
+        return gasGet(action, extraParams, Object.assign({}, opts, { _retried: true }));
+      }
+    }
+
+    const err = new Error(msg);
+    err.response = json;
+    throw err;
+  }
+  return json;
+}
+
+// ============================================================
+// LOGIN FLOW
+// ============================================================
+async function doLogin(){
+  const u = $('login-username').value.trim().toLowerCase();
+  const p = $('login-password').value;
+  const err = $('login-err');
+  const btn = $('btn-login');
+  err.classList.remove('show');
+
+  if(!u || !p){
+    err.textContent = 'Username dan password wajib diisi.';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-label').textContent = 'Memverifikasi...';
+
+  try {
+    const r = await gasRequest('auth_login', {
+      username: u,
+      password: p,
+      deviceInfo: 'mobile-' + (navigator.userAgent || 'browser').slice(0, 200)
+    }, { noToken: true });
+
+    // Sukses — simpan token & user
+    sessionToken = r.sessionToken;
+    currentUser = r.user;
+    _resetRecoveryFlags(); // [PERF FIX] reset flag biar bisa auto-recover lagi nanti
+    try {
+      // Pendekatan B: simpan di localStorage supaya persist sampai logout manual
+      localStorage.setItem(LS.TOKEN, sessionToken);
+      localStorage.setItem(LS.USER, JSON.stringify(currentUser));
+    } catch(e){}
+
+    toast('Selamat datang, ' + (currentUser.nama || currentUser.username), 'ok');
+    await enterApp();
+  } catch(e){
+    console.error('[Login] error:', e);
+    err.textContent = e.message || 'Login gagal. Coba lagi.';
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-label').textContent = 'Masuk';
+  }
+}
+
+async function doLogout(){
+  if(!confirm('Yakin keluar dari akun ini?')) return;
+
+  // [PERF] Optimistic logout — UI berubah INSTAN, server logout jalan di background
+  const tokenToInvalidate = sessionToken; // simpan dulu untuk dipakai background
+
+  // 1. Clear state mobile dulu (instan)
+  sessionToken = '';
+  currentUser = null;
+  try {
+    localStorage.removeItem(LS.TOKEN);
+    localStorage.removeItem(LS.USER);
+  } catch(e){}
+
+  // 2. Pindah ke screen login (instan)
+  $('screen-app').classList.remove('show');
+  $('screen-login').style.display = '';
+  $('login-username').value = '';
+  $('login-password').value = '';
+  toast('Berhasil keluar');
+
+  // 3. Server logout di background — pakai fetch LANGSUNG biar tidak trigger auto-recover
+  //    (user emang mau keluar, jangan tampilkan "sesi habis" alert)
+  if(tokenToInvalidate){
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action: 'auth_logout', sessionToken: tokenToInvalidate }),
+      cache: 'no-store'
+    }).catch(() => {/* ignore — user sudah logout di local */});
+  }
+}
+
+// ============================================================
+// [STEP 5] PROFILE MANAGEMENT
+// ============================================================
+const PROFILE_LS = {
+  BIO: 'bm4_mobile_bio_',     // + username
+  FOTO: 'bm4_mobile_foto_'    // + username (data URL)
+};
+
+function getProfileBio(){
+  if(!currentUser) return '';
+  // Prioritas: localStorage (yang user edit lokal) → currentUser.bio (dari server)
+  try {
+    const local = localStorage.getItem(PROFILE_LS.BIO + currentUser.username);
+    if(local !== null) return local;
+  } catch(e){}
+  return currentUser.bio || '';
+}
+function setProfileBio(text){
+  if(!currentUser) return;
+  try { localStorage.setItem(PROFILE_LS.BIO + currentUser.username, text || ''); } catch(e){}
+}
+function getProfileFoto(){
+  if(!currentUser) return '';
+  // Prioritas: localStorage → currentUser.foto (dari server saat login)
+  try {
+    const local = localStorage.getItem(PROFILE_LS.FOTO + currentUser.username);
+    if(local) return local;
+  } catch(e){}
+  if(currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
+    return currentUser.foto;
+  }
+  return '';
+}
+function setProfileFoto(dataUrl){
+  if(!currentUser) return;
+  try {
+    if(dataUrl) localStorage.setItem(PROFILE_LS.FOTO + currentUser.username, dataUrl);
+    else localStorage.removeItem(PROFILE_LS.FOTO + currentUser.username);
+  } catch(e){
+    toast('Gagal simpan foto (storage penuh?)', 'err');
+  }
+}
+
+function openProfile(){
+  if(!currentUser){ return; }
+  renderProfileScreen();
+  // Update label reminder di profile
+  const label = $('reminder-setting-value');
+  if(label) label.textContent = getReminderThreshold() + ' hari ›';
+  $('screen-profile').classList.add('show');
+}
+
+function closeProfile(){
+  // Tutup edit bio kalau lagi terbuka
+  profileBioEditCancel();
+  $('screen-profile').classList.remove('show');
+}
+
+function renderProfileScreen(){
+  if(!currentUser) return;
+
+  // Avatar
+  const avEl = $('profile-avatar');
+  const foto = getProfileFoto();
+  if(foto){
+    avEl.innerHTML = '<img src="'+foto+'" alt="Foto">';
+  } else {
+    const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+    avEl.textContent = initial;
+  }
+
+  // Sync header avatar juga
+  const headerAv = $('user-avatar');
+  if(headerAv){
+    if(foto){
+      headerAv.innerHTML = '<img src="'+foto+'" alt="Foto">';
+    } else {
+      const initial = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+      headerAv.textContent = initial;
+    }
+  }
+
+  // Nama & role
+  $('profile-name').textContent = currentUser.nama || currentUser.username || '-';
+  $('profile-username').textContent = '@' + (currentUser.username || '');
+
+  const role = (currentUser.role || '').toLowerCase();
+  const roleLabels = {
+    bm: 'Branch Manager', owner: 'Owner', admin: 'Admin',
+    strategi: 'Strategi Promo', sales: 'Sales',
+    konstruksi: 'Konstruksi', legal: 'Legal',
+    finance: 'Finance', manager: 'Manager', viewer: 'Viewer'
+  };
+  const rolePill = $('profile-role-pill');
+  rolePill.textContent = roleLabels[role] || (currentUser.role || '-');
+  rolePill.className = 'profile-role-pill ' + role;
+
+  // Bio
+  const bio = getProfileBio();
+  const bioEl = $('profile-bio-display');
+  if(bio.trim()){
+    bioEl.textContent = bio;
+    bioEl.classList.remove('empty');
+  } else {
+    bioEl.textContent = 'Belum ada bio. Tap Edit untuk menulis.';
+    bioEl.classList.add('empty');
+  }
+
+  // Stats
+  renderProfileStats();
+}
+
+function renderProfileStats(){
+  // Target di proyek aktif
+  let count = 0;
+  try {
+    if(typeof getTargetsForCurrentProyek === 'function'){
+      count = getTargetsForCurrentProyek().length;
+    }
+  } catch(e){ count = 0; }
+  $('stat-target-count').textContent = count;
+
+  const proj = (typeof proyekList !== 'undefined') ? proyekList.find(p => p.id === currentProyekId) : null;
+  $('stat-target-sub').textContent = proj ? (proj.kode || proj.id) : 'proyek aktif';
+
+  // Last login — pakai loginAt dari currentUser kalau ada, atau "Sekarang"
+  const loginAt = currentUser && currentUser.loginAt ? new Date(currentUser.loginAt) : new Date();
+  const now = new Date();
+  const sameDay = loginAt.toDateString() === now.toDateString();
+  if(sameDay){
+    const hh = String(loginAt.getHours()).padStart(2,'0');
+    const mm = String(loginAt.getMinutes()).padStart(2,'0');
+    $('stat-last-login').textContent = hh+':'+mm;
+    $('stat-last-login-sub').textContent = 'Hari ini';
+  } else {
+    const days = Math.floor((now - loginAt) / 86400000);
+    $('stat-last-login').textContent = days <= 0 ? '-' : days;
+    $('stat-last-login-sub').textContent = days <= 0 ? '-' : 'hari lalu';
+  }
+}
+
+// ===== EDIT BIO =====
+function profileBioEditOpen(){
+  $('profile-bio-input').value = getProfileBio();
+  updateBioCounter();
+  $('profile-bio-edit').classList.add('show');
+  $('profile-bio-edit-btn').style.display = 'none';
+  setTimeout(() => $('profile-bio-input').focus(), 100);
+}
+function profileBioEditCancel(){
+  $('profile-bio-edit').classList.remove('show');
+  $('profile-bio-edit-btn').style.display = '';
+}
+async function profileBioSave(){
+  const text = ($('profile-bio-input').value || '').trim().slice(0, 150);
+  // Save ke localStorage dulu (instan)
+  setProfileBio(text);
+  // Update display
+  const bioEl = $('profile-bio-display');
+  if(text){
+    bioEl.textContent = text;
+    bioEl.classList.remove('empty');
+  } else {
+    bioEl.textContent = 'Belum ada bio. Tap Edit untuk menulis.';
+    bioEl.classList.add('empty');
+  }
+  profileBioEditCancel();
+  toast('Bio tersimpan');
+
+  // Background sync ke Sheets (tidak block UI)
+  try {
+    const result = await gasRequest('auth_update_profile', {
+      sessionToken: sessionToken,
+      profile: { bio: text }
+    });
+    if(result && result.success){
+      // Update currentUser in memory & localStorage
+      if(currentUser) currentUser.bio = text;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+      console.log('[Profile] bio synced to server');
+    }
+  } catch(err){
+    console.warn('[Profile] bio sync gagal (tetap tersimpan lokal):', err.message || err);
+    // Tidak tampil error ke user — bio sudah tersimpan di localStorage, sync nanti saat online
+  }
+}
+function updateBioCounter(){
+  const el = $('profile-bio-input');
+  if(!el) return;
+  const len = (el.value || '').length;
+  $('profile-bio-counter').textContent = len + '/150';
+  // Auto-trim kalau melebihi
+  if(len > 150){
+    el.value = el.value.slice(0, 150);
+    $('profile-bio-counter').textContent = '150/150';
+  }
+}
+// Bind counter event
+document.addEventListener('DOMContentLoaded', function(){
+  const bioInput = document.getElementById('profile-bio-input');
+  if(bioInput){
+    bioInput.addEventListener('input', updateBioCounter);
+  }
+});
+
+// ===== EDIT FOTO =====
+function onProfileFotoSelected(event){
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ''; // reset biar bisa pilih file sama lagi
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    toast('File harus berupa gambar', 'err');
+    return;
+  }
+  if(file.size > 8 * 1024 * 1024){
+    toast('Ukuran foto maks 8MB', 'err');
+    return;
+  }
+  toast('Memproses foto...');
+  // Compress lebih ringkas (240px, quality 0.78) — lebih kecil supaya hemat storage Sheets
+  compressImage(file, 240, 0.78).then(async dataUrl => {
+    setProfileFoto(dataUrl);
+    renderProfileScreen();
+    toast('Foto profil tersimpan');
+
+    // Background sync ke Sheets
+    try {
+      const result = await gasRequest('auth_update_profile', {
+        sessionToken: sessionToken,
+        profile: { foto: dataUrl }
+      });
+      if(result && result.success){
+        if(currentUser) currentUser.foto = dataUrl;
+        try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+        console.log('[Profile] foto synced to server (' + Math.round(dataUrl.length/1024) + ' KB)');
+      }
+    } catch(err){
+      console.warn('[Profile] foto sync gagal (tetap tersimpan lokal):', err.message || err);
+      // Tidak block UI — foto tetap tersimpan di localStorage
+    }
+  }).catch(err => {
+    console.error('[Profile] foto error:', err);
+    toast('Gagal proses foto: ' + (err.message||'unknown'), 'err');
+  });
+}
+
+// Compress image jadi square thumbnail
+function compressImage(file, maxSize, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Gagal baca file'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('File bukan gambar valid'));
+      img.onload = () => {
+        try {
+          // Crop ke square (center)
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+          const targetSize = Math.min(maxSize, size);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, targetSize, targetSize);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality || 0.85);
+          resolve(dataUrl);
+        } catch(e){ reject(e); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== GANTI PASSWORD =====
+function openChangePassword(){
+  // Reset form
+  $('pwd-old').value = '';
+  $('pwd-new').value = '';
+  $('pwd-confirm').value = '';
+  ['grp-pwd-old','grp-pwd-new','grp-pwd-confirm'].forEach(id => {
+    const el = $(id); if(el) el.classList.remove('has-error');
+  });
+  $('btn-pwd-save').disabled = false;
+  $('btn-pwd-save').textContent = '💾 Ganti Password';
+  $('modal-change-password').classList.add('show');
+  setTimeout(() => $('pwd-old').focus(), 150);
+}
+
+function closeChangePassword(){
+  $('modal-change-password').classList.remove('show');
+}
+
+async function submitChangePassword(){
+  const oldPwd = $('pwd-old').value;
+  const newPwd = $('pwd-new').value;
+  const confirmPwd = $('pwd-confirm').value;
+
+  // Reset error states
+  ['grp-pwd-old','grp-pwd-new','grp-pwd-confirm'].forEach(id => {
+    const el = $(id); if(el) el.classList.remove('has-error');
+  });
+
+  // Validasi
+  if(!oldPwd){
+    $('grp-pwd-old').classList.add('has-error');
+    $('grp-pwd-old').querySelector('.err-msg').textContent = 'Wajib diisi';
+    return;
+  }
+  if(!newPwd || newPwd.length < 8){
+    $('grp-pwd-new').classList.add('has-error');
+    $('grp-pwd-new').querySelector('.err-msg').textContent = 'Minimal 8 karakter';
+    return;
+  }
+  if(newPwd === oldPwd){
+    $('grp-pwd-new').classList.add('has-error');
+    $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda dari yang lama';
+    return;
+  }
+  if(newPwd !== confirmPwd){
+    $('grp-pwd-confirm').classList.add('has-error');
+    $('grp-pwd-confirm').querySelector('.err-msg').textContent = 'Password tidak sama';
+    return;
+  }
+
+  // Submit
+  const btn = $('btn-pwd-save');
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+
+  try {
+    // Endpoint Apps Script: 'auth_change_password' (snake_case)
+    const result = await gasRequest('auth_change_password', {
+      sessionToken: sessionToken,
+      oldPassword: oldPwd,
+      newPassword: newPwd,
+      deviceInfo: navigator.userAgent.substring(0, 200)
+    });
+
+    if(result && result.success){
+      closeChangePassword();
+      toast('✓ Password berhasil diganti', 'ok');
+    } else {
+      // Error response dari Apps Script — handle berdasarkan error code
+      const errCode = (result && result.error) || '';
+      const errMsg = (result && result.message) || (result && result.error) || 'Gagal mengganti password';
+
+      if(errCode === 'invalid_old_password'){
+        $('grp-pwd-old').classList.add('has-error');
+        $('grp-pwd-old').querySelector('.err-msg').textContent = 'Password lama salah';
+      } else if(errCode === 'weak_password'){
+        $('grp-pwd-new').classList.add('has-error');
+        $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password minimal 8 karakter';
+      } else if(errCode === 'same_password'){
+        $('grp-pwd-new').classList.add('has-error');
+        $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda';
+      } else {
+        toast(errMsg, 'err');
+      }
+      btn.disabled = false;
+      btn.textContent = '💾 Ganti Password';
+    }
+  } catch(err){
+    console.error('[ChangePwd] error:', err);
+    const msg = err.message || String(err);
+    // Cek pesan error untuk identifikasi tipe kesalahan
+    if(/invalid_old_password|password.*(lama|old).*(salah|invalid|wrong|incorrect)/i.test(msg)){
+      $('grp-pwd-old').classList.add('has-error');
+      $('grp-pwd-old').querySelector('.err-msg').textContent = 'Password lama salah';
+    } else if(/weak_password|minimal.*karakter/i.test(msg)){
+      $('grp-pwd-new').classList.add('has-error');
+      $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password minimal 8 karakter';
+    } else if(/same_password|tidak boleh sama/i.test(msg)){
+      $('grp-pwd-new').classList.add('has-error');
+      $('grp-pwd-new').querySelector('.err-msg').textContent = 'Password baru harus berbeda';
+    } else if(/unauthorized|session/i.test(msg)){
+      toast('Sesi habis, silakan login ulang', 'err');
+      setTimeout(() => doLogout(), 1500);
+    } else {
+      toast('Gagal: ' + msg, 'err');
+    }
+    btn.disabled = false;
+    btn.textContent = '💾 Ganti Password';
+  }
+}
+
+// ===== LOGOUT DARI PROFILE =====
+function profileLogoutClick(){
+  if(!confirm('Yakin keluar dari akun ini?')) return;
+  closeProfile();
+  setTimeout(() => doLogout(), 200);
+}
+
+async function tryAutoLogin(){
+  // Coba ambil token dari localStorage
+  let savedToken = '';
+  let savedUser = null;
+  try {
+    savedToken = localStorage.getItem(LS.TOKEN) || '';
+    const userRaw = localStorage.getItem(LS.USER);
+    if(userRaw) savedUser = JSON.parse(userRaw);
+  } catch(e){}
+
+  if(!savedToken || !savedUser) return false;
+
+  // [PERF] Optimistic auto-login — pakai cache dulu, verify di background
+  sessionToken = savedToken;
+  currentUser = savedUser;
+
+  // Background verify — tidak block UI
+  gasRequest('auth_verify').then(r => {
+    if(r && r.user){
+      currentUser = r.user;
+      try { localStorage.setItem(LS.USER, JSON.stringify(currentUser)); } catch(e){}
+    }
+  }).catch(e => {
+    console.warn('[AutoLogin] background verify failed (will retry next time):', e.message);
+    // Tidak logout user — bisa jadi network glitch saja
+    // Kalau token beneran invalid, fetch berikutnya akan return error dan handle di sana
+  });
+
+  return true;
+}
+
+// ============================================================
+// MOBILE PERMISSIONS (dynamic dari Sheets)
+// ============================================================
+// [PERF] Load cache permissions dulu (instan), return true kalau sukses
+function loadMobilePermissionsFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.MOBILE_PERMISSIONS);
+    if(saved){
+      const obj = JSON.parse(saved);
+      if(obj && typeof obj === 'object' && Object.keys(obj).length > 0){
+        mobilePermissions = obj;
+        console.log('[Permissions] loaded from cache:', Object.keys(obj).length, 'rules');
+        return true;
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
+// [PERF] Fetch fresh permissions dari Sheets (untuk background refresh)
+async function loadMobilePermissions(){
+  try {
+    const r = await gasGet('getMobilePermissions');
+    if(r.success && Array.isArray(r.data)){
+      const map = {};
+      r.data.forEach(p => {
+        const role = String(p.role||'').toLowerCase();
+        const module = String(p.module||'').toLowerCase();
+        if(!role || !module) return;
+        map[role + '|' + module] = {
+          view: !!p.view,
+          create: !!p.create,
+          edit: !!p.edit,
+          delete: !!p.delete
+        };
+      });
+      mobilePermissions = map;
+      try { localStorage.setItem(LS.MOBILE_PERMISSIONS, JSON.stringify(map)); } catch(e){}
+      console.log('[Permissions] loaded from Sheets:', Object.keys(map).length, 'rules');
+      return true;
+    }
+  } catch(e){
+    console.warn('[Permissions] load from Sheets failed:', e.message);
+  }
+  // Fallback: dari localStorage
+  if(loadMobilePermissionsFromCache()) return false;
+  // Last fallback: hardcoded
+  mobilePermissions = Object.assign({}, PERMISSION_FALLBACK);
+  console.log('[Permissions] using hardcoded fallback');
+  return false;
+}
+
+// ============================================================
+// PROYEK LIST
+// ============================================================
+// [PERF] Load cache proyek dulu (instan)
+function loadProyekListFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.PROYEK);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr) && arr.length > 0){
+        // Validasi: pastikan punya lat/lng
+        const valid = arr.filter(p => p && p.id);
+        if(valid.length > 0){
+          proyekList = valid;
+          console.log('[Proyek] loaded from cache:', valid.length, 'proyek');
+          return true;
+        }
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
+async function loadProyekList(){
+  // Coba dari Sheets dulu (kalau online)
+  try {
+    const r = await gasGet('getProyek');
+    if(r.success && Array.isArray(r.data) && r.data.length > 0){
+      proyekList = r.data.map(p => ({
+        id: String(p.id || '').toLowerCase(),
+        nama: p.nama || '',
+        kode: (p.kode || p.id || '').toString().toUpperCase(),
+        area: p.area || '',
+        lat: parseFloat(p.lat) || 0,
+        lng: parseFloat(p.lng) || 0,
+        tipe: p.tipe || 'Mix-use',
+        unit: parseInt(p.unit) || 0,
+        developer: p.developer || '',
+        ikon: p.ikon || '🏘️',
+        warna: p.warna || '#3b82f6',
+        status: p.status || 'Aktif'
+      }));
+      try { localStorage.setItem(LS.PROYEK, JSON.stringify(proyekList)); } catch(e){}
+      console.log('[Proyek] loaded from Sheets:', proyekList.length, 'proyek');
+      return true;
+    }
+  } catch(e){
+    console.warn('[Proyek] load from Sheets failed, fallback to local:', e.message);
+  }
+  // Fallback: dari localStorage
+  if(loadProyekListFromCache()) return false;
+  // Last fallback: default
+  proyekList = PROYEK_DEFAULT.slice();
+  return false;
+}
+
+function renderProyekDropdown(){
+  const sel = $('proyek-select');
+  sel.innerHTML = proyekList.map(p =>
+    `<option value="${esc(p.id)}">${esc(p.nama)} (${esc(p.kode||p.id)})</option>`
+  ).join('');
+  let last = '';
+  try { last = localStorage.getItem(LS.LAST_PROYEK) || ''; } catch(e){}
+  if(last && proyekList.some(p => p.id === last)){
+    sel.value = last;
+    currentProyekId = last;
+  } else {
+    currentProyekId = proyekList[0].id;
+    sel.value = currentProyekId;
+  }
+  sel.onchange = () => {
+    currentProyekId = sel.value;
+    try { localStorage.setItem(LS.LAST_PROYEK, currentProyekId); } catch(e){}
+    activeFilter = 'all';
+    activeJenis = 'all';
+    searchQuery = '';
+    renderContent();
+  };
+}
+
+// ============================================================
+// TARGET PASAR DATA
+// ============================================================
+// [PERF] Load cache target dulu (instan)
+function loadTpTargetsFromCache(){
+  try {
+    const saved = localStorage.getItem(LS.TP_TARGETS);
+    if(saved){
+      const arr = JSON.parse(saved);
+      if(Array.isArray(arr)){
+        tpTargets = arr.map(t => Object.assign({}, t, {
+          proyek: String(t.proyek || 'gwc').toLowerCase()
+        }));
+        console.log('[TP] loaded from cache:', tpTargets.length, 'targets');
+        return true;
+      }
+    }
+  } catch(e){}
+  return false;
+}
+
+async function loadTpTargets(){
+  try {
+    const r = await gasGet('getTargetPasar');
+    if(r.success && Array.isArray(r.data)){
+      tpTargets = r.data.map(row => ({
+        id: parseInt(row.id),
+        proyek: String(row.proyek || 'gwc').toLowerCase(),
+        nama: row.nama,
+        jenis: row.jenis,
+        lat: parseFloat(row.lat),
+        lng: parseFloat(row.lng),
+        karyawan: parseInt(row.karyawan) || 0,
+        pic: row.pic || '',
+        lastcontact: row.lastcontact || '-',
+        status: parseInt(row.status) || 0,
+        catatan: row.catatan || ''
+      }));
+      try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+      console.log('[TP] loaded from Sheets:', tpTargets.length, 'targets');
+      return true;
+    }
+  } catch(e){
+    console.warn('[TP] load from Sheets failed:', e.message);
+  }
+  // Fallback localStorage
+  if(loadTpTargetsFromCache()) return false;
+  tpTargets = [];
+  return false;
+}
+
+function getTargetsForCurrentProyek(){
+  return tpTargets.filter(t => String(t.proyek||'gwc').toLowerCase() === currentProyekId);
+}
+
+// ============================================================
+// SCREEN FLOW
+// ============================================================
+function showLogin(){
+  $('screen-boot').style.display = 'none';
+  $('screen-app').classList.remove('show');
+  $('screen-login').style.display = '';
+}
+
+async function enterApp(){
+  $('screen-boot').style.display = 'none';
+  $('screen-login').style.display = 'none';
+  $('screen-app').classList.add('show');
+
+  // Reset state Kata Hari Ini (fresh quote tiap login/buka aplikasi)
+  _motivasiCurrentIdx = -1;
+  _detailTipCurrentIdx = -1;
+  _detailTipCurrentStatus = -1;
+
+  // Tampilkan splash motivasi (auto-hide 2.5 detik atau tap untuk skip)
+  showMotivasiSplash();
+
+  // Render header user
+  const av = $('user-avatar');
+  // Cek foto dari Profile localStorage dulu (yang user upload sendiri), fallback ke currentUser.foto
+  let fotoSrc = '';
+  try { fotoSrc = localStorage.getItem('bm4_mobile_foto_' + currentUser.username) || ''; } catch(e){}
+  if(!fotoSrc && currentUser.foto && String(currentUser.foto).startsWith('data:image/')){
+    fotoSrc = currentUser.foto;
+  }
+  if(fotoSrc){
+    av.innerHTML = `<img src="${fotoSrc}" alt="">`;
+  } else {
+    av.textContent = (currentUser.nama || currentUser.username || '?').charAt(0).toUpperCase();
+  }
+  $('user-name').textContent = currentUser.nama || currentUser.username;
+  const roleKey = String(currentUser.role||'').toLowerCase();
+  $('user-role').textContent = ROLE_LABELS[roleKey] || currentUser.role || '';
+
+  // ════════════════════════════════════════════════════════
+  // [PERF] PHASE 1: Tampilkan dari cache DULU (instan!)
+  // ════════════════════════════════════════════════════════
+  const cachePerm = loadMobilePermissionsFromCache();
+  const cacheProyek = loadProyekListFromCache();
+  const cacheTp = loadTpTargetsFromCache();
+
+  if(cachePerm && cacheProyek){
+    // Punya cache lengkap → render instan
+    renderProyekDropdown();
+    renderContent();
+    showSyncState('Memperbarui data...', 'loading');
+  } else {
+    // Cache tidak ada / pertama kali → tampilkan skeleton
+    renderSkeletonUI();
+    showSyncState('Memuat...', 'loading');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // [PERF] PHASE 2: Background refresh — semua paralel!
+  // ════════════════════════════════════════════════════════
+  try {
+    const results = await Promise.allSettled([
+      loadMobilePermissions(),
+      loadProyekList(),
+      loadTpTargets()
+    ]);
+
+    // Cek hasil — kalau ada yang sukses, refresh UI
+    const anySuccess = results.some(r => r.status === 'fulfilled' && r.value === true);
+    if(anySuccess){
+      renderProyekDropdown();
+      renderContent();
+    }
+    showSyncState('Tersinkron', 'ok');
+    setTimeout(() => showSyncState(''), 2000);
+  } catch(e){
+    console.warn('[enterApp] background refresh error:', e);
+    showSyncState('Offline - pakai data lokal', 'err');
+    setTimeout(() => showSyncState(''), 3000);
+    // Walau error, tetap render dari cache
+    if(!cachePerm || !cacheProyek){
+      renderProyekDropdown();
+      renderContent();
+    }
+  }
+}
+
+// [PERF] Skeleton UI saat cache kosong (first-time login)
+function renderSkeletonUI(){
+  const main = $('content-area');
+  if(!main) return;
+  main.innerHTML = `
+    <div class="skeleton-wrap">
+      <div class="skel-card"></div>
+      <div class="skel-card"></div>
+      <div class="skel-card"></div>
+    </div>
+  `;
+}
+
+// ============================================================
+// KATA HARI INI - Splash motivasi (saat login) + Tips per status (detail target)
+// ============================================================
+let _motivasiCurrentIdx = -1;       // index quote terakhir splash
+let _detailTipCurrentIdx = -1;      // index tip terakhir di detail modal
+let _detailTipCurrentStatus = -1;   // status terakhir untuk tip
+
+// Pilih quote random dari array, hindari yang sama persis dengan sebelumnya
+function pickRandomQuote(arr, lastIdx){
+  if(!arr || arr.length === 0) return { idx: -1, text: '' };
+  if(arr.length === 1) return { idx: 0, text: arr[0] };
+  let idx;
+  let tries = 0;
+  do {
+    idx = Math.floor(Math.random() * arr.length);
+    tries++;
+  } while(idx === lastIdx && tries < 8);
+  return { idx, text: arr[idx] };
+}
+
+// Tampilkan splash motivasi (full screen, tap untuk lanjut — tidak auto-hide)
+function showMotivasiSplash(){
+  const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
+  _motivasiCurrentIdx = picked.idx;
+  const quoteEl = $('motivasi-splash-quote');
+  if(quoteEl) quoteEl.textContent = picked.text;
+  const splash = $('motivasi-splash');
+  if(!splash) return;
+  splash.classList.remove('fadeout');
+  splash.classList.add('show');
+}
+
+// Sembunyikan splash dengan fade-out
+function hideMotivasiSplash(){
+  const splash = $('motivasi-splash');
+  if(!splash || !splash.classList.contains('show')) return;
+  splash.classList.add('fadeout');
+  setTimeout(() => {
+    splash.classList.remove('show');
+    splash.classList.remove('fadeout');
+  }, 500);
+}
+
+// Shuffle ke quote lain (di splash, tanpa tutup)
+function shuffleSplashQuote(){
+  const picked = pickRandomQuote(MOTIVASI_QUOTES, _motivasiCurrentIdx);
+  _motivasiCurrentIdx = picked.idx;
+  const quoteEl = $('motivasi-splash-quote');
+  if(quoteEl){
+    quoteEl.style.opacity = '0';
+    setTimeout(() => {
+      quoteEl.textContent = picked.text;
+      quoteEl.style.opacity = '1';
+    }, 180);
+  }
+}
+
+// Buka splash dari profile (untuk tombol "Lihat Kata Hari Ini")
+function openMotivasiFromProfile(){
+  showMotivasiSplash();
+}
+
+// ===== Reminder Setting (per user, simpan di localStorage) =====
+function openReminderSetting(){
+  const current = getReminderThreshold();
+  // Highlight option yang aktif
+  document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+    const days = parseInt(btn.getAttribute('data-days'));
+    btn.classList.toggle('active', days === current);
+    btn.onclick = () => selectReminderDays(days);
+  });
+  $('modal-reminder-setting').classList.add('show');
+}
+
+function closeReminderSetting(){
+  $('modal-reminder-setting').classList.remove('show');
+}
+
+function selectReminderDays(days){
+  const v = setReminderThreshold(days);
+  // Update UI
+  document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+    const d = parseInt(btn.getAttribute('data-days'));
+    btn.classList.toggle('active', d === v);
+  });
+  // Update label di profile
+  const label = $('reminder-setting-value');
+  if(label) label.textContent = v + ' hari ›';
+  toast(`Reminder diubah ke ${v} hari`, 'ok');
+  // Tutup modal setelah delay singkat (biar user lihat feedback)
+  setTimeout(() => closeReminderSetting(), 600);
+}
+
+// ===== Tip per status untuk detail modal target =====
+function renderDetailTipCard(status){
+  const s = parseInt(status);
+  if(isNaN(s) || s < 0 || s > 4) return '';
+  const tips = TIPS_BY_STATUS[s];
+  if(!tips || tips.length === 0) return '';
+
+  // Reset index kalau status berbeda dari sebelumnya
+  if(_detailTipCurrentStatus !== s){
+    _detailTipCurrentIdx = -1;
+    _detailTipCurrentStatus = s;
+  }
+  const picked = pickRandomQuote(tips, _detailTipCurrentIdx);
+  _detailTipCurrentIdx = picked.idx;
+
+  const lbl = STATUS_LABELS[s] || '-';
+  const ic = STATUS_ICONS[s] || '💡';
+  return `
+    <div class="detail-tip-card" id="detail-tip-card" data-status="${s}">
+      <div class="detail-tip-head">
+        <span class="detail-tip-icon">💡</span>
+        <span class="detail-tip-label">Tip Strategi</span>
+      </div>
+      <p class="detail-tip-quote" id="detail-tip-quote">"${esc(picked.text)}"</p>
+      <div class="detail-tip-foot">
+        <span class="detail-tip-status">${ic} Fase: ${esc(lbl)}</span>
+        <button class="detail-tip-shuffle" onclick="shuffleDetailTip()">⟲ Tip lain</button>
+      </div>
+    </div>
+  `;
+}
+
+// Shuffle tip di detail modal
+function shuffleDetailTip(){
+  const card = $('detail-tip-card');
+  if(!card) return;
+  const s = parseInt(card.getAttribute('data-status'));
+  if(isNaN(s)) return;
+  const tips = TIPS_BY_STATUS[s];
+  if(!tips || tips.length === 0) return;
+
+  const picked = pickRandomQuote(tips, _detailTipCurrentIdx);
+  _detailTipCurrentIdx = picked.idx;
+  const el = $('detail-tip-quote');
+  if(el){
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = `"${picked.text}"`;
+      el.style.opacity = '1';
+    }, 150);
+  }
+}
+
+// ============================================================
+// CONTENT RENDERING (dinamis sesuai role)
+// ============================================================
+function renderContent(){
+  const role = currentUser.role || 'viewer';
+  const modules = getRoleModules(role);
+  if(modules.length === 0){
+    renderNoAccess();
+    return;
+  }
+  // Cek apakah user punya akses ke modul aktif file ini
+  if(!modules.includes(ACTIVE_MODULE)){
+    renderNoAccess();
+    return;
+  }
+  // Render modul yang aktif untuk file ini
+  if(ACTIVE_MODULE === 'target_pasar'){
+    renderTargetPasarDashboard();
+  } else if(ACTIVE_MODULE === 'estate'){
+    if(typeof renderEstateDashboard === 'function') renderEstateDashboard();
+    else renderNoAccess();
+  } else if(ACTIVE_MODULE === 'sales'){
+    if(typeof renderSalesDashboard === 'function') renderSalesDashboard();
+    else renderNoAccess();
+  } else {
+    renderNoAccess();
+  }
+}
+
+function renderNoAccess(){
+  $('content-area').innerHTML = `
+    <div class="no-access">
+      <div class="icon">🔒</div>
+      <h2>Belum ada akses ke ${esc(ACTIVE_DIVISI_NAME)}</h2>
+      <p>Akun <b>${esc(currentUser.username)}</b> dengan role <b>${esc(currentUser.role||'-')}</b> belum punya akses ke modul <b>${ACTIVE_DIVISI_ICON} ${esc(ACTIVE_DIVISI_NAME)}</b>.</p>
+      <p>Hubungi Branch Manager untuk meminta akses, atau gunakan versi desktop.</p>
+      <p style="margin-top:18px"><a href="index.html?desktop=1&v=rc14" style="color:var(--accent);font-weight:600;text-decoration:none">Buka versi desktop &uarr;</a></p>
+    </div>
+  `;
+}
+
+function renderTargetPasarDashboard(){
+  const role = currentUser.role;
+  const perm = getPermissionFor(role, 'target_pasar');
+  const targets = getTargetsForCurrentProyek();
+  const proj = proyekList.find(p => p.id === currentProyekId);
+
+  // Statistik
+  const total = targets.length;
+  const byStatus = [0,0,0,0,0];
+  targets.forEach(t => {
+    const s = parseInt(t.status) || 0;
+    if(s>=0 && s<=4) byStatus[s]++;
+  });
+  const aktif = byStatus[1] + byStatus[2] + byStatus[3];
+
+  // Hitung distribusi jenis (untuk pill filter jenis)
+  const byJenis = {};
+  JENIS_LIST.forEach(j => byJenis[j.id] = 0);
+  targets.forEach(t => {
+    const jid = String(t.jenis||'lainnya').toLowerCase();
+    if(byJenis[jid] !== undefined) byJenis[jid]++;
+    else byJenis['lainnya']++;
+  });
+
+  // Filter — status, jenis, search
+  let filtered = targets;
+  if(activeFilter !== 'all'){
+    const fs = parseInt(activeFilter);
+    filtered = filtered.filter(t => (parseInt(t.status)||0) === fs);
+  }
+  if(activeJenis !== 'all'){
+    filtered = filtered.filter(t => String(t.jenis||'lainnya').toLowerCase() === activeJenis);
+  }
+  if(searchQuery === '__STAGNANT__'){
+    // Filter khusus: hanya target stagnant
+    filtered = filtered.filter(t => isTargetStagnant(t));
+  } else if(searchQuery && searchQuery.trim()){
+    const q = searchQuery.trim().toLowerCase();
+    filtered = filtered.filter(t => {
+      const nama = String(t.nama||'').toLowerCase();
+      const pic = String(t.pic||'').toLowerCase();
+      const cat = String(t.catatan||'').toLowerCase();
+      return nama.includes(q) || pic.includes(q) || cat.includes(q);
+    });
+  }
+  filtered = filtered.slice().sort((a,b) => (parseInt(b.status)||0) - (parseInt(a.status)||0));
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total target</div>
+        <div class="stat-value">${total}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pipeline aktif</div>
+        <div class="stat-value warn">${aktif}</div>
+      </div>
+    </div>
+  `;
+
+  if(total > 0){
+    const segs = byStatus.map((n,i) => n>0 ? `<div class="seg s${i}" style="flex:${n}"></div>` : '').filter(Boolean).join('');
+    html += `
+      <div class="pipeline-card">
+        <div class="label">Distribusi status</div>
+        <div class="pipeline-bar">${segs || '<div class="seg s0" style="flex:1;opacity:.3"></div>'}</div>
+        <div class="pipeline-legend">
+          ${byStatus.map((n,i) => `<span><span class="dot" style="background:${STATUS_COLORS[i]}"></span>${esc(STATUS_LABELS[i])} ${n}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if(perm.create){
+    html += `<button class="btn-primary" onclick="openAddTarget()">+ Tambah Target Baru</button>`;
+  }
+
+  // Reminder banner — kalau ada target stagnant
+  const stagnantCount = targets.filter(t => isTargetStagnant(t)).length;
+  if(stagnantCount > 0){
+    const threshold = getReminderThreshold();
+    html += `
+      <div class="reminder-banner" onclick="filterStagnantTargets()">
+        <div class="reminder-banner-icon">⏰</div>
+        <div class="reminder-banner-content">
+          <div class="reminder-banner-title">${stagnantCount} target butuh follow-up</div>
+          <div class="reminder-banner-sub">Stagnan ≥ ${threshold} hari · Tap untuk lihat</div>
+        </div>
+        <div class="reminder-banner-arrow">›</div>
+      </div>
+    `;
+  }
+
+  // Sticky filter area: search + filter status + filter jenis
+  const filterStatusPills = `
+    <button class="pill-filter ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Semua (${total})</button>
+    ${STATUS_LABELS.map((lbl,i) => byStatus[i]===0 ? '' :
+      `<button class="pill-filter ${activeFilter===String(i)?'active':''}" onclick="setFilter('${i}')">${STATUS_ICONS[i]} ${esc(lbl)} (${byStatus[i]})</button>`
+    ).filter(Boolean).join('')}
+  `;
+  const filterJenisPills = `
+    <button class="pill-jenis ${activeJenis==='all'?'active':''}" onclick="setJenis('all')">Semua jenis</button>
+    ${JENIS_LIST.map(j => byJenis[j.id]===0 ? '' :
+      `<button class="pill-jenis ${activeJenis===j.id?'active':''}" onclick="setJenis('${j.id}')">${j.icon} ${esc(j.label)} (${byJenis[j.id]})</button>`
+    ).filter(Boolean).join('')}
+  `;
+  const isStagnantFilter = searchQuery === '__STAGNANT__';
+  const searchVal = isStagnantFilter ? '' : esc(searchQuery || '');
+  html += `
+    <div class="sticky-filter-bar" id="sticky-filter-bar">
+      ${isStagnantFilter ? `
+        <div class="active-filter-chip">
+          <span>⏰ Filter: Butuh follow-up</span>
+          <button onclick="clearSearch()" aria-label="Hapus filter">×</button>
+        </div>
+      ` : `
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Cari nama, PIC, atau catatan..." value="${searchVal}" oninput="onSearchInput(this.value)" autocomplete="off">
+          ${searchQuery ? '<button class="search-clear" onclick="clearSearch()" aria-label="Hapus">×</button>' : ''}
+        </div>
+      `}
+      <div class="filter-pills">${filterStatusPills}</div>
+      <div class="filter-pills filter-pills-jenis">${filterJenisPills}</div>
+    </div>
+  `;
+
+  html += `
+    <div class="list-header">
+      <span class="title">Daftar target</span>
+      <span class="count">Proyek: ${esc(proj ? (proj.kode||proj.id) : currentProyekId)}</span>
+    </div>
+  `;
+
+  if(filtered.length === 0){
+    if(total === 0){
+      html += `
+        <div class="empty-state">
+          <div class="icon">🎯</div>
+          <p><b>Belum ada target</b></p>
+          <p>untuk proyek ${esc(proj?proj.nama:currentProyekId)}</p>
+          ${perm.create ? '<p class="hint">Tap tombol "+ Tambah Target Baru" di atas untuk mulai.</p>' : ''}
+        </div>
+      `;
+    } else if(searchQuery && searchQuery.trim()){
+      html += `
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <p><b>Tidak ditemukan</b></p>
+          <p>Tidak ada target yang cocok dengan "<b>${esc(searchQuery)}</b>"</p>
+          <p class="hint" style="margin-top:8px"><button class="pill-filter" onclick="clearSearch()" style="background:var(--accent);border-color:var(--accent);color:#fff">× Hapus pencarian</button></p>
+        </div>
+      `;
+    } else {
+      const filterDesc = [];
+      if(activeFilter !== 'all') filterDesc.push(STATUS_LABELS[parseInt(activeFilter)]);
+      if(activeJenis !== 'all') filterDesc.push(getJenisMeta(activeJenis).label);
+      html += `
+        <div class="empty-state">
+          <p>Tidak ada target di filter <b>${esc(filterDesc.join(' + '))}</b>.</p>
+          <p class="hint" style="margin-top:6px">Tap "Semua" / "Semua jenis" untuk reset filter.</p>
+        </div>
+      `;
+    }
+  } else {
+    html += filtered.map(t => renderTargetCard(t, perm)).join('');
+  }
+
+  $('content-area').innerHTML = html;
+  // Bind swipe handlers untuk quick update status
+  setTimeout(() => bindSwipeHandlers(), 50);
+}
+
+function renderTargetCard(t, perm){
+  const s = parseInt(t.status) || 0;
+  const lbl = STATUS_LABELS[s] || '-';
+  const ic = STATUS_ICONS[s] || '';
+  const meta = [];
+  if(t.karyawan) meta.push(Number(t.karyawan).toLocaleString('id-ID') + ' karyawan');
+  if(t.jenis) meta.push(_capitalize(t.jenis));
+  const meta1 = meta.join(' • ');
+  const meta2 = t.pic ? 'PIC: ' + esc(t.pic) : '';
+  const tid = parseInt(t.id) || 0;
+  const onclick = `onclick="openDetailTarget(${tid})"`;
+  const canQuickUpdate = perm.edit && s < 4;
+  const nextStatus = s + 1;
+  const nextLbl = STATUS_LABELS[nextStatus] || '';
+  const nextIc = STATUS_ICONS[nextStatus] || '';
+  // Reminder badge — kalau stagnant
+  const stagnant = isTargetStagnant(t);
+  const daysAgo = stagnant ? daysSinceContact(t) : 0;
+  const reminderBadge = stagnant
+    ? `<div class="target-reminder-badge" title="Stagnan ${daysAgo} hari">🔴 ${daysAgo}h</div>`
+    : '';
+  const cardCls = `target-card s${s}${stagnant ? ' stagnant' : ''}`;
+  if(!canQuickUpdate){
+    return `
+      <div class="${cardCls}" ${onclick} style="cursor:pointer">
+        <div class="target-card-head">
+          <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}${reminderBadge}</div>
+          <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
+        </div>
+        ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
+        ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
+      </div>
+    `;
+  }
+  return `
+    <div class="swipe-card-wrap" data-target-id="${tid}" data-current-status="${s}">
+      <div class="swipe-action swipe-action-right" data-next-status="${nextStatus}">
+        <span class="swipe-icon">${nextIc}</span>
+        <span class="swipe-label">${esc(nextLbl)}</span>
+      </div>
+      <div class="swipe-card ${cardCls}" ${onclick} style="cursor:pointer">
+        <div class="target-card-head">
+          <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}${reminderBadge}</div>
+          <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
+        </div>
+        ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
+        ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function setFilter(f){
+  activeFilter = f;
+  renderContent();
+}
+
+function setJenis(j){
+  activeJenis = j;
+  renderContent();
+}
+
+let _searchDebounceTimer = null;
+function onSearchInput(val){
+  searchQuery = val || '';
+  // Debounce: tunggu 250ms sebelum re-render (lebih smooth)
+  if(_searchDebounceTimer) clearTimeout(_searchDebounceTimer);
+  _searchDebounceTimer = setTimeout(() => {
+    // Save cursor position & focus state
+    const inputEl = document.getElementById('search-input');
+    const focused = inputEl === document.activeElement;
+    const cursorPos = inputEl ? inputEl.selectionStart : 0;
+    renderContent();
+    // Restore focus & cursor
+    if(focused){
+      const newInput = document.getElementById('search-input');
+      if(newInput){
+        newInput.focus();
+        try { newInput.setSelectionRange(cursorPos, cursorPos); } catch(e){}
+      }
+    }
+  }, 250);
+}
+
+function clearSearch(){
+  searchQuery = '';
+  if(_searchDebounceTimer) clearTimeout(_searchDebounceTimer);
+  renderContent();
+  setTimeout(() => {
+    const newInput = document.getElementById('search-input');
+    if(newInput) newInput.focus();
+  }, 50);
+}
+
+// Filter ke target stagnant — pakai pseudo-filter via search
+function filterStagnantTargets(){
+  // Reset filter dulu
+  activeFilter = 'all';
+  activeJenis = 'all';
+  searchQuery = '__STAGNANT__'; // marker khusus, nanti di-handle di filter
+  renderContent();
+  // Update input visual
+  setTimeout(() => {
+    const input = document.getElementById('search-input');
+    if(input) input.value = '';
+  }, 50);
+}
+
+// ===== Swipe handler untuk quick update status =====
+let _swipeState = null;
+
+function bindSwipeHandlers(){
+  const wraps = document.querySelectorAll('.swipe-card-wrap');
+  wraps.forEach(wrap => {
+    const card = wrap.querySelector('.swipe-card');
+    if(!card || card._swipeBound) return;
+    card._swipeBound = true;
+    card.addEventListener('touchstart', onSwipeStart, { passive: true });
+    card.addEventListener('touchmove', onSwipeMove, { passive: false });
+    card.addEventListener('touchend', onSwipeEnd, { passive: true });
+    card.addEventListener('touchcancel', onSwipeEnd, { passive: true });
+  });
+}
+
+function onSwipeStart(e){
+  const t = e.touches[0];
+  const card = e.currentTarget;
+  const wrap = card.closest('.swipe-card-wrap');
+  _swipeState = {
+    card,
+    wrap,
+    startX: t.clientX,
+    startY: t.clientY,
+    deltaX: 0,
+    deltaY: 0,
+    locked: null, // 'horizontal' | 'vertical' | null
+    moved: false
+  };
+  card.classList.add('swiping');
+  card.classList.remove('snap-back');
+}
+
+function onSwipeMove(e){
+  if(!_swipeState) return;
+  const t = e.touches[0];
+  const dx = t.clientX - _swipeState.startX;
+  const dy = t.clientY - _swipeState.startY;
+  _swipeState.deltaX = dx;
+  _swipeState.deltaY = dy;
+
+  // Determine direction lock setelah threshold kecil
+  if(!_swipeState.locked){
+    if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
+      _swipeState.locked = (Math.abs(dx) > Math.abs(dy)) ? 'horizontal' : 'vertical';
+    }
+  }
+  if(_swipeState.locked === 'horizontal'){
+    e.preventDefault(); // cegah scroll vertikal
+    _swipeState.moved = true;
+    // Hanya boleh swipe ke kanan (positif). Limit max ke setengah card width.
+    const cardW = _swipeState.card.offsetWidth || 320;
+    const maxSwipe = cardW * 0.55;
+    let translateX = Math.max(0, Math.min(maxSwipe, dx));
+    _swipeState.card.style.transform = `translateX(${translateX}px)`;
+  }
+}
+
+function onSwipeEnd(e){
+  if(!_swipeState) return;
+  const card = _swipeState.card;
+  const wrap = _swipeState.wrap;
+  card.classList.remove('swiping');
+  card.classList.add('snap-back');
+
+  const cardW = card.offsetWidth || 320;
+  const threshold = cardW * 0.35; // harus swipe minimal 35% width
+
+  if(_swipeState.locked === 'horizontal' && _swipeState.deltaX >= threshold){
+    // Trigger update
+    const tid = parseInt(wrap.getAttribute('data-target-id')) || 0;
+    const nextStatus = parseInt(wrap.querySelector('.swipe-action').getAttribute('data-next-status'));
+    // Snap ke kanan dulu untuk feedback visual
+    card.style.transform = `translateX(${cardW}px)`;
+    setTimeout(() => {
+      _confirmQuickUpdateStatus(tid, nextStatus, () => {
+        // Kalau cancel, snap back
+        card.style.transform = 'translateX(0)';
+      });
+    }, 80);
+  } else {
+    // Snap back
+    card.style.transform = 'translateX(0)';
+    // Kalau tidak ada gerakan & swipe-state tidak locked → biarkan onclick berjalan
+    if(!_swipeState.moved){
+      // do nothing, klik akan terjadi natural
+    }
+  }
+  // Cegah click setelah swipe
+  if(_swipeState.moved){
+    const blockClickFor = card;
+    blockClickFor._suppressClick = true;
+    setTimeout(() => { blockClickFor._suppressClick = false; }, 300);
+  }
+  _swipeState = null;
+}
+
+// Hadang click kalau habis swipe
+document.addEventListener('click', function(e){
+  let el = e.target;
+  while(el && el !== document){
+    if(el.classList && el.classList.contains('swipe-card') && el._suppressClick){
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+    el = el.parentNode;
+  }
+}, true);
+
+function _confirmQuickUpdateStatus(tid, nextStatus, onCancel){
+  const t = (tpTargets || []).find(x => parseInt(x.id) === parseInt(tid));
+  if(!t){ if(onCancel) onCancel(); return; }
+  const fromLbl = STATUS_LABELS[parseInt(t.status)||0] || '-';
+  const toLbl = STATUS_LABELS[nextStatus] || '-';
+  const toIc = STATUS_ICONS[nextStatus] || '';
+  // Konfirmasi via native confirm (simple & reliable di mobile)
+  const ok = confirm(`Update status:\n\n"${t.nama||'(tanpa nama)'}"\n\n${fromLbl} → ${toIc} ${toLbl}\n\nLanjutkan?`);
+  if(!ok){ if(onCancel) onCancel(); return; }
+  _executeQuickUpdate(tid, nextStatus, t);
+}
+
+async function _executeQuickUpdate(tid, nextStatus, t){
+  try {
+    toast('⏳ Mengupdate status...', 'info');
+    // Bangun newRows: ganti target ini dengan status baru, sisanya tetap
+    const today = new Date().toISOString().slice(0,10);
+    const newRows = (tpTargets || []).map(row => {
+      if(parseInt(row.id) === parseInt(tid)){
+        return Object.assign({}, row, {
+          status: parseInt(nextStatus),
+          lastcontact: today
+        });
+      }
+      return row;
+    });
+    await gasRequest('saveTargetPasar', { rows: newRows });
+    tpTargets = newRows;
+    try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+    toast(`✓ ${STATUS_ICONS[nextStatus]} ${STATUS_LABELS[nextStatus]}`, 'ok');
+    // Riwayat (akan di-handle di Fase 4)
+    if(typeof addAktivitas === 'function'){
+      addAktivitas(tid, 'status_update', `${STATUS_LABELS[parseInt(t.status)||0]} → ${STATUS_LABELS[nextStatus]}`);
+    }
+    renderContent();
+  } catch(e){
+    console.error('[quickUpdateStatus] error:', e);
+    toast('Gagal update: ' + (e.message || 'tidak diketahui'), 'err');
+    renderContent();
+  }
+}
+
+// ============================================================
+// DETAIL MODAL — view target dengan rute via jalan
+// ============================================================
+let currentDetailTarget = null;     // target yang sedang ditampilkan
+let detailMap = null;               // Leaflet map instance untuk detail
+let detailRouteLayer = null;        // polyline rute jalan (yang biru)
+let detailRouteCache = {};          // cache hasil OSRM { 'lat1,lng1->lat2,lng2': {distance, duration} }
+
+function openDetailTarget(id){
+  const t = tpTargets.find(x => parseInt(x.id) === parseInt(id));
+  if(!t){
+    toast('Target tidak ditemukan', 'err');
+    return;
+  }
+  currentDetailTarget = t;
+
+  // Header
+  $('modal-detail-title').textContent = 'Detail Target';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-detail-sub').textContent = (proj ? proj.kode || proj.id : currentProyekId).toUpperCase();
+
+  // Hero: nama + meta
+  $('d-nama').textContent = t.nama || '(tanpa nama)';
+  const metaParts = [];
+  if(t.jenis) metaParts.push(_capitalize(t.jenis));
+  if(t.karyawan) metaParts.push(Number(t.karyawan).toLocaleString('id-ID') + ' karyawan');
+  $('d-meta').textContent = metaParts.length ? metaParts.join(' · ') : '—';
+
+  // Status pill
+  const s = parseInt(t.status) || 0;
+  const statusInfo = [
+    {ic:'🔍', lbl:'Identifikasi', bg:'#E0F2FE', col:'#075985'},
+    {ic:'📞', lbl:'Kontak Awal',  bg:'#FEF3C7', col:'#92400E'},
+    {ic:'🤝', lbl:'Presentasi',   bg:'#FED7AA', col:'#9A3412'},
+    {ic:'💬', lbl:'Negosiasi',    bg:'#DDD6FE', col:'#5B21B6'},
+    {ic:'✅', lbl:'Deal',         bg:'#D1FAE5', col:'#065F46'}
+  ][s] || {ic:'❓', lbl:'-', bg:'#E5E7EB', col:'#374151'};
+  const statusEl = $('d-status');
+  statusEl.textContent = statusInfo.ic + ' ' + statusInfo.lbl;
+  statusEl.style.background = statusInfo.bg;
+  statusEl.style.color = statusInfo.col;
+
+  // Render tip strategi sesuai status target
+  const tipContainer = $('d-tip-container');
+  if(tipContainer){
+    tipContainer.innerHTML = renderDetailTipCard(s);
+  }
+
+  // Render riwayat aktivitas
+  const aktContainer = $('d-aktivitas-container');
+  if(aktContainer){
+    aktContainer.innerHTML = renderAktivitasSection(parseInt(t.id));
+  }
+
+  // Info rows
+  const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+  if(!isNaN(lat) && !isNaN(lng)){
+    $('d-coord').textContent = lat.toFixed(7) + ', ' + lng.toFixed(7);
+    $('d-coord').classList.remove('empty');
+  } else {
+    $('d-coord').textContent = 'Belum ada koordinat';
+    $('d-coord').classList.add('empty');
+  }
+
+  if(t.pic){
+    $('d-pic').textContent = t.pic;
+    $('d-pic').classList.remove('empty');
+  } else {
+    $('d-pic').textContent = 'Belum diisi';
+    $('d-pic').classList.add('empty');
+  }
+
+  if(t.lastcontact){
+    $('d-lastcontact').textContent = formatDateID(t.lastcontact);
+    $('d-lastcontact').classList.remove('empty');
+  } else {
+    $('d-lastcontact').textContent = 'Belum ada';
+    $('d-lastcontact').classList.add('empty');
+  }
+
+  if(t.catatan){
+    $('d-catatan').textContent = t.catatan;
+    $('d-catatan').classList.remove('empty');
+  } else {
+    $('d-catatan').textContent = 'Belum ada catatan';
+    $('d-catatan').classList.add('empty');
+  }
+
+  // Reset stats ke loading
+  $('d-distance').textContent = 'Memuat...';
+  $('d-distance').classList.add('loading');
+  $('d-duration').textContent = 'Memuat...';
+  $('d-duration').classList.add('loading');
+
+  // Quick actions: enable/disable berdasarkan data
+  setupDetailActions(t);
+
+  // Edit button: muncul kalau permission edit=true
+  const role = currentUser.role;
+  const perm = getPermissionFor(role, 'target_pasar');
+  const editBtn = $('d-btn-edit');
+  if(perm.edit){
+    editBtn.classList.remove('hidden');
+  } else {
+    editBtn.classList.add('hidden');
+  }
+
+  // Show modal
+  $('modal-detail').classList.add('show');
+  // Init map setelah modal visible
+  setTimeout(() => initDetailMap(t), 120);
+}
+
+function closeDetailModal(){
+  $('modal-detail').classList.remove('show');
+  // Cleanup map
+  if(detailMap){
+    try { detailMap.remove(); } catch(e){}
+    detailMap = null;
+    detailRouteLayer = null;
+  }
+  currentDetailTarget = null;
+}
+
+function detailToEdit(){
+  if(!currentDetailTarget) return;
+  const id = parseInt(currentDetailTarget.id);
+  // Tutup detail dulu
+  closeDetailModal();
+  // Buka edit
+  setTimeout(() => openEditTarget(id), 200);
+}
+
+function setupDetailActions(t){
+  const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+  const hasCoord = !isNaN(lat) && !isNaN(lng);
+  const phone = extractPhone(t.pic || '');
+
+  // Buka Maps button
+  const mapsBtn = $('d-act-maps');
+  if(hasCoord){
+    mapsBtn.classList.remove('disabled');
+    mapsBtn.dataset.lat = lat;
+    mapsBtn.dataset.lng = lng;
+  } else {
+    mapsBtn.classList.add('disabled');
+  }
+
+  // Telepon button
+  const callBtn = $('d-act-call');
+  if(phone){
+    callBtn.classList.remove('disabled');
+    callBtn.dataset.phone = phone;
+  } else {
+    callBtn.classList.add('disabled');
+  }
+
+  // WhatsApp button — pakai phone yang sama
+  const waBtn = $('d-act-wa');
+  if(phone){
+    waBtn.classList.remove('disabled');
+    waBtn.dataset.phone = phone;
+    waBtn.dataset.name = t.nama || '';
+  } else {
+    waBtn.classList.add('disabled');
+  }
+}
+
+function actionOpenMaps(){
+  const btn = $('d-act-maps');
+  if(btn.classList.contains('disabled')) return;
+  const lat = btn.dataset.lat, lng = btn.dataset.lng;
+  // Format intent yang di-handle Google Maps di Android & iOS
+  const url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+  window.open(url, '_blank');
+}
+
+function actionCallPic(){
+  const btn = $('d-act-call');
+  if(btn.classList.contains('disabled')){
+    toast('Nomor telepon tidak ditemukan di kontak', '');
+    return;
+  }
+  const phone = btn.dataset.phone;
+  window.location.href = 'tel:' + phone;
+}
+
+function actionWhatsAppPic(){
+  const btn = $('d-act-wa');
+  if(btn.classList.contains('disabled')){
+    toast('Nomor WhatsApp tidak ditemukan di kontak', '');
+    return;
+  }
+  const phone = btn.dataset.phone;
+  // Format WA: harus pakai 62 di depan untuk Indonesia
+  let waPhone = phone.replace(/[^\d]/g, '');
+  if(waPhone.startsWith('0')) waPhone = '62' + waPhone.slice(1);
+  else if(!waPhone.startsWith('62')) waPhone = '62' + waPhone;
+  const targetName = btn.dataset.name || '';
+  const text = encodeURIComponent('Halo, saya dari tim ' + (currentUser.nama || currentUser.username) + ' BM4 Property. Mau follow-up terkait ' + targetName + '.');
+  const url = 'https://wa.me/' + waPhone + '?text=' + text;
+  window.open(url, '_blank');
+}
+
+// Helper: extract nomor telepon dari string PIC
+// "Pak Hendra - 0812-3456-7890" → "081234567890"
+// "Bu Sari HRD 0814 1234 5678" → "081412345678"
+function extractPhone(text){
+  if(!text) return '';
+  // Cari urutan digit (boleh diselingi - atau spasi) yang panjangnya 9-13 digit
+  const matches = String(text).match(/[\d][\d\s\-]{7,16}\d/g);
+  if(!matches) return '';
+  for(const m of matches){
+    const digits = m.replace(/[^\d]/g, '');
+    if(digits.length >= 9 && digits.length <= 14){
+      return digits;
+    }
+  }
+  return '';
+}
+
+function formatDateID(dateStr){
+  if(!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return String(dateStr);
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  } catch(e){ return String(dateStr); }
+}
+
+function _capitalize(s){
+  if(!s) return '';
+  return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+}
+
+// ============================================================
+// DETAIL MAP — pin proyek + pin target + rute jalan via OSRM
+// ============================================================
+function initDetailMap(target){
+  const mapEl = $('d-map');
+  if(!mapEl) return;
+  // Cleanup container
+  if(mapEl._leaflet_id){
+    try { mapEl._leaflet_id = null; mapEl.innerHTML = ''; } catch(e){}
+  }
+  mapEl.classList.add('loading');
+
+  const tLat = parseFloat(target.lat), tLng = parseFloat(target.lng);
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  const pLat = proj ? parseFloat(proj.lat) : NaN;
+  const pLng = proj ? parseFloat(proj.lng) : NaN;
+
+  if(isNaN(tLat) || isNaN(tLng)){
+    mapEl.classList.remove('loading');
+    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94A3B8;font-size:12px;padding:14px;text-align:center">Target belum punya koordinat<br>Edit target untuk set lokasi</div>';
+    $('d-distance').textContent = '—';
+    $('d-distance').classList.remove('loading');
+    $('d-duration').textContent = '—';
+    $('d-duration').classList.remove('loading');
+    return;
+  }
+
+  detailMap = L.map(mapEl, {zoomControl:true, attributionControl:false}).setView([tLat, tLng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(detailMap);
+
+  // Pin target (merah, drop pin shape)
+  const targetIcon = L.divIcon({
+    html: '<div style="width:28px;height:28px;background:#EF4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;"><span style="transform:rotate(45deg)">⭐</span></div>',
+    iconSize: [28,28], iconAnchor: [14,28], className: ''
+  });
+  L.marker([tLat,tLng], {icon: targetIcon}).addTo(detailMap)
+    .bindPopup('<b>' + _esc(target.nama || 'Target') + '</b>');
+
+  // Pin proyek (kalau ada)
+  if(!isNaN(pLat) && !isNaN(pLng)){
+    const projectIcon = L.divIcon({
+      html: '<div style="width:32px;height:32px;background:#1C2B4A;border-radius:8px;border:2.5px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">🏠</div>',
+      iconSize: [32,32], iconAnchor: [16,16], className: ''
+    });
+    L.marker([pLat,pLng], {icon: projectIcon}).addTo(detailMap)
+      .bindPopup('<b>' + _esc(proj.nama) + '</b><br><span style="color:#666">Proyek aktif</span>');
+
+    // Fit bounds: tampilkan kedua pin
+    const bounds = L.latLngBounds([[tLat,tLng], [pLat,pLng]]);
+    detailMap.fitBounds(bounds, {padding:[40,40]});
+
+    // Fetch rute via OSRM
+    fetchRoute(pLat, pLng, tLat, tLng);
+  } else {
+    // Tidak ada koord proyek — fokus ke target saja
+    detailMap.setView([tLat,tLng], 14);
+    $('d-distance').textContent = '—';
+    $('d-distance-sub').textContent = 'proyek tidak punya koordinat';
+    $('d-distance').classList.remove('loading');
+    $('d-duration').textContent = '—';
+    $('d-duration').classList.remove('loading');
+  }
+
+  setTimeout(() => {
+    mapEl.classList.remove('loading');
+    if(detailMap) detailMap.invalidateSize();
+  }, 200);
+}
+
+// Fetch route dari OSRM gratis public server
+async function fetchRoute(fromLat, fromLng, toLat, toLng){
+  const cacheKey = fromLat.toFixed(5) + ',' + fromLng.toFixed(5) + '->' + toLat.toFixed(5) + ',' + toLng.toFixed(5);
+  // Cek cache
+  if(detailRouteCache[cacheKey]){
+    applyRoute(detailRouteCache[cacheKey]);
+    return;
+  }
+  // OSRM expects lng,lat (bukan lat,lng — ini gotcha umum)
+  const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+  try {
+    const r = await fetch(url, { method: 'GET' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if(!data.routes || !data.routes.length) throw new Error('No route found');
+    const route = data.routes[0];
+    const result = {
+      distance: route.distance,           // meter
+      duration: route.duration,           // detik
+      geometry: route.geometry,           // GeoJSON LineString
+    };
+    detailRouteCache[cacheKey] = result;
+    applyRoute(result);
+  } catch(e){
+    console.error('[OSRM] route fetch failed:', e);
+    // Fallback: pakai jarak haversine
+    const distKm = haversine(fromLat, fromLng, toLat, toLng);
+    $('d-distance').textContent = distKm.toFixed(1) + ' km';
+    $('d-distance').classList.remove('loading');
+    $('d-distance-sub').textContent = 'garis lurus (rute tidak tersedia)';
+    $('d-duration').textContent = '~' + Math.round(distKm * 2) + ' menit';
+    $('d-duration').classList.remove('loading');
+  }
+}
+
+function applyRoute(route){
+  // Distance
+  const distKm = (route.distance / 1000);
+  $('d-distance').textContent = distKm.toFixed(1) + ' km';
+  $('d-distance').classList.remove('loading');
+  $('d-distance-sub').textContent = 'via jalan';
+
+  // Duration
+  const durMin = Math.round(route.duration / 60);
+  $('d-duration').textContent = durMin + ' min';
+  $('d-duration').classList.remove('loading');
+
+  // Draw polyline
+  if(detailMap && route.geometry && route.geometry.coordinates){
+    if(detailRouteLayer){
+      try { detailMap.removeLayer(detailRouteLayer); } catch(e){}
+    }
+    // GeoJSON koordinat: [lng, lat], Leaflet butuh [lat, lng] — convert
+    const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+    detailRouteLayer = L.polyline(latlngs, {
+      color: '#3B82F6',
+      weight: 4,
+      opacity: 0.75,
+      lineCap: 'round'
+    }).addTo(detailMap);
+    // Fit bounds termasuk rute (lebih akurat dari pin saja)
+    detailMap.fitBounds(detailRouteLayer.getBounds(), {padding:[30,30]});
+  }
+}
+
+function _esc(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// EDIT TARGET (dipanggil dari detail modal kalau perm.edit=true)
+// ============================================================
+let editingTargetId = null;       // null = mode tambah, number = mode edit
+let tfMap = null;                 // Leaflet mini-map instance
+let tfMarker = null;              // Pin draggable
+let tfRefMarkers = [];            // Reference markers (target lain di proyek)
+let tfCoord = { lat: null, lng: null };
+let tfDirty = false;              // Apakah user sudah edit form
+let lastSavedWasNew = false;
+
+function openAddTarget(){
+  editingTargetId = null;
+  tfDirty = false;
+  resetTargetForm();
+  $('modal-target-title').textContent = 'Tambah Target Baru';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-target-sub').textContent = 'Proyek: ' + (proj ? proj.nama : currentProyekId);
+  $('modal-target').classList.add('show');
+  setTimeout(() => initTargetMap(), 100);
+}
+
+function openEditTarget(id){
+  const t = tpTargets.find(x => parseInt(x.id) === parseInt(id));
+  if(!t){ toast('Target tidak ditemukan', 'err'); return; }
+  editingTargetId = parseInt(id);
+  tfDirty = false;
+  resetTargetForm();
+  $('tf-nama').value = t.nama || '';
+  $('tf-jenis').value = t.jenis || 'pabrik';
+  $('tf-karyawan').value = t.karyawan || '';
+  $('tf-pic').value = t.pic || '';
+  $('tf-status').value = String(parseInt(t.status) || 0);
+  $('tf-catatan').value = t.catatan || '';
+  if(!isNaN(parseFloat(t.lat)) && !isNaN(parseFloat(t.lng))){
+    setCoord(parseFloat(t.lat), parseFloat(t.lng), 'data');
+  }
+  $('modal-target-title').textContent = 'Edit Target';
+  const proj = proyekList.find(p => p.id === currentProyekId);
+  $('modal-target-sub').textContent = (t.nama||'').slice(0,40) + ' · ' + (proj ? proj.kode||proj.id : '');
+  $('modal-target').classList.add('show');
+  setTimeout(() => initTargetMap(), 100);
+}
+
+function closeTargetModal(){
+  if(tfDirty){
+    if(!confirm('Ada perubahan yang belum disimpan. Yakin tutup?')) return;
+  }
+  $('modal-target').classList.remove('show');
+  if(tfMap){
+    try { tfMap.remove(); } catch(e){}
+    tfMap = null;
+    tfMarker = null;
+    tfRefMarkers = [];
+  }
+  editingTargetId = null;
+  tfDirty = false;
+  tfCoord = { lat: null, lng: null };
+}
+
+function resetTargetForm(){
+  $('tf-nama').value = '';
+  $('tf-jenis').value = 'pabrik';
+  $('tf-karyawan').value = '';
+  $('tf-pic').value = '';
+  $('tf-status').value = '0';
+  $('tf-catatan').value = '';
+  tfCoord = { lat: null, lng: null };
+  updateCoordDisplay();
+  $('tf-btn-save').disabled = false;
+  $('tf-btn-save').textContent = 'Simpan Target';
+  ['tf-nama','tf-jenis','tf-karyawan','tf-pic','tf-status','tf-catatan'].forEach(id => {
+    const el = $(id);
+    if(el && !el._dirtyHooked){
+      el.addEventListener('input', () => { tfDirty = true; });
+      el._dirtyHooked = true;
+    }
+  });
+}
+
+// ============================================================
+// MINI-MAP (Leaflet)
+// ============================================================
+function initTargetMap(){
+  const el = $('tf-mini-map');
+  if(!el) return;
+  if(el._leaflet_id){
+    try { el._leaflet_id = null; el.innerHTML = ''; } catch(e){}
+  }
+  let center, zoom;
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    center = [tfCoord.lat, tfCoord.lng]; zoom = 14;
+  } else {
+    const proj = proyekList.find(p => p.id === currentProyekId);
+    if(proj && !isNaN(parseFloat(proj.lat)) && !isNaN(parseFloat(proj.lng))){
+      center = [parseFloat(proj.lat), parseFloat(proj.lng)];
+    } else {
+      center = [-6.530, 107.740];
+    }
+    zoom = 12;
+  }
+  tfMap = L.map(el, {zoomControl:true, attributionControl:false}).setView(center, zoom);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(tfMap);
+  tfMap.on('click', e => setCoord(e.latlng.lat, e.latlng.lng, 'tap'));
+  renderRefMarkers();
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    placePin(tfCoord.lat, tfCoord.lng);
+  }
+  setTimeout(() => { if(tfMap) tfMap.invalidateSize(); }, 200);
+}
+
+function renderRefMarkers(){
+  if(!tfMap) return;
+  tfRefMarkers.forEach(m => tfMap.removeLayer(m));
+  tfRefMarkers = [];
+  const targets = getTargetsForCurrentProyek();
+  targets.forEach(t => {
+    if(editingTargetId !== null && parseInt(t.id) === editingTargetId) return;
+    const lat = parseFloat(t.lat), lng = parseFloat(t.lng);
+    if(isNaN(lat) || isNaN(lng)) return;
+    const icon = L.divIcon({
+      html: '<div style="width:10px;height:10px;background:#94A3B8;border-radius:50%;border:1.5px solid white;opacity:.7"></div>',
+      iconSize: [10,10], iconAnchor: [5,5], className: ''
+    });
+    const m = L.marker([lat,lng], {icon, interactive:false}).addTo(tfMap);
+    tfRefMarkers.push(m);
+  });
+}
+
+function placePin(lat, lng){
+  if(!tfMap) return;
+  if(tfMarker){
+    tfMarker.setLatLng([lat,lng]);
+  } else {
+    const icon = L.divIcon({
+      html: '<div style="width:24px;height:24px;background:#EF4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,.3)"></div>',
+      iconSize: [24,24], iconAnchor: [12,24], className: ''
+    });
+    tfMarker = L.marker([lat,lng], {icon, draggable:true}).addTo(tfMap);
+    tfMarker.on('dragend', e => {
+      const ll = e.target.getLatLng();
+      setCoord(ll.lat, ll.lng, 'drag');
+    });
+  }
+}
+
+function setCoord(lat, lng, source){
+  if(isNaN(lat) || isNaN(lng)) return;
+  tfCoord = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  tfDirty = true;
+  placePin(tfCoord.lat, tfCoord.lng);
+  if(tfMap){
+    tfMap.setView([tfCoord.lat, tfCoord.lng], Math.max(tfMap.getZoom(), 14));
+  }
+  updateCoordDisplay(source);
+}
+
+function updateCoordDisplay(source){
+  const latEl = $('tf-coord-lat');
+  const lngEl = $('tf-coord-lng');
+  const badge = $('tf-coord-badge');
+  const info = $('tf-coord-info');
+  if(tfCoord.lat !== null && tfCoord.lng !== null){
+    latEl.classList.remove('empty');
+    lngEl.classList.remove('empty');
+    latEl.querySelector('.val').textContent = tfCoord.lat.toFixed(7);
+    lngEl.querySelector('.val').textContent = tfCoord.lng.toFixed(7);
+    badge.className = 'badge ok';
+    badge.textContent = '✓ Lokasi terisi';
+    info.className = 'coord-info';
+    const proj = proyekList.find(p => p.id === currentProyekId);
+    if(proj && !isNaN(parseFloat(proj.lat))){
+      const dist = haversine(parseFloat(proj.lat), parseFloat(proj.lng), tfCoord.lat, tfCoord.lng);
+      const sourceLabel = source === 'gps' ? 'GPS HP' : source === 'tap' ? 'tap di peta' : source === 'drag' ? 'drag pin' : source === 'paste' ? 'paste link' : 'data tersimpan';
+      info.textContent = '✓ Lokasi dari ' + sourceLabel + ' · ' + dist.toFixed(1) + ' km dari proyek';
+    } else {
+      info.textContent = '✓ Lokasi tersimpan';
+    }
+  } else {
+    latEl.classList.add('empty');
+    lngEl.classList.add('empty');
+    latEl.querySelector('.val').textContent = '—';
+    lngEl.querySelector('.val').textContent = '—';
+    badge.className = 'badge warn';
+    badge.textContent = 'Belum ada lokasi';
+    info.className = 'coord-info warn';
+    info.textContent = 'ℹ️ Tap "Pakai GPS Saya" atau tap di peta untuk set lokasi';
+  }
+}
+
+function haversine(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// ============================================================
+// GPS
+// ============================================================
+function useGpsForTarget(){
+  if(!navigator.geolocation){
+    toast('GPS tidak didukung di browser ini', 'err');
+    return;
+  }
+  const btn = $('tf-btn-gps');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Mengambil GPS...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 Pakai GPS Saya';
+      setCoord(pos.coords.latitude, pos.coords.longitude, 'gps');
+      toast('Lokasi GPS berhasil', 'ok');
+    },
+    err => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 Pakai GPS Saya';
+      let msg = 'GPS gagal';
+      if(err.code === 1) msg = 'Izin lokasi ditolak. Aktifkan di settings browser.';
+      else if(err.code === 2) msg = 'Posisi tidak tersedia. Coba di luar gedung.';
+      else if(err.code === 3) msg = 'GPS timeout. Coba lagi.';
+      toast(msg, 'err');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+// ============================================================
+// SMART INPUT
+// ============================================================
+function openSmartInput(){
+  $('smart-input-text').value = '';
+  $('smart-input').classList.add('show');
+  setTimeout(() => $('smart-input-text').focus(), 100);
+}
+
+function closeSmartInput(){
+  $('smart-input').classList.remove('show');
+}
+
+async function parseSmartInput(){
+  const text = $('smart-input-text').value.trim();
+  if(!text){ toast('Tempelkan link atau koordinat dulu', 'err'); return; }
+
+  // Tampilkan loading di tombol "Pakai Lokasi"
+  const okBtn = document.querySelector('#smart-input .ok');
+  if(okBtn){
+    okBtn._origText = okBtn.textContent;
+    okBtn.disabled = true;
+    okBtn.textContent = 'Memproses...';
+  }
+
+  try {
+    const parsed = await parseLocationText(text);
+    if(!parsed){
+      toast('Format tidak dikenali. Coba link Google Maps atau koordinat', 'err');
+      return;
+    }
+    setCoord(parsed.lat, parsed.lng, 'paste');
+    closeSmartInput();
+    toast('Lokasi berhasil di-set', 'ok');
+  } catch(e){
+    console.error('[parseSmartInput] error:', e);
+    toast(e.message || 'Gagal proses link', 'err');
+  } finally {
+    if(okBtn){
+      okBtn.disabled = false;
+      okBtn.textContent = okBtn._origText || 'Pakai Lokasi';
+    }
+  }
+}
+
+async function parseLocationText(text){
+  text = String(text).trim();
+  // 1. Koordinat mentah: "-6.5169, 107.8017"
+  const coordMatch = text.match(/^(-?\d{1,3}\.\d+)[\s,]+(-?\d{1,3}\.\d+)$/);
+  if(coordMatch){
+    const lat = parseFloat(coordMatch[1]);
+    const lng = parseFloat(coordMatch[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 2. Google Maps: @lat,lng
+  const at = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(at){
+    const lat = parseFloat(at[1]), lng = parseFloat(at[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 3. !3d!4d format
+  const exclam = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if(exclam){
+    const lat = parseFloat(exclam[1]), lng = parseFloat(exclam[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 4. q= / ll= parameter
+  const qMatch = text.match(/[?&](?:q|ll|destination)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(qMatch){
+    const lat = parseFloat(qMatch[1]), lng = parseFloat(qMatch[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  // 5. Shortlink goo.gl / maps.app.goo.gl — call server untuk follow redirect
+  const shortMatch = text.match(/https?:\/\/(?:maps\.app\.)?goo\.gl\/[A-Za-z0-9_-]+/i);
+  if(shortMatch){
+    const shortUrl = shortMatch[0];
+    try {
+      const res = await gasGet('resolveShortUrl', { url: shortUrl });
+      console.log('[resolveShortUrl] response:', res);
+      if(res.success && isValidLatLng(res.lat, res.lng)){
+        return { lat: parseFloat(res.lat), lng: parseFloat(res.lng) };
+      }
+      // Gagal — kasih instruksi jelas
+      toast('Link pendek tidak terbaca. Coba: GPS, tap di peta, atau paste koordinat (-6.xx, 107.xx)', 'err');
+    } catch(e){
+      console.error('[resolveShortUrl] error:', e);
+      toast('Gagal proses link. Coba GPS atau tap di peta', 'err');
+    }
+    return null;
+  }
+  // 6. Fallback: cari pasangan angka koordinat di teks
+  const anyCoord = text.match(/(-?\d{1,3}\.\d{4,})\s*[,\s]\s*(-?\d{1,3}\.\d{4,})/);
+  if(anyCoord){
+    const lat = parseFloat(anyCoord[1]), lng = parseFloat(anyCoord[2]);
+    if(isValidLatLng(lat, lng)) return { lat, lng };
+  }
+  return null;
+}
+
+function isValidLatLng(lat, lng){
+  return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+// ============================================================
+// SAVE TARGET
+// ============================================================
+async function saveTargetForm(){
+  const nama = $('tf-nama').value.trim();
+  if(!nama){
+    toast('Nama target wajib diisi', 'err');
+    $('tf-nama').focus();
+    return;
+  }
+  if(tfCoord.lat === null || tfCoord.lng === null){
+    toast('Lokasi wajib diisi (GPS atau tap di peta)', 'err');
+    return;
+  }
+
+  const btn = $('tf-btn-save');
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    let newRows;
+    let isNew = (editingTargetId === null);
+
+    if(isNew){
+      const maxId = tpTargets.reduce((m, t) => Math.max(m, parseInt(t.id) || 0), 0);
+      const newId = maxId + 1;
+      const newRow = {
+        id: newId,
+        proyek: currentProyekId,
+        nama: nama,
+        jenis: $('tf-jenis').value,
+        lat: tfCoord.lat,
+        lng: tfCoord.lng,
+        karyawan: parseInt($('tf-karyawan').value) || 0,
+        pic: $('tf-pic').value.trim(),
+        lastcontact: today,
+        status: parseInt($('tf-status').value) || 0,
+        catatan: $('tf-catatan').value.trim()
+      };
+      newRows = tpTargets.concat([newRow]);
+    } else {
+      newRows = tpTargets.map(t => {
+        if(parseInt(t.id) === editingTargetId){
+          return Object.assign({}, t, {
+            nama: nama,
+            jenis: $('tf-jenis').value,
+            lat: tfCoord.lat,
+            lng: tfCoord.lng,
+            karyawan: parseInt($('tf-karyawan').value) || 0,
+            pic: $('tf-pic').value.trim(),
+            lastcontact: today,
+            status: parseInt($('tf-status').value) || 0,
+            catatan: $('tf-catatan').value.trim()
+          });
+        }
+        return t;
+      });
+    }
+
+    await gasRequest('saveTargetPasar', { rows: newRows });
+
+    tpTargets = newRows;
+    try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+
+    // Record aktivitas
+    try {
+      if(isNew){
+        // Cari ID baru (last new row)
+        const newId = newRows[newRows.length-1] && newRows[newRows.length-1].id;
+        if(newId) addAktivitas(newId, 'create', `Target dibuat: ${nama}`);
+      } else if(editingTargetId){
+        // Cari perubahan
+        const oldRow = (tpTargets.length > 0 ? tpTargets : []).find(x => parseInt(x.id) === editingTargetId);
+        // Build descriptive message
+        const newStatus = parseInt($('tf-status').value) || 0;
+        const oldStatus = oldRow ? (parseInt(oldRow.status) || 0) : 0;
+        if(oldStatus !== newStatus){
+          addAktivitas(editingTargetId, 'status_update',
+            `Status: ${STATUS_LABELS[oldStatus]} → ${STATUS_LABELS[newStatus]}`);
+        } else {
+          addAktivitas(editingTargetId, 'edit', `Target diedit: ${nama}`);
+        }
+      }
+    } catch(e){ console.warn('[aktivitas] error:', e); }
+
+    lastSavedWasNew = isNew;
+    tfDirty = false;
+    if(isNew){
+      $('save-success-msg').textContent = '"' + nama + '" berhasil disimpan ke server.';
+      $('save-success').classList.add('show');
+    } else {
+      closeTargetModal();
+      renderContent();
+      toast('Target "' + nama + '" diupdate', 'ok');
+    }
+  } catch(e){
+    console.error('[SaveTarget] error:', e);
+    toast(e.message || 'Gagal simpan target', 'err');
+    btn.disabled = false;
+    btn.textContent = 'Simpan Target';
+  }
+}
+
+function saveSuccessAddAgain(){
+  $('save-success').classList.remove('show');
+  editingTargetId = null;
+  resetTargetForm();
+  $('modal-target-title').textContent = 'Tambah Target Baru';
+  if(tfMap){
+    try { tfMap.remove(); } catch(e){}
+    tfMap = null;
+    tfMarker = null;
+    tfRefMarkers = [];
+  }
+  setTimeout(() => initTargetMap(), 100);
+  $('tf-nama').focus();
+}
+
+function saveSuccessClose(){
+  $('save-success').classList.remove('show');
+  closeTargetModal();
+  renderContent();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+// ============================================================
+// [PWA] Service Worker Registration + Install Prompt
+// ============================================================
+let _pwaDeferredPrompt = null;
+
+function registerPWA(){
+  if(!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => {
+      console.log('[PWA] Service worker registered:', reg.scope);
+
+      // Listen for updates
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if(!newSW) return;
+        newSW.addEventListener('statechange', () => {
+          if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+            // Update available — auto-apply
+            console.log('[PWA] Update available, applying...');
+            newSW.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    })
+    .catch(err => console.warn('[PWA] SW registration failed:', err));
+
+  // Listen for SW takeover
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(refreshing) return;
+    refreshing = true;
+    console.log('[PWA] New SW activated, reloading...');
+    window.location.reload();
+  });
+}
+
+// Helper: detect device type
+function _isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function _isInStandaloneMode(){
+  // Sudah di-install (dibuka dari home screen)
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+function setupInstallPrompt(){
+  // Skip kalau sudah di-install
+  if(_isInStandaloneMode()){
+    console.log('[PWA] Running as installed app');
+    return;
+  }
+
+  // Cek kalau user sudah dismiss banner sebelumnya (7 hari)
+  const dismissed = localStorage.getItem('bm4_pwa_install_dismissed');
+  if(dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000){
+    return;
+  }
+
+  // ────────────────────────────────────────
+  // ANDROID/Desktop Chrome — auto banner via beforeinstallprompt
+  // ────────────────────────────────────────
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _pwaDeferredPrompt = e;
+    showInstallBanner('android');
+  });
+
+  // ────────────────────────────────────────
+  // iOS — tampilkan banner manual (Apple block beforeinstallprompt)
+  // ────────────────────────────────────────
+  if(_isIOS()){
+    // Delay 5 detik supaya tidak mengganggu di awal
+    setTimeout(() => {
+      if(!_isInStandaloneMode()){
+        showInstallBanner('ios');
+      }
+    }, 5000);
+  }
+
+  // Saat user sudah install (dari Chrome native prompt)
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App installed!');
+    hideInstallBanner();
+    _pwaDeferredPrompt = null;
+    if(typeof toast === 'function') toast('✓ BM4 berhasil di-install ke HP!', 'ok');
+  });
+}
+
+function showInstallBanner(platform){
+  platform = platform || 'android';
+  if(document.getElementById('pwa-install-banner')) return;
+  if(document.getElementById('pwa-ios-modal')) return;
+
+  // ────────────────────────────────────────
+  // iOS: Tampilkan modal instruksi (karena tidak bisa auto-install)
+  // ────────────────────────────────────────
+  if(platform === 'ios'){
+    const modal = document.createElement('div');
+    modal.id = 'pwa-ios-modal';
+    modal.style.cssText = `
+      position:fixed; bottom:16px; left:16px; right:16px;
+      background:linear-gradient(135deg, #1C2B4A 0%, #2D3F6B 100%);
+      color:white; border-radius:14px;
+      padding:16px; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      z-index:9999; font-family: inherit;
+      animation: pwaSlideUp 0.4s ease-out;
+    `;
+    modal.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;">
+        <div style="font-size:32px;flex-shrink:0;">📱</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Install BM4 ke iPhone</div>
+          <div style="font-size:11px;opacity:0.85;line-height:1.4;">
+            Akses lebih cepat, fullscreen, terlihat seperti app native.
+          </div>
+        </div>
+        <button id="pwa-ios-dismiss" style="
+          background:transparent; color:rgba(255,255,255,0.7); border:none;
+          padding:6px 8px; cursor:pointer; font-size:18px;
+          flex-shrink:0; line-height:1;
+        ">×</button>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:12px; font-size:11px; line-height:1.6;">
+        <div style="font-weight:700;margin-bottom:8px;color:#FCD34D;">Cara Install di iPhone:</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">1</span>
+          <span>Tap tombol <b>Share</b> di bawah Safari (kotak dengan panah ke atas <span style="font-size:14px;">⬆️</span>)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">2</span>
+          <span>Scroll ke bawah → tap <b>"Add to Home Screen"</b> / <b>"Tambahkan ke Layar Utama"</b></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="background:white;color:#1C2B4A;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">3</span>
+          <span>Tap <b>Add</b> → icon BM4 muncul di home screen ✨</span>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.15);color:#FCD34D;font-size:10px;font-style:italic;">
+          ⚠️ Pastikan buka di <b>Safari</b> (bukan Chrome iOS)
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    if(!document.getElementById('pwa-keyframes')){
+      const style = document.createElement('style');
+      style.id = 'pwa-keyframes';
+      style.textContent = `@keyframes pwaSlideUp { from { transform: translateY(120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+      document.head.appendChild(style);
+    }
+
+    document.getElementById('pwa-ios-dismiss').onclick = () => {
+      const m = document.getElementById('pwa-ios-modal');
+      if(m) m.remove();
+      localStorage.setItem('bm4_pwa_install_dismissed', String(Date.now()));
+    };
+    return;
+  }
+
+  // ────────────────────────────────────────
+  // ANDROID: Banner dengan tombol Install yang trigger native prompt
+  // ────────────────────────────────────────
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = `
+    position:fixed; bottom:16px; left:16px; right:16px;
+    background:linear-gradient(135deg, #1C2B4A 0%, #2D3F6B 100%);
+    color:white; border-radius:14px;
+    padding:14px 16px; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    z-index:9999; display:flex; gap:12px; align-items:center;
+    font-family: inherit;
+    animation: pwaSlideUp 0.4s ease-out;
+  `;
+  banner.innerHTML = `
+    <div style="font-size:32px;flex-shrink:0;">📱</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Install BM4 ke HP</div>
+      <div style="font-size:11px;opacity:0.85;line-height:1.4;">
+        Akses lebih cepat, fullscreen, bisa offline.
+      </div>
+    </div>
+    <button id="pwa-btn-install" style="
+      background:white; color:#1C2B4A; border:none;
+      padding:8px 14px; border-radius:8px; font-weight:700;
+      font-size:12px; cursor:pointer; font-family:inherit;
+      flex-shrink:0;
+    ">Install</button>
+    <button id="pwa-btn-dismiss" style="
+      background:transparent; color:rgba(255,255,255,0.7); border:none;
+      padding:6px 8px; cursor:pointer; font-size:18px;
+      flex-shrink:0; line-height:1;
+    ">×</button>
+  `;
+  document.body.appendChild(banner);
+
+  if(!document.getElementById('pwa-keyframes')){
+    const style = document.createElement('style');
+    style.id = 'pwa-keyframes';
+    style.textContent = `@keyframes pwaSlideUp { from { transform: translateY(120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+    document.head.appendChild(style);
+  }
+
+  document.getElementById('pwa-btn-install').onclick = async () => {
+    if(!_pwaDeferredPrompt) return;
+    _pwaDeferredPrompt.prompt();
+    const choice = await _pwaDeferredPrompt.userChoice;
+    console.log('[PWA] User choice:', choice.outcome);
+    if(choice.outcome === 'accepted'){
+      hideInstallBanner();
+    }
+    _pwaDeferredPrompt = null;
+  };
+
+  document.getElementById('pwa-btn-dismiss').onclick = () => {
+    hideInstallBanner();
+    localStorage.setItem('bm4_pwa_install_dismissed', String(Date.now()));
+  };
+}
+
+function hideInstallBanner(){
+  const banner = document.getElementById('pwa-install-banner');
+  if(banner) banner.remove();
+  const iosModal = document.getElementById('pwa-ios-modal');
+  if(iosModal) iosModal.remove();
+}
+
+// Trigger PWA setup
+registerPWA();
+setupInstallPrompt();
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Set label divisi di login screen sesuai ACTIVE_MODULE
+  const lblEl = document.getElementById('login-divisi-label');
+  if(lblEl) lblEl.textContent = ACTIVE_DIVISI_ICON + ' ' + ACTIVE_DIVISI_NAME + ' · Masuk dengan akun tim kamu';
+
+  // Bind login form
+  $('btn-login').addEventListener('click', doLogin);
+  $('login-password').addEventListener('keypress', e => { if(e.key==='Enter') doLogin(); });
+  $('login-username').addEventListener('keypress', e => { if(e.key==='Enter') $('login-password').focus(); });
+
+  // Coba auto-login
+  const ok = await tryAutoLogin();
+  if(ok){
+    await enterApp();
+  } else {
+    showLogin();
+  }
+});
+</script>
+</body>
+</html>
