@@ -727,13 +727,218 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 }
 .lf-error-msg.show{display:block}
 
-/* Tombol delete laporan */
-.btn.delete-laporan{
-  background:#FEE2E2;color:#991B1B;
-  border:1px solid #FCA5A5;
-  margin-top:10px;
+/* ============================================================
+   GPS FIELD di FORM LAPORAN ESTATE
+   ============================================================ */
+.lf-gps-row{
+  display:flex;gap:6px;
+  align-items:stretch;
 }
-.btn.delete-laporan:active{background:#FCA5A5}
+.lf-gps-btn{
+  flex:1;
+  padding:9px 10px;
+  font:inherit;font-size:12px;font-weight:600;
+  background:#F1F5F9;color:#1E40AF;
+  border:1px solid #E2E8F0;border-radius:8px;
+  cursor:pointer;
+  transition:background .12s, border-color .12s;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.lf-gps-btn:hover{background:#E2E8F0}
+.lf-gps-btn:active{transform:scale(.97)}
+.lf-gps-btn.primary{
+  background:#1E40AF;color:#fff;border-color:#1E40AF;
+}
+.lf-gps-btn.primary:hover{background:#1E3A8A}
+.lf-gps-btn.loading{opacity:.6;pointer-events:none}
+.lf-gps-clear{
+  flex:0 0 36px;
+  background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5;
+}
+.lf-gps-clear:hover{background:#FECACA}
+.lf-gps-badge{
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:10px;
+}
+.lf-gps-badge.has-coord{
+  background:#D1FAE5;color:#065F46;
+}
+.lf-gps-badge.no-coord{
+  background:#F1F5F9;color:#64748B;
+}
+.lf-coord-display{
+  margin-top:6px;
+  padding:8px 10px;
+  background:#F0F9FF;
+  border:1px solid #BAE6FD;
+  border-radius:8px;
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-family:monospace;
+  color:#0C4A6E;
+}
+.lf-coord-display.hidden{display:none}
+.lf-coord-label{font-size:14px}
+.lf-coord-val{font-weight:600}
+
+/* ============================================================
+   ESTATE VIEW TOGGLE (List ↔ Peta)
+   ============================================================ */
+.estate-view-toggle{
+  display:flex;gap:4px;
+  background:#F1F5F9;border-radius:10px;padding:3px;
+  margin:8px 0 12px;
+}
+.view-toggle-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 10px;
+  font:inherit;font-size:13px;font-weight:600;
+  background:transparent;color:#64748B;
+  border:none;border-radius:8px;
+  cursor:pointer;
+  transition:background .15s, color .15s, box-shadow .15s;
+}
+.view-toggle-btn:hover{color:#1E40AF}
+.view-toggle-btn.active{
+  background:#fff;color:#1E40AF;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+.view-count{
+  background:#1E40AF;color:#fff;
+  font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:8px;
+  min-width:18px;text-align:center;
+}
+.view-toggle-btn:not(.active) .view-count{background:#94A3B8}
+
+/* ============================================================
+   ESTATE MAP CONTAINER
+   ============================================================ */
+.estate-map-wrap{
+  position:relative;
+  margin:0 0 14px;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  border:1px solid rgba(0,0,0,0.08);
+}
+.estate-map{
+  width:100%;
+  height:480px;
+  background:#E5E7EB;
+}
+.estate-map-legend{
+  position:absolute;
+  bottom:8px;left:8px;
+  background:rgba(255,255,255,0.95);
+  border-radius:8px;
+  padding:6px 10px;
+  display:flex;gap:10px;
+  font-size:11px;font-weight:500;
+  box-shadow:0 1px 4px rgba(0,0,0,0.1);
+  z-index:1000;
+}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{
+  width:10px;height:10px;border-radius:50%;
+  display:inline-block;
+  border:1.5px solid #fff;
+  box-shadow:0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* ============================================================
+   ESTATE MAP PIN (custom marker)
+   ============================================================ */
+.estate-map-pin{background:transparent;border:none}
+.estate-map-pin .pin-inner{
+  width:32px;height:32px;border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.estate-map-pin .pin-emoji{
+  transform:rotate(45deg);
+  font-size:14px;line-height:1;
+}
+
+/* ============================================================
+   ESTATE MAP POPUP
+   ============================================================ */
+.estate-popup{padding:2px 0}
+.estate-popup-status{
+  display:inline-block;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:8px;
+  margin-bottom:6px;
+}
+.estate-popup-title{
+  font-size:13px;font-weight:600;
+  color:#1E293B;
+  margin-bottom:6px;
+  line-height:1.3;
+}
+.estate-popup-meta{
+  font-size:11px;color:#64748B;
+  line-height:1.5;
+  margin-bottom:8px;
+}
+.estate-popup-btn{
+  width:100%;padding:6px 10px;
+  background:#1E40AF;color:#fff;
+  border:none;border-radius:6px;
+  font:inherit;font-size:11px;font-weight:600;
+  cursor:pointer;
+}
+.estate-popup-btn:hover{background:#1E3A8A}
+
+/* ============================================================
+   BUTTON STYLES — Form laporan (Simpan/Hapus)
+   ============================================================ */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;
+  padding:14px 16px;
+  font:inherit;font-size:14px;font-weight:700;
+  border:none;border-radius:12px;
+  cursor:pointer;
+  transition:transform .12s, box-shadow .15s, background .15s;
+  letter-spacing:.2px;
+}
+.btn:active{transform:scale(.98)}
+
+/* Primary save button — gradient navy dengan shadow */
+.btn.save{
+  background:linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(30,58,138,.25);
+  margin-top:6px;
+}
+.btn.save:hover{
+  box-shadow:0 4px 12px rgba(30,58,138,.35);
+}
+.btn.save:active{
+  background:linear-gradient(135deg, #172554 0%, #1E3A8A 100%);
+}
+.btn.save:disabled{
+  opacity:.6;cursor:not-allowed;
+  background:#94A3B8;box-shadow:none;
+}
+
+/* Danger button — Hapus Laporan */
+.btn.delete-laporan{
+  background:#FEF2F2;
+  color:#B91C1C;
+  border:1.5px solid #FCA5A5;
+  margin-top:12px;
+  box-shadow:none;
+}
+.btn.delete-laporan:hover{
+  background:#FEE2E2;
+  border-color:#F87171;
+}
+.btn.delete-laporan:active{
+  background:#FECACA;
+}
 .btn.hidden{display:none}
 
 /* Detail laporan hero */
@@ -1383,6 +1588,21 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
         <input type="text" id="lf-lokasi" placeholder="contoh: Blok C, Boulevard, Tower A" autocomplete="off">
       </div>
       <div class="field">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>Koordinat GPS <span style="color:var(--muted);font-weight:400;font-size:11px">(opsional)</span></span>
+          <span class="lf-gps-badge" id="lf-gps-badge"></span>
+        </label>
+        <div class="lf-gps-row">
+          <button type="button" class="lf-gps-btn primary" id="lf-btn-gps" onclick="useLfGps()">📍 GPS Saya</button>
+          <button type="button" class="lf-gps-btn" onclick="openLfSmartInput()" title="Paste link Google Maps">🔗 Paste Link</button>
+          <button type="button" class="lf-gps-btn lf-gps-clear hidden" id="lf-btn-clear-gps" onclick="clearLfGps()" title="Hapus koordinat">✕</button>
+        </div>
+        <div class="lf-coord-display hidden" id="lf-coord-display">
+          <span class="lf-coord-label">📌</span>
+          <span class="lf-coord-val" id="lf-coord-val">—</span>
+        </div>
+      </div>
+      <div class="field">
         <label>Pekerjaan Dilakukan</label>
         <textarea id="lf-pekerjaan" rows="3" placeholder="contoh: Pembersihan saluran air, perawatan taman..."></textarea>
       </div>
@@ -1661,7 +1881,8 @@ const LS = {
   TP_TARGETS: 'bm4_tp_targets',
   MOBILE_PERMISSIONS: 'bm4_mobile_permissions',
   REMINDER_DAYS: 'bm4_reminder_threshold_days',
-  ESTATE_LAPORAN: 'bm4_estate_laporan'
+  ESTATE_LAPORAN: 'bm4_estate_laporan',
+  ESTATE_KATEGORI: 'bm4_estate_kategori'
 };
 
 // Default threshold reminder (hari)
@@ -1900,7 +2121,9 @@ const ESTATE_STATUS_LABELS = ['Selesai', 'Proses', 'Tertunda'];
 const ESTATE_STATUS_ICONS  = ['✅', '🔄', '⏸'];
 
 // Kategori pekerjaan estate management
-const ESTATE_KATEGORI = [
+// Sekarang sheet-driven: fetch dari Apps Script sheet 'EstateKategori'
+// Fallback ke default ini kalau offline / fetch gagal
+const ESTATE_KATEGORI_FALLBACK = [
   { id: 'pertamanan', label: 'Pertamanan', icon: '🌿' },
   { id: 'kebersihan', label: 'Kebersihan', icon: '🧹' },
   { id: 'drainase',   label: 'Drainase',   icon: '💧' },
@@ -1910,6 +2133,7 @@ const ESTATE_KATEGORI = [
   { id: 'perbaikan',  label: 'Perbaikan',  icon: '🔧' },
   { id: 'lainnya',    label: 'Lainnya',    icon: '📋' }
 ];
+let ESTATE_KATEGORI = ESTATE_KATEGORI_FALLBACK.slice();
 function getKategoriLabel(id){
   const k = ESTATE_KATEGORI.find(x => x.id === id);
   return k ? (k.icon + ' ' + k.label) : '';
@@ -2022,6 +2246,9 @@ let activeEstateStatus = 'all';   // filter status: 'all' / 'selesai' / 'proses'
 let editingLaporanId = null;      // id laporan yang sedang diedit (null = mode tambah baru)
 let expandedDates = new Set();    // tanggal-tanggal yg sedang di-expand (auto: hari ini)
 let activeEstateKategori = 'all'; // filter kategori: 'all' atau key kategori (Phase 3)
+let activeEstateView = 'list';    // 'list' atau 'map' — toggle di dashboard (Phase 4)
+let estateMap = null;             // Leaflet map instance untuk view peta
+let estateMapMarkers = [];        // Array marker untuk cleanup
 
 // ============================================================
 // Helpers
@@ -2921,6 +3148,8 @@ async function enterApp(){
   if(ACTIVE_MODULE === 'estate'){
     // Load cache dulu (instan), lalu fetch server di background
     loadEstateLaporanInitial();
+    // Fetch kategori dari sheet (sheet-driven config)
+    loadEstateKategoriInitial();
   }
 
   // Tampilkan splash motivasi (auto-hide 2.5 detik atau tap untuk skip)
@@ -3245,6 +3474,9 @@ async function syncLaporanToServer(laporan){
     };
     // Tambah kategori kalau ada (Phase 3)
     if(laporan.kategori) payload.kategori = laporan.kategori;
+    // Tambah lat/lng kalau ada (Phase 4)
+    if(laporan.lat !== null && laporan.lat !== undefined) payload.lat = laporan.lat;
+    if(laporan.lng !== null && laporan.lng !== undefined) payload.lng = laporan.lng;
     const r = await gasRequest('saveEstateLaporan', payload);
     if(r.success){
       // Mark sebagai synced
@@ -3302,6 +3534,8 @@ async function fetchEstateLaporanFromServer(){
                     ? ['selesai','proses','tertunda'].indexOf(s.status) : 0),
         catatan: s.catatan || '',
         kategori: s.kategori || '',
+        lat: (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null,
+        lng: (s.lng !== null && s.lng !== undefined && s.lng !== '') ? parseFloat(s.lng) : null,
         created_at: s.createdAt,
         created_by: s.createdBy,
         updated_at: s.updatedAt,
@@ -3316,6 +3550,74 @@ async function fetchEstateLaporanFromServer(){
     console.warn('[estate] fetch error:', e.message);
     return null; // null = error, beda dari [] = kosong
   }
+}
+
+// ============================================================
+// FETCH ESTATE KATEGORI dari server (sheet-driven)
+// ============================================================
+// Strategi: load cache dulu (instan), lalu fetch server di background.
+// Kalau server gagal, tetap pakai cache (atau fallback hardcoded).
+
+function loadEstateKategoriFromCache(){
+  try {
+    const raw = localStorage.getItem(LS.ESTATE_KATEGORI);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(Array.isArray(data) && data.length > 0) return data;
+  } catch(e){
+    console.warn('[estate] kategori cache error:', e);
+  }
+  return null;
+}
+
+function saveEstateKategoriToCache(list){
+  try {
+    localStorage.setItem(LS.ESTATE_KATEGORI, JSON.stringify(list));
+  } catch(e){
+    console.warn('[estate] kategori save cache error:', e);
+  }
+}
+
+async function fetchEstateKategoriFromServer(){
+  try {
+    const r = await gasGet('getEstateKategori');
+    if(r.success && Array.isArray(r.data) && r.data.length > 0){
+      // Map ke format mobile (id, label, icon)
+      const mapped = r.data.map(k => ({
+        id: String(k.id || '').toLowerCase(),
+        label: String(k.label || ''),
+        icon: String(k.icon || '📋')
+      })).filter(k => k.id && k.label);
+      console.log('[estate] kategori fetched:', mapped.length);
+      return mapped;
+    }
+    throw new Error(r.message || 'Empty kategori');
+  } catch(e){
+    console.warn('[estate] kategori fetch error:', e.message);
+    return null;
+  }
+}
+
+// Initial load kategori — pakai cache instan, lalu sync server
+async function loadEstateKategoriInitial(){
+  // Step 1: pakai cache kalau ada (instan)
+  const cached = loadEstateKategoriFromCache();
+  if(cached && cached.length > 0){
+    ESTATE_KATEGORI = cached;
+    console.log('[estate] kategori from cache:', cached.length);
+  }
+
+  // Step 2: fetch dari server di background
+  const fromServer = await fetchEstateKategoriFromServer();
+  if(fromServer && fromServer.length > 0){
+    ESTATE_KATEGORI = fromServer;
+    saveEstateKategoriToCache(fromServer);
+    // Re-render kalau dashboard sedang tampil
+    if(typeof renderContent === 'function'){
+      try { renderContent(); } catch(e){}
+    }
+  }
+  // Kalau server gagal & cache kosong, pakai fallback (sudah di-set di awal)
 }
 
 // Merge data server + local. Local pending menang, sisanya server menang.
@@ -3534,14 +3836,50 @@ function renderEstateDashboard(){
     </div>
   `;
 
+  // Toggle View List/Peta (Phase 4)
+  const filteredHasCoord = filtered.filter(l =>
+    l.lat !== null && l.lat !== undefined && l.lng !== null && l.lng !== undefined
+  ).length;
+  html += `
+    <div class="estate-view-toggle">
+      <button class="view-toggle-btn ${activeEstateView==='list'?'active':''}" onclick="setEstateView('list')">📋 List</button>
+      <button class="view-toggle-btn ${activeEstateView==='map'?'active':''}" onclick="setEstateView('map')">
+        🗺️ Peta ${filteredHasCoord > 0 ? `<span class="view-count">${filteredHasCoord}</span>` : ''}
+      </button>
+    </div>
+  `;
+
   html += `
     <div class="list-header">
-      <span class="title">Daftar laporan</span>
+      <span class="title">${activeEstateView === 'map' ? 'Peta Lokasi' : 'Daftar laporan'}</span>
       <span class="count">Proyek: ${esc(proj ? (proj.kode||proj.id) : currentProyekId)}</span>
     </div>
   `;
 
-  if(filtered.length === 0){
+  if(activeEstateView === 'map'){
+    // ============= VIEW PETA =============
+    if(filteredHasCoord === 0){
+      html += `
+        <div class="empty-state">
+          <div class="icon">🗺️</div>
+          <p><b>Belum ada laporan dengan koordinat</b></p>
+          <p class="hint">Saat input laporan, pakai tombol "📍 GPS Saya" untuk simpan lokasi pekerjaan.</p>
+        </div>
+      `;
+    } else {
+      html += `
+        <div id="estate-map-container" class="estate-map-wrap">
+          <div id="estate-map" class="estate-map"></div>
+          <div class="estate-map-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#10B981"></span>Selesai</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#F59E0B"></span>Proses</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#EF4444"></span>Tertunda</span>
+          </div>
+        </div>
+      `;
+    }
+  } else if(filtered.length === 0){
+    // ============= VIEW LIST — empty =============
     if(allLaporan.length === 0){
       html += `
         <div class="empty-state">
@@ -3566,9 +3904,7 @@ function renderEstateDashboard(){
       `;
     }
   } else {
-    // Group by date — Hibrida (Opsi C):
-    // - Hari ini auto-expanded
-    // - Hari lain collapsed (tap untuk expand)
+    // ============= VIEW LIST — Group by date (Hibrida) =============
     const byDate = {};
     filtered.forEach(l => {
       const d = l.tanggal || '';
@@ -3617,6 +3953,11 @@ function renderEstateDashboard(){
   }
 
   $('content-area').innerHTML = html;
+
+  // Init peta kalau view = 'map' dan ada laporan dengan koordinat
+  if(activeEstateView === 'map' && filteredHasCoord > 0){
+    setTimeout(() => initEstateMap(filtered, proj), 50);
+  }
 }
 
 // Format tanggal: "2 Mei 2026 (Hari ini)" / "1 Mei 2026 (Kemarin)" / "30 Apr 2026"
@@ -3679,6 +4020,116 @@ function setEstateKategori(k){
   renderContent();
 }
 
+// Toggle view List/Peta (Phase 4)
+function setEstateView(v){
+  if(activeEstateView === v) return;
+  // Cleanup peta lama saat pindah dari map ke list
+  if(activeEstateView === 'map' && estateMap){
+    try { estateMap.remove(); } catch(e){}
+    estateMap = null;
+    estateMapMarkers = [];
+  }
+  activeEstateView = v;
+  renderContent();
+}
+
+// Init Leaflet map untuk view peta
+function initEstateMap(laporanList, proj){
+  const mapEl = document.getElementById('estate-map');
+  if(!mapEl) return;
+
+  // Cleanup peta lama
+  if(estateMap){
+    try { estateMap.remove(); } catch(e){}
+    estateMap = null;
+    estateMapMarkers = [];
+  }
+  if(mapEl._leaflet_id){
+    try { mapEl._leaflet_id = null; mapEl.innerHTML = ''; } catch(e){}
+  }
+
+  // Filter laporan yang punya koordinat
+  const withCoord = laporanList.filter(l =>
+    l.lat !== null && l.lat !== undefined && l.lng !== null && l.lng !== undefined &&
+    !isNaN(parseFloat(l.lat)) && !isNaN(parseFloat(l.lng))
+  );
+
+  if(withCoord.length === 0) return;
+
+  // Tentukan center: rata-rata semua titik, atau koordinat proyek kalau ada
+  let centerLat, centerLng;
+  if(proj && !isNaN(parseFloat(proj.lat))){
+    centerLat = parseFloat(proj.lat);
+    centerLng = parseFloat(proj.lng);
+  } else {
+    centerLat = withCoord.reduce((s,l) => s + parseFloat(l.lat), 0) / withCoord.length;
+    centerLng = withCoord.reduce((s,l) => s + parseFloat(l.lng), 0) / withCoord.length;
+  }
+
+  // Init map
+  estateMap = L.map(mapEl, { zoomControl: true, attributionControl: false }).setView([centerLat, centerLng], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '© OpenStreetMap'
+  }).addTo(estateMap);
+
+  // Render pin untuk setiap laporan
+  const STATUS_COLORS = ['#10B981', '#F59E0B', '#EF4444']; // Selesai, Proses, Tertunda
+  const bounds = L.latLngBounds([]);
+
+  withCoord.forEach(l => {
+    const lat = parseFloat(l.lat);
+    const lng = parseFloat(l.lng);
+    const s = parseInt(l.status) || 0;
+    const color = STATUS_COLORS[s] || '#94A3B8';
+    const sIcon = ESTATE_STATUS_ICONS[s] || '';
+    const sLbl = ESTATE_STATUS_LABELS[s] || '';
+    const kategoriIcon = (l.kategori && getKategoriLabel(l.kategori).split(' ')[0]) || '📋';
+
+    // Custom div icon dengan warna status
+    const icon = L.divIcon({
+      className: 'estate-map-pin',
+      html: `<div class="pin-inner" style="background:${color}">
+               <span class="pin-emoji">${kategoriIcon}</span>
+             </div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+    });
+
+    const marker = L.marker([lat, lng], { icon }).addTo(estateMap);
+
+    // Popup content
+    const tanggalShort = l.tanggal ? new Date(l.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short'}) : '';
+    const popupHtml = `
+      <div class="estate-popup">
+        <div class="estate-popup-status" style="background:${color}20;color:${color}">
+          ${sIcon} ${sLbl}
+        </div>
+        <div class="estate-popup-title">${esc(String(l.pekerjaan || '-').substring(0, 80))}</div>
+        <div class="estate-popup-meta">
+          ${l.lokasi ? '📍 ' + esc(l.lokasi) + '<br>' : ''}
+          ${l.tim ? '👷 ' + esc(l.tim) + '<br>' : ''}
+          ${tanggalShort ? '📅 ' + esc(tanggalShort) : ''}
+        </div>
+        <button class="estate-popup-btn" onclick="openLaporanDetail('${esc(l.id)}')">Lihat Detail →</button>
+      </div>
+    `;
+    marker.bindPopup(popupHtml, { maxWidth: 240 });
+
+    estateMapMarkers.push(marker);
+    bounds.extend([lat, lng]);
+  });
+
+  // Fit map to all pins (kalau lebih dari 1)
+  if(withCoord.length > 1 && bounds.isValid()){
+    estateMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
+  } else if(withCoord.length === 1){
+    estateMap.setView([parseFloat(withCoord[0].lat), parseFloat(withCoord[0].lng)], 17);
+  }
+
+  // Force resize biar map render benar
+  setTimeout(() => { try { estateMap.invalidateSize(); } catch(e){} }, 100);
+}
+
 // Toggle day group expand/collapse — hari ini selalu expanded, tidak bisa di-collapse
 function toggleDayGroup(dateStr){
   const todayStr = todayDateStr();
@@ -3727,6 +4178,12 @@ function openLaporanForm(laporanId){
     $('lf-tim').value = l.tim || '';
     $('lf-catatan').value = l.catatan || '';
     if(katSel) katSel.value = l.kategori || '';
+    // Restore koordinat
+    if(l.lat !== null && l.lat !== undefined && l.lng !== null && l.lng !== undefined){
+      setLfCoord(l.lat, l.lng);
+    } else {
+      setLfCoord(NaN, NaN);
+    }
     selectLfStatus(parseInt(l.status) || 0);
     $('lf-btn-delete').classList.remove('hidden');
   } else {
@@ -3740,8 +4197,19 @@ function openLaporanForm(laporanId){
     $('lf-tim').value = '';
     $('lf-catatan').value = '';
     if(katSel) katSel.value = '';
+    setLfCoord(NaN, NaN); // reset koordinat
     selectLfStatus(0); // default: Selesai
     $('lf-btn-delete').classList.add('hidden');
+    // Auto-trigger GPS saat create baru (silent — kalau gagal, cuma tidak terisi)
+    setTimeout(() => {
+      if(navigator.geolocation && lfCoord.lat === null){
+        navigator.geolocation.getCurrentPosition(
+          pos => setLfCoord(pos.coords.latitude, pos.coords.longitude),
+          err => { /* silent: user bisa klik tombol GPS manual atau skip */ },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+        );
+      }
+    }, 300);
   }
 
   $('lf-error').classList.remove('show');
@@ -3779,6 +4247,120 @@ function todayDateStr(){
 function closeLaporanModal(){
   $('modal-laporan').classList.remove('show');
   editingLaporanId = null;
+}
+
+// ============================================================
+// GPS UNTUK FORM LAPORAN ESTATE
+// ============================================================
+// State koordinat form (terpisah dari tfCoord target_pasar)
+let lfCoord = { lat: null, lng: null };
+
+function setLfCoord(lat, lng){
+  if(isNaN(lat) || isNaN(lng) || !isValidLatLng(lat, lng)){
+    lfCoord = { lat: null, lng: null };
+  } else {
+    lfCoord = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  }
+  updateLfCoordDisplay();
+}
+
+function updateLfCoordDisplay(){
+  const badge = $('lf-gps-badge');
+  const display = $('lf-coord-display');
+  const valEl = $('lf-coord-val');
+  const clearBtn = $('lf-btn-clear-gps');
+  if(lfCoord.lat !== null && lfCoord.lng !== null){
+    if(badge){
+      badge.textContent = '✓ tersimpan';
+      badge.className = 'lf-gps-badge has-coord';
+    }
+    if(display){
+      display.classList.remove('hidden');
+      if(valEl) valEl.textContent = lfCoord.lat.toFixed(6) + ', ' + lfCoord.lng.toFixed(6);
+    }
+    if(clearBtn) clearBtn.classList.remove('hidden');
+  } else {
+    if(badge){
+      badge.textContent = 'belum di-set';
+      badge.className = 'lf-gps-badge no-coord';
+    }
+    if(display) display.classList.add('hidden');
+    if(clearBtn) clearBtn.classList.add('hidden');
+  }
+}
+
+function useLfGps(){
+  if(!navigator.geolocation){
+    toast('GPS tidak didukung di browser ini', 'err');
+    return;
+  }
+  const btn = $('lf-btn-gps');
+  if(!btn) return;
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Mengambil...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 GPS Saya';
+      setLfCoord(pos.coords.latitude, pos.coords.longitude);
+      toast('Lokasi GPS berhasil', 'ok');
+    },
+    err => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍 GPS Saya';
+      let msg = 'GPS gagal';
+      if(err.code === 1) msg = 'Izin lokasi ditolak. Aktifkan di settings browser.';
+      else if(err.code === 2) msg = 'Posisi tidak tersedia. Coba di luar gedung.';
+      else if(err.code === 3) msg = 'GPS timeout. Coba lagi.';
+      toast(msg, 'err');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function clearLfGps(){
+  if(!confirm('Hapus koordinat GPS dari laporan ini?')) return;
+  setLfCoord(NaN, NaN);
+  toast('Koordinat dihapus', 'ok');
+}
+
+// Smart input untuk paste link Maps
+let _lfSmartInputActive = false;
+function openLfSmartInput(){
+  _lfSmartInputActive = true;
+  $('smart-input-text').value = '';
+  $('smart-input').classList.add('show');
+  setTimeout(() => $('smart-input-text').focus(), 100);
+}
+
+async function applyLfSmartInput(){
+  const text = $('smart-input-text').value.trim();
+  if(!text){ toast('Tempelkan link atau koordinat dulu', 'err'); return; }
+  const okBtn = document.querySelector('#smart-input .ok');
+  if(okBtn){
+    okBtn._origText = okBtn.textContent;
+    okBtn.disabled = true;
+    okBtn.textContent = 'Memproses...';
+  }
+  try {
+    const parsed = await parseLocationText(text);
+    if(!parsed){
+      toast('Format tidak dikenali. Coba link Google Maps atau koordinat', 'err');
+      return;
+    }
+    setLfCoord(parsed.lat, parsed.lng);
+    closeSmartInput();
+    _lfSmartInputActive = false;
+    toast('Lokasi berhasil di-set', 'ok');
+  } catch(e){
+    console.error('[applyLfSmartInput] error:', e);
+    toast(e.message || 'Gagal proses link', 'err');
+  } finally {
+    if(okBtn){
+      okBtn.disabled = false;
+      okBtn.textContent = okBtn._origText || 'Pakai Lokasi';
+    }
+  }
 }
 
 // ===== FORM: Save laporan =====
@@ -3819,6 +4401,7 @@ function saveLaporanForm(){
       tanggal, proyek, lokasi, pekerjaan, tim,
       status: String(status), catatan,
       kategori,
+      lat: lfCoord.lat, lng: lfCoord.lng,
       updated_at: now,
       updated_by: currentUser.username || '-',
       _syncStatus: 'pending'
@@ -3837,6 +4420,7 @@ function saveLaporanForm(){
       tanggal, proyek, lokasi, pekerjaan, tim,
       status: String(status), catatan,
       kategori,
+      lat: lfCoord.lat, lng: lfCoord.lng,
       created_at: now,
       created_by: currentUser.username || '-',
       updated_at: now,
@@ -5007,9 +5591,14 @@ function openSmartInput(){
 
 function closeSmartInput(){
   $('smart-input').classList.remove('show');
+  _lfSmartInputActive = false;
 }
 
 async function parseSmartInput(){
+  // Router: kalau context dari laporan estate, pakai applyLfSmartInput
+  if(_lfSmartInputActive){
+    return applyLfSmartInput();
+  }
   const text = $('smart-input-text').value.trim();
   if(!text){ toast('Tempelkan link atau koordinat dulu', 'err'); return; }
 
