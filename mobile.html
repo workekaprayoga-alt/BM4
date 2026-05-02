@@ -232,7 +232,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .empty-state .hint{font-size:11px;margin-top:8px}
 
 /* Filter pills */
-.filter-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.filter-pills{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 0 6px;margin-bottom:10px;-webkit-overflow-scrolling:touch;align-items:center}
 .filter-pills::-webkit-scrollbar{display:none}
 .pill-filter{background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--muted);cursor:pointer}
 .pill-filter.active{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -244,10 +244,11 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   background:var(--bg);
   z-index:30;
   margin:0 -16px 12px;
-  padding:8px 16px 4px;
+  padding:10px 16px 12px;
   box-shadow:0 4px 8px -4px rgba(0,0,0,.06);
 }
-.sticky-filter-bar .filter-pills{margin-bottom:6px}
+.sticky-filter-bar .filter-pills{margin-bottom:8px}
+.sticky-filter-bar .filter-pills:last-child{margin-bottom:0}
 .search-box{
   background:#fff;border:1px solid var(--border);
   border-radius:999px;
@@ -301,13 +302,14 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .active-filter-chip button:active{background:rgba(220,38,38,0.25)}
 
 /* Filter pills jenis (baris kedua) */
-.filter-pills-jenis{margin-bottom:0;padding-bottom:2px}
+.filter-pills-jenis{margin-bottom:0;padding-bottom:6px}
 .pill-jenis{
   background:#fff;border:1px solid var(--border);
-  border-radius:999px;padding:5px 10px;
+  border-radius:999px;padding:6px 12px;
   font-size:11px;font-weight:500;
   white-space:nowrap;color:var(--muted);cursor:pointer;
   flex-shrink:0;
+  line-height:1.3;
 }
 .pill-jenis.active{
   background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;
