@@ -117,6 +117,49 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .list-header .count{font-size:11px;color:var(--muted)}
 
 /* Target card */
+/* ===== Swipe Card untuk Quick Update Status ===== */
+.swipe-card-wrap{
+  position:relative;
+  margin-bottom:8px;
+  border-radius:10px;
+  overflow:hidden;
+  background:#10B981;
+}
+.swipe-action{
+  position:absolute;
+  top:0;left:0;bottom:0;
+  display:flex;align-items:center;
+  padding:0 18px;
+  color:#fff;
+  font-weight:600;font-size:12px;
+  width:100%;
+  pointer-events:none;
+  gap:8px;
+}
+.swipe-action-right{
+  background:linear-gradient(90deg, #10B981 0%, #059669 100%);
+  justify-content:flex-start;
+}
+.swipe-action .swipe-icon{font-size:16px}
+.swipe-action .swipe-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:4px;
+}
+.swipe-action .swipe-label::before{
+  content:'→ ';opacity:0.8;
+}
+.swipe-card{
+  position:relative;
+  margin-bottom:0 !important;
+  background:#fff;
+  transition:transform 0.2s ease;
+  z-index:2;
+  touch-action:pan-y;
+}
+.swipe-card.swiping{transition:none}
+.swipe-card.snap-back{transition:transform 0.25s ease}
+
 .target-card{background:#fff;border:1px solid var(--border);border-left:3px solid #94A3B8;border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
 .target-card.s0{border-left-color:#94A3B8}
 .target-card.s1{border-left-color:#3B82F6}
@@ -125,6 +168,56 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .target-card.s4{border-left-color:#10B981}
 .target-card-head{display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:5px}
 .target-card-name{font-weight:700;font-size:13px;line-height:1.3;flex:1}
+
+/* ===== Reminder Follow-up Stagnant ===== */
+.target-card.stagnant{
+  border-left-color:#DC2626 !important;
+  box-shadow:0 0 0 1px rgba(220,38,38,0.08), 0 1px 4px rgba(0,0,0,0.04);
+}
+.target-reminder-badge{
+  display:inline-flex;align-items:center;
+  background:rgba(220,38,38,0.1);
+  color:#DC2626;
+  border-radius:10px;
+  padding:1px 6px;
+  font-size:10px;
+  font-weight:700;
+  margin-left:6px;
+  vertical-align:middle;
+  letter-spacing:0.3px;
+}
+.reminder-banner{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border:1px solid rgba(220,38,38,0.2);
+  border-radius:12px;
+  padding:10px 12px 10px 14px;
+  margin:0 0 10px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+  transition:transform 0.1s;
+}
+.reminder-banner:active{transform:scale(0.99)}
+.reminder-banner-icon{
+  font-size:20px;flex-shrink:0;
+  filter:drop-shadow(0 1px 1px rgba(220,38,38,0.2));
+}
+.reminder-banner-content{flex:1;min-width:0}
+.reminder-banner-title{
+  font-size:12px;font-weight:700;
+  color:#991B1B;
+  margin-bottom:1px;
+}
+.reminder-banner-sub{
+  font-size:11px;
+  color:#7F1D1D;
+  opacity:0.85;
+}
+.reminder-banner-arrow{
+  color:#DC2626;
+  font-size:16px;font-weight:700;
+  flex-shrink:0;
+  opacity:0.6;
+}
 .target-card-badge{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
 .target-card-badge.s0{background:#F1F5F9;color:#475569}
 .target-card-badge.s1{background:#DBEAFE;color:#1E40AF}
@@ -140,6 +233,85 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 
 /* Filter pills */
 .filter-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.filter-pills::-webkit-scrollbar{display:none}
+.pill-filter{background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--muted);cursor:pointer}
+.pill-filter.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* ===== Sticky Search + Filter Bar ===== */
+.sticky-filter-bar{
+  position:sticky;
+  top:62px;
+  background:var(--bg);
+  z-index:30;
+  margin:0 -16px 12px;
+  padding:8px 16px 4px;
+  box-shadow:0 4px 8px -4px rgba(0,0,0,.06);
+}
+.sticky-filter-bar .filter-pills{margin-bottom:6px}
+.search-box{
+  background:#fff;border:1px solid var(--border);
+  border-radius:999px;
+  padding:8px 12px;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+  transition:border-color .15s, box-shadow .15s;
+}
+.search-box:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+}
+.search-box .search-icon{
+  font-size:13px;flex-shrink:0;opacity:0.6;
+}
+.search-box input{
+  flex:1;border:none;background:none;outline:none;
+  font-size:13px;color:var(--text);
+  padding:0;min-width:0;
+  font-family:inherit;
+}
+.search-box input::placeholder{color:#94A3B8}
+.search-box .search-clear{
+  background:rgba(0,0,0,0.06);border:none;color:#64748B;
+  width:20px;height:20px;border-radius:50%;
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.search-box .search-clear:active{background:rgba(0,0,0,0.12)}
+
+/* Filter aktif chip (untuk filter stagnant) */
+.active-filter-chip{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border:1px solid rgba(220,38,38,0.25);
+  border-radius:999px;
+  padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+  font-size:12px;font-weight:600;color:#991B1B;
+}
+.active-filter-chip span{flex:1}
+.active-filter-chip button{
+  background:rgba(220,38,38,0.15);
+  border:none;color:#DC2626;
+  width:20px;height:20px;border-radius:50%;
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.active-filter-chip button:active{background:rgba(220,38,38,0.25)}
+
+/* Filter pills jenis (baris kedua) */
+.filter-pills-jenis{margin-bottom:0;padding-bottom:2px}
+.pill-jenis{
+  background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:5px 10px;
+  font-size:11px;font-weight:500;
+  white-space:nowrap;color:var(--muted);cursor:pointer;
+  flex-shrink:0;
+}
+.pill-jenis.active{
+  background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;
+}
 .filter-pills::-webkit-scrollbar{display:none}
 .pill-filter{background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--muted);cursor:pointer}
 .pill-filter.active{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -349,6 +521,45 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .profile-form-group.has-error input{border-color:var(--danger)}
 .profile-form-group.has-error .err-msg{display:block}
 .profile-modal-actions{display:flex;gap:10px;margin-top:16px}
+
+/* Reminder Setting Options */
+.reminder-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(90px, 1fr));
+  gap:8px;
+  margin:14px 0 10px;
+}
+.reminder-option-btn{
+  background:#fff;
+  border:2px solid #E2E8F0;
+  border-radius:10px;
+  padding:10px 6px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:2px;
+  cursor:pointer;
+  font-size:13px;font-weight:700;color:#1C1C1A;
+  transition:all 0.15s;
+}
+.reminder-option-btn small{
+  font-size:9px;font-weight:500;color:#94A3B8;
+  letter-spacing:0.2px;
+}
+.reminder-option-btn:hover,.reminder-option-btn:active{
+  border-color:#94A3B8;
+  background:#F8FAFC;
+}
+.reminder-option-btn.active{
+  background:linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border-color:#DC2626;
+  color:#991B1B;
+}
+.reminder-option-btn.active small{color:#7F1D1D}
+.reminder-info{
+  font-size:11px;color:#94A3B8;
+  background:#F8FAFC;padding:8px 10px;border-radius:8px;
+  margin:8px 0 0;line-height:1.5;
+}
 .profile-modal-actions .profile-btn{flex:1;padding:11px}
 
 .profile-logout-btn{width:100%;margin-top:8px;padding:13px;background:#fff;color:var(--danger);border:1.5px solid var(--danger);border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -573,6 +784,61 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
   box-shadow:0 1px 3px rgba(0,0,0,.04);
 }
+
+/* Aktivitas section di detail modal */
+.aktivitas-section{
+  background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.aktivitas-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid #F1F5F9;
+}
+.aktivitas-title{
+  font-size:13px;font-weight:700;color:var(--navy);
+}
+.aktivitas-count{
+  font-size:10px;color:var(--muted);
+  background:#F1F5F9;padding:2px 8px;border-radius:10px;
+}
+.aktivitas-empty{
+  font-size:12px;color:var(--muted);
+  background:#F8FAFC;padding:10px 12px;border-radius:8px;
+  text-align:center;line-height:1.5;
+}
+.aktivitas-list{
+  display:flex;flex-direction:column;gap:8px;
+}
+.aktivitas-item{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:8px 0;
+  border-bottom:1px solid #F8FAFC;
+}
+.aktivitas-item:last-child{border-bottom:none}
+.aktivitas-icon{
+  font-size:14px;flex-shrink:0;
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  background:#F1F5F9;border-radius:50%;
+}
+.aktivitas-body{flex:1;min-width:0}
+.aktivitas-desc{
+  font-size:12px;font-weight:600;color:var(--text);
+  line-height:1.4;
+}
+.aktivitas-meta{
+  font-size:10px;color:var(--muted);
+  margin-top:2px;
+}
+.aktivitas-more{
+  background:none;border:none;
+  color:var(--accent);font-size:11px;font-weight:600;
+  padding:8px 0 0;cursor:pointer;width:100%;
+  text-align:center;
+}
+.aktivitas-more:active{opacity:0.7}
 .detail-info-row{
   display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);
 }
@@ -784,6 +1050,9 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
           </div>
         </div>
       </div>
+
+      <!-- Riwayat aktivitas -->
+      <div id="d-aktivitas-container"></div>
     </div>
     <div class="modal-foot detail-foot">
       <button class="btn close" onclick="closeDetailModal()">Tutup</button>
@@ -815,6 +1084,9 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
             <option value="pabrik">🏭 Pabrik</option>
             <option value="perusahaan">🏢 Perusahaan</option>
             <option value="kawasan">🏗️ Kawasan</option>
+            <option value="dinas">🏛️ Dinas</option>
+            <option value="sekolah">🏫 Sekolah</option>
+            <option value="lainnya">📍 Lainnya</option>
           </select>
         </div>
         <div class="field">
@@ -969,6 +1241,13 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
         </div>
         <span class="profile-action-arrow">›</span>
       </div>
+      <div class="profile-action-row" onclick="openReminderSetting()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">⏰</span>
+          <span>Reminder follow-up</span>
+        </div>
+        <span class="profile-action-arrow" id="reminder-setting-value">7 hari ›</span>
+      </div>
       <div class="profile-action-row" onclick="openChangePassword()">
         <div class="profile-action-label">
           <span class="profile-action-icon">🔐</span>
@@ -1020,6 +1299,28 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
   </div>
 </div>
 
+<!-- ========== MODAL SETTING REMINDER FOLLOW-UP ========== -->
+<div class="profile-modal" id="modal-reminder-setting">
+  <div class="profile-modal-card">
+    <h3>⏰ Reminder Follow-up</h3>
+    <p class="sub">Atur berapa hari target dianggap "stagnan" dan butuh follow-up. Default 7 hari.</p>
+
+    <div class="reminder-options">
+      <button class="reminder-option-btn" data-days="3">3 hari<small>Sangat ketat</small></button>
+      <button class="reminder-option-btn" data-days="7">7 hari<small>Direkomendasikan</small></button>
+      <button class="reminder-option-btn" data-days="10">10 hari<small>Standar</small></button>
+      <button class="reminder-option-btn" data-days="14">14 hari<small>Santai</small></button>
+      <button class="reminder-option-btn" data-days="30">30 hari<small>Bulanan</small></button>
+    </div>
+
+    <p class="reminder-info">Target dengan status <b>Deal</b> tidak akan dihitung stagnan.</p>
+
+    <div class="profile-modal-actions">
+      <button class="profile-btn ghost" onclick="closeReminderSetting()">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1036,8 +1337,180 @@ const LS = {
   PROYEK: 'bm4_proyek',
   LAST_PROYEK: 'bm4_mobile_last_proyek',
   TP_TARGETS: 'bm4_tp_targets',
-  MOBILE_PERMISSIONS: 'bm4_mobile_permissions'
+  MOBILE_PERMISSIONS: 'bm4_mobile_permissions',
+  REMINDER_DAYS: 'bm4_reminder_threshold_days'
 };
+
+// Default threshold reminder (hari)
+const REMINDER_DEFAULT_DAYS = 7;
+
+function getReminderThreshold(){
+  try {
+    const v = parseInt(localStorage.getItem(LS.REMINDER_DAYS));
+    if(!isNaN(v) && v >= 1 && v <= 60) return v;
+  } catch(e){}
+  return REMINDER_DEFAULT_DAYS;
+}
+function setReminderThreshold(days){
+  const v = Math.max(1, Math.min(60, parseInt(days) || REMINDER_DEFAULT_DAYS));
+  try { localStorage.setItem(LS.REMINDER_DAYS, String(v)); } catch(e){}
+  return v;
+}
+
+// Hitung hari sejak last update target
+function daysSinceContact(t){
+  if(!t) return 0;
+  const dateStr = t.lastcontact || t.updated_at || t.created_at || '';
+  if(!dateStr) return 999; // tidak ada tanggal = anggap sangat lama
+  const lastDate = new Date(dateStr);
+  if(isNaN(lastDate.getTime())) return 999;
+  const today = new Date();
+  const diffMs = today - lastDate;
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+// Cek apakah target stagnan (status bukan Deal & melewati threshold)
+function isTargetStagnant(t, threshold){
+  const s = parseInt(t.status) || 0;
+  if(s === 4) return false; // Deal = tidak perlu follow-up
+  const th = threshold || getReminderThreshold();
+  return daysSinceContact(t) >= th;
+}
+
+// ===== Riwayat Aktivitas Target (localStorage cache) =====
+// Format: { 'targetId': [{ ts, type, desc, by }] }
+const LS_AKTIVITAS = 'bm4_target_aktivitas';
+
+function _loadAllAktivitas(){
+  try {
+    const raw = localStorage.getItem(LS_AKTIVITAS);
+    if(!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch(e){ return {}; }
+}
+
+function _saveAllAktivitas(data){
+  try {
+    localStorage.setItem(LS_AKTIVITAS, JSON.stringify(data));
+  } catch(e){ console.warn('[aktivitas] save failed:', e); }
+}
+
+// Tambahkan aktivitas baru ke target
+function addAktivitas(targetId, type, desc){
+  if(!targetId) return;
+  const all = _loadAllAktivitas();
+  const key = String(targetId);
+  if(!all[key]) all[key] = [];
+  all[key].unshift({
+    ts: new Date().toISOString(),
+    type: type || 'update',
+    desc: desc || '',
+    by: (currentUser && currentUser.username) ? currentUser.username : '-'
+  });
+  // Limit per target: max 50 entry biar localStorage tidak bengkak
+  if(all[key].length > 50) all[key] = all[key].slice(0, 50);
+  _saveAllAktivitas(all);
+}
+
+// Ambil aktivitas untuk target tertentu (sorted: terbaru di atas)
+function getAktivitas(targetId){
+  if(!targetId) return [];
+  const all = _loadAllAktivitas();
+  return all[String(targetId)] || [];
+}
+
+// Format relative time: "2 jam lalu", "3 hari lalu"
+function formatRelativeTime(isoStr){
+  if(!isoStr) return '-';
+  const date = new Date(isoStr);
+  if(isNaN(date.getTime())) return '-';
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+  if(diffMin < 1) return 'baru saja';
+  if(diffMin < 60) return diffMin + ' menit lalu';
+  if(diffHour < 24) return diffHour + ' jam lalu';
+  if(diffDay < 30) return diffDay + ' hari lalu';
+  // Format tanggal
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Icon per tipe aktivitas
+function aktivitasIcon(type){
+  const map = {
+    'status_update': '🔄',
+    'edit': '✏️',
+    'create': '✨',
+    'note': '📝',
+    'update': '🔃'
+  };
+  return map[type] || '📌';
+}
+
+// Render section riwayat untuk detail modal
+function renderAktivitasSection(targetId){
+  const list = getAktivitas(targetId);
+  if(!list || list.length === 0){
+    return `
+      <div class="aktivitas-section">
+        <div class="aktivitas-head">
+          <span class="aktivitas-title">📜 Riwayat Aktivitas</span>
+        </div>
+        <div class="aktivitas-empty">Belum ada riwayat tercatat. Aktivitas akan muncul saat ada perubahan status atau edit target.</div>
+      </div>
+    `;
+  }
+  // Maksimal tampilkan 8 entri pertama, sisanya pakai "lihat semua"
+  const visible = list.slice(0, 8);
+  const hasMore = list.length > 8;
+  const items = visible.map(a => `
+    <div class="aktivitas-item">
+      <div class="aktivitas-icon">${aktivitasIcon(a.type)}</div>
+      <div class="aktivitas-body">
+        <div class="aktivitas-desc">${esc(a.desc || a.type)}</div>
+        <div class="aktivitas-meta">${formatRelativeTime(a.ts)} ${a.by && a.by !== '-' ? '· oleh ' + esc(a.by) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="aktivitas-section">
+      <div class="aktivitas-head">
+        <span class="aktivitas-title">📜 Riwayat Aktivitas</span>
+        <span class="aktivitas-count">${list.length} entri</span>
+      </div>
+      <div class="aktivitas-list">${items}</div>
+      ${hasMore ? `<button class="aktivitas-more" onclick="showAllAktivitas(${targetId})">Lihat semua ${list.length} aktivitas →</button>` : ''}
+    </div>
+  `;
+}
+
+// Tampilkan semua aktivitas (untuk button "lihat semua")
+function showAllAktivitas(targetId){
+  const list = getAktivitas(targetId);
+  const allItems = list.map(a => `
+    <div class="aktivitas-item">
+      <div class="aktivitas-icon">${aktivitasIcon(a.type)}</div>
+      <div class="aktivitas-body">
+        <div class="aktivitas-desc">${esc(a.desc || a.type)}</div>
+        <div class="aktivitas-meta">${formatRelativeTime(a.ts)} ${a.by && a.by !== '-' ? '· oleh ' + esc(a.by) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  const container = $('d-aktivitas-container');
+  if(container){
+    container.innerHTML = `
+      <div class="aktivitas-section">
+        <div class="aktivitas-head">
+          <span class="aktivitas-title">📜 Riwayat Aktivitas (semua)</span>
+          <span class="aktivitas-count">${list.length} entri</span>
+        </div>
+        <div class="aktivitas-list">${allItems}</div>
+      </div>
+    `;
+  }
+}
 
 const PROYEK_DEFAULT = [
   {id:'gwc', nama:'Griya Wijaya Cibogo', kode:'GWC', area:'Cibogo, Subang'},
@@ -1092,6 +1565,20 @@ function getRoleModules(role){
 const STATUS_LABELS = ['Identifikasi','Kontak Awal','Presentasi','Negosiasi','Deal'];
 const STATUS_ICONS  = ['🔍','📞','🤝','💬','✅'];
 const STATUS_COLORS = ['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'];
+
+// ===== JENIS PERUSAHAAN (untuk filter & dropdown form) =====
+const JENIS_LIST = [
+  { id: 'pabrik',     label: 'Pabrik',     icon: '🏭' },
+  { id: 'dinas',      label: 'Dinas',      icon: '🏛️' },
+  { id: 'sekolah',    label: 'Sekolah',    icon: '🏫' },
+  { id: 'perusahaan', label: 'Perusahaan', icon: '🏢' },
+  { id: 'kawasan',    label: 'Kawasan',    icon: '🏗️' },
+  { id: 'lainnya',    label: 'Lainnya',    icon: '📍' }
+];
+function getJenisMeta(id){
+  const j = JENIS_LIST.find(x => x.id === String(id||'').toLowerCase());
+  return j || { id: 'lainnya', label: 'Lainnya', icon: '📍' };
+}
 
 // ===== KATA HARI INI - Tips Strategi Target Market (umum, untuk banner dashboard) =====
 const MOTIVASI_QUOTES = [
@@ -1173,6 +1660,8 @@ let proyekList = [];
 let currentProyekId = 'gwc';
 let tpTargets = [];
 let activeFilter = 'all';
+let activeJenis = 'all';        // filter jenis: 'all' atau 'pabrik'/'dinas'/dst
+let searchQuery = '';            // pencarian nama / PIC
 
 // ============================================================
 // Helpers
@@ -1452,6 +1941,9 @@ function setProfileFoto(dataUrl){
 function openProfile(){
   if(!currentUser){ return; }
   renderProfileScreen();
+  // Update label reminder di profile
+  const label = $('reminder-setting-value');
+  if(label) label.textContent = getReminderThreshold() + ' hari ›';
   $('screen-profile').classList.add('show');
 }
 
@@ -1957,6 +2449,8 @@ function renderProyekDropdown(){
     currentProyekId = sel.value;
     try { localStorage.setItem(LS.LAST_PROYEK, currentProyekId); } catch(e){}
     activeFilter = 'all';
+    activeJenis = 'all';
+    searchQuery = '';
     renderContent();
   };
 }
@@ -2178,6 +2672,37 @@ function openMotivasiFromProfile(){
   showMotivasiSplash();
 }
 
+// ===== Reminder Setting (per user, simpan di localStorage) =====
+function openReminderSetting(){
+  const current = getReminderThreshold();
+  // Highlight option yang aktif
+  document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+    const days = parseInt(btn.getAttribute('data-days'));
+    btn.classList.toggle('active', days === current);
+    btn.onclick = () => selectReminderDays(days);
+  });
+  $('modal-reminder-setting').classList.add('show');
+}
+
+function closeReminderSetting(){
+  $('modal-reminder-setting').classList.remove('show');
+}
+
+function selectReminderDays(days){
+  const v = setReminderThreshold(days);
+  // Update UI
+  document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+    const d = parseInt(btn.getAttribute('data-days'));
+    btn.classList.toggle('active', d === v);
+  });
+  // Update label di profile
+  const label = $('reminder-setting-value');
+  if(label) label.textContent = v + ' hari ›';
+  toast(`Reminder diubah ke ${v} hari`, 'ok');
+  // Tutup modal setelah delay singkat (biar user lihat feedback)
+  setTimeout(() => closeReminderSetting(), 600);
+}
+
 // ===== Tip per status untuk detail modal target =====
 function renderDetailTipCard(status){
   const s = parseInt(status);
@@ -2275,11 +2800,35 @@ function renderTargetPasarDashboard(){
   });
   const aktif = byStatus[1] + byStatus[2] + byStatus[3];
 
-  // Filter
+  // Hitung distribusi jenis (untuk pill filter jenis)
+  const byJenis = {};
+  JENIS_LIST.forEach(j => byJenis[j.id] = 0);
+  targets.forEach(t => {
+    const jid = String(t.jenis||'lainnya').toLowerCase();
+    if(byJenis[jid] !== undefined) byJenis[jid]++;
+    else byJenis['lainnya']++;
+  });
+
+  // Filter — status, jenis, search
   let filtered = targets;
   if(activeFilter !== 'all'){
     const fs = parseInt(activeFilter);
-    filtered = targets.filter(t => (parseInt(t.status)||0) === fs);
+    filtered = filtered.filter(t => (parseInt(t.status)||0) === fs);
+  }
+  if(activeJenis !== 'all'){
+    filtered = filtered.filter(t => String(t.jenis||'lainnya').toLowerCase() === activeJenis);
+  }
+  if(searchQuery === '__STAGNANT__'){
+    // Filter khusus: hanya target stagnant
+    filtered = filtered.filter(t => isTargetStagnant(t));
+  } else if(searchQuery && searchQuery.trim()){
+    const q = searchQuery.trim().toLowerCase();
+    filtered = filtered.filter(t => {
+      const nama = String(t.nama||'').toLowerCase();
+      const pic = String(t.pic||'').toLowerCase();
+      const cat = String(t.catatan||'').toLowerCase();
+      return nama.includes(q) || pic.includes(q) || cat.includes(q);
+    });
   }
   filtered = filtered.slice().sort((a,b) => (parseInt(b.status)||0) - (parseInt(a.status)||0));
 
@@ -2313,13 +2862,53 @@ function renderTargetPasarDashboard(){
     html += `<button class="btn-primary" onclick="openAddTarget()">+ Tambah Target Baru</button>`;
   }
 
-  // Filter pills
+  // Reminder banner — kalau ada target stagnant
+  const stagnantCount = targets.filter(t => isTargetStagnant(t)).length;
+  if(stagnantCount > 0){
+    const threshold = getReminderThreshold();
+    html += `
+      <div class="reminder-banner" onclick="filterStagnantTargets()">
+        <div class="reminder-banner-icon">⏰</div>
+        <div class="reminder-banner-content">
+          <div class="reminder-banner-title">${stagnantCount} target butuh follow-up</div>
+          <div class="reminder-banner-sub">Stagnan ≥ ${threshold} hari · Tap untuk lihat</div>
+        </div>
+        <div class="reminder-banner-arrow">›</div>
+      </div>
+    `;
+  }
+
+  // Sticky filter area: search + filter status + filter jenis
+  const filterStatusPills = `
+    <button class="pill-filter ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Semua (${total})</button>
+    ${STATUS_LABELS.map((lbl,i) => byStatus[i]===0 ? '' :
+      `<button class="pill-filter ${activeFilter===String(i)?'active':''}" onclick="setFilter('${i}')">${STATUS_ICONS[i]} ${esc(lbl)} (${byStatus[i]})</button>`
+    ).filter(Boolean).join('')}
+  `;
+  const filterJenisPills = `
+    <button class="pill-jenis ${activeJenis==='all'?'active':''}" onclick="setJenis('all')">Semua jenis</button>
+    ${JENIS_LIST.map(j => byJenis[j.id]===0 ? '' :
+      `<button class="pill-jenis ${activeJenis===j.id?'active':''}" onclick="setJenis('${j.id}')">${j.icon} ${esc(j.label)} (${byJenis[j.id]})</button>`
+    ).filter(Boolean).join('')}
+  `;
+  const isStagnantFilter = searchQuery === '__STAGNANT__';
+  const searchVal = isStagnantFilter ? '' : esc(searchQuery || '');
   html += `
-    <div class="filter-pills">
-      <button class="pill-filter ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Semua (${total})</button>
-      ${STATUS_LABELS.map((lbl,i) => byStatus[i]===0 ? '' :
-        `<button class="pill-filter ${activeFilter===String(i)?'active':''}" onclick="setFilter('${i}')">${STATUS_ICONS[i]} ${esc(lbl)} (${byStatus[i]})</button>`
-      ).filter(Boolean).join('')}
+    <div class="sticky-filter-bar" id="sticky-filter-bar">
+      ${isStagnantFilter ? `
+        <div class="active-filter-chip">
+          <span>⏰ Filter: Butuh follow-up</span>
+          <button onclick="clearSearch()" aria-label="Hapus filter">×</button>
+        </div>
+      ` : `
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Cari nama, PIC, atau catatan..." value="${searchVal}" oninput="onSearchInput(this.value)" autocomplete="off">
+          ${searchQuery ? '<button class="search-clear" onclick="clearSearch()" aria-label="Hapus">×</button>' : ''}
+        </div>
+      `}
+      <div class="filter-pills">${filterStatusPills}</div>
+      <div class="filter-pills filter-pills-jenis">${filterJenisPills}</div>
     </div>
   `;
 
@@ -2340,11 +2929,23 @@ function renderTargetPasarDashboard(){
           ${perm.create ? '<p class="hint">Tap tombol "+ Tambah Target Baru" di atas untuk mulai.</p>' : ''}
         </div>
       `;
-    } else {
+    } else if(searchQuery && searchQuery.trim()){
       html += `
         <div class="empty-state">
-          <p>Tidak ada target di filter ini.</p>
-          <p class="hint" style="margin-top:6px">Tap "Semua" untuk lihat semua target.</p>
+          <div class="icon">🔍</div>
+          <p><b>Tidak ditemukan</b></p>
+          <p>Tidak ada target yang cocok dengan "<b>${esc(searchQuery)}</b>"</p>
+          <p class="hint" style="margin-top:8px"><button class="pill-filter" onclick="clearSearch()" style="background:var(--accent);border-color:var(--accent);color:#fff">× Hapus pencarian</button></p>
+        </div>
+      `;
+    } else {
+      const filterDesc = [];
+      if(activeFilter !== 'all') filterDesc.push(STATUS_LABELS[parseInt(activeFilter)]);
+      if(activeJenis !== 'all') filterDesc.push(getJenisMeta(activeJenis).label);
+      html += `
+        <div class="empty-state">
+          <p>Tidak ada target di filter <b>${esc(filterDesc.join(' + '))}</b>.</p>
+          <p class="hint" style="margin-top:6px">Tap "Semua" / "Semua jenis" untuk reset filter.</p>
         </div>
       `;
     }
@@ -2353,6 +2954,8 @@ function renderTargetPasarDashboard(){
   }
 
   $('content-area').innerHTML = html;
+  // Bind swipe handlers untuk quick update status
+  setTimeout(() => bindSwipeHandlers(), 50);
 }
 
 function renderTargetCard(t, perm){
@@ -2361,20 +2964,48 @@ function renderTargetCard(t, perm){
   const ic = STATUS_ICONS[s] || '';
   const meta = [];
   if(t.karyawan) meta.push(Number(t.karyawan).toLocaleString('id-ID') + ' karyawan');
-  if(t.jenis) meta.push(t.jenis);
+  if(t.jenis) meta.push(_capitalize(t.jenis));
   const meta1 = meta.join(' • ');
   const meta2 = t.pic ? 'PIC: ' + esc(t.pic) : '';
-  // Tap card → buka detail (semua user yang punya view bisa buka detail)
-  // Edit hanya muncul sebagai tombol di dalam modal detail kalau perm.edit=true
-  const onclick = `onclick="openDetailTarget(${parseInt(t.id)||0})"`;
-  return `
-    <div class="target-card s${s}" ${onclick} style="cursor:pointer">
-      <div class="target-card-head">
-        <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}</div>
-        <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
+  const tid = parseInt(t.id) || 0;
+  const onclick = `onclick="openDetailTarget(${tid})"`;
+  const canQuickUpdate = perm.edit && s < 4;
+  const nextStatus = s + 1;
+  const nextLbl = STATUS_LABELS[nextStatus] || '';
+  const nextIc = STATUS_ICONS[nextStatus] || '';
+  // Reminder badge — kalau stagnant
+  const stagnant = isTargetStagnant(t);
+  const daysAgo = stagnant ? daysSinceContact(t) : 0;
+  const reminderBadge = stagnant
+    ? `<div class="target-reminder-badge" title="Stagnan ${daysAgo} hari">🔴 ${daysAgo}h</div>`
+    : '';
+  const cardCls = `target-card s${s}${stagnant ? ' stagnant' : ''}`;
+  if(!canQuickUpdate){
+    return `
+      <div class="${cardCls}" ${onclick} style="cursor:pointer">
+        <div class="target-card-head">
+          <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}${reminderBadge}</div>
+          <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
+        </div>
+        ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
+        ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
       </div>
-      ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
-      ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
+    `;
+  }
+  return `
+    <div class="swipe-card-wrap" data-target-id="${tid}" data-current-status="${s}">
+      <div class="swipe-action swipe-action-right" data-next-status="${nextStatus}">
+        <span class="swipe-icon">${nextIc}</span>
+        <span class="swipe-label">${esc(nextLbl)}</span>
+      </div>
+      <div class="swipe-card ${cardCls}" ${onclick} style="cursor:pointer">
+        <div class="target-card-head">
+          <div class="target-card-name">${esc(t.nama || '(tanpa nama)')}${reminderBadge}</div>
+          <div class="target-card-badge s${s}">${ic} ${esc(lbl)}</div>
+        </div>
+        ${meta1 ? `<div class="target-card-meta">${esc(meta1)}</div>` : ''}
+        ${meta2 ? `<div class="target-card-meta">${meta2}</div>` : ''}
+      </div>
     </div>
   `;
 }
@@ -2382,6 +3013,210 @@ function renderTargetCard(t, perm){
 function setFilter(f){
   activeFilter = f;
   renderContent();
+}
+
+function setJenis(j){
+  activeJenis = j;
+  renderContent();
+}
+
+let _searchDebounceTimer = null;
+function onSearchInput(val){
+  searchQuery = val || '';
+  // Debounce: tunggu 250ms sebelum re-render (lebih smooth)
+  if(_searchDebounceTimer) clearTimeout(_searchDebounceTimer);
+  _searchDebounceTimer = setTimeout(() => {
+    // Save cursor position & focus state
+    const inputEl = document.getElementById('search-input');
+    const focused = inputEl === document.activeElement;
+    const cursorPos = inputEl ? inputEl.selectionStart : 0;
+    renderContent();
+    // Restore focus & cursor
+    if(focused){
+      const newInput = document.getElementById('search-input');
+      if(newInput){
+        newInput.focus();
+        try { newInput.setSelectionRange(cursorPos, cursorPos); } catch(e){}
+      }
+    }
+  }, 250);
+}
+
+function clearSearch(){
+  searchQuery = '';
+  if(_searchDebounceTimer) clearTimeout(_searchDebounceTimer);
+  renderContent();
+  setTimeout(() => {
+    const newInput = document.getElementById('search-input');
+    if(newInput) newInput.focus();
+  }, 50);
+}
+
+// Filter ke target stagnant — pakai pseudo-filter via search
+function filterStagnantTargets(){
+  // Reset filter dulu
+  activeFilter = 'all';
+  activeJenis = 'all';
+  searchQuery = '__STAGNANT__'; // marker khusus, nanti di-handle di filter
+  renderContent();
+  // Update input visual
+  setTimeout(() => {
+    const input = document.getElementById('search-input');
+    if(input) input.value = '';
+  }, 50);
+}
+
+// ===== Swipe handler untuk quick update status =====
+let _swipeState = null;
+
+function bindSwipeHandlers(){
+  const wraps = document.querySelectorAll('.swipe-card-wrap');
+  wraps.forEach(wrap => {
+    const card = wrap.querySelector('.swipe-card');
+    if(!card || card._swipeBound) return;
+    card._swipeBound = true;
+    card.addEventListener('touchstart', onSwipeStart, { passive: true });
+    card.addEventListener('touchmove', onSwipeMove, { passive: false });
+    card.addEventListener('touchend', onSwipeEnd, { passive: true });
+    card.addEventListener('touchcancel', onSwipeEnd, { passive: true });
+  });
+}
+
+function onSwipeStart(e){
+  const t = e.touches[0];
+  const card = e.currentTarget;
+  const wrap = card.closest('.swipe-card-wrap');
+  _swipeState = {
+    card,
+    wrap,
+    startX: t.clientX,
+    startY: t.clientY,
+    deltaX: 0,
+    deltaY: 0,
+    locked: null, // 'horizontal' | 'vertical' | null
+    moved: false
+  };
+  card.classList.add('swiping');
+  card.classList.remove('snap-back');
+}
+
+function onSwipeMove(e){
+  if(!_swipeState) return;
+  const t = e.touches[0];
+  const dx = t.clientX - _swipeState.startX;
+  const dy = t.clientY - _swipeState.startY;
+  _swipeState.deltaX = dx;
+  _swipeState.deltaY = dy;
+
+  // Determine direction lock setelah threshold kecil
+  if(!_swipeState.locked){
+    if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
+      _swipeState.locked = (Math.abs(dx) > Math.abs(dy)) ? 'horizontal' : 'vertical';
+    }
+  }
+  if(_swipeState.locked === 'horizontal'){
+    e.preventDefault(); // cegah scroll vertikal
+    _swipeState.moved = true;
+    // Hanya boleh swipe ke kanan (positif). Limit max ke setengah card width.
+    const cardW = _swipeState.card.offsetWidth || 320;
+    const maxSwipe = cardW * 0.55;
+    let translateX = Math.max(0, Math.min(maxSwipe, dx));
+    _swipeState.card.style.transform = `translateX(${translateX}px)`;
+  }
+}
+
+function onSwipeEnd(e){
+  if(!_swipeState) return;
+  const card = _swipeState.card;
+  const wrap = _swipeState.wrap;
+  card.classList.remove('swiping');
+  card.classList.add('snap-back');
+
+  const cardW = card.offsetWidth || 320;
+  const threshold = cardW * 0.35; // harus swipe minimal 35% width
+
+  if(_swipeState.locked === 'horizontal' && _swipeState.deltaX >= threshold){
+    // Trigger update
+    const tid = parseInt(wrap.getAttribute('data-target-id')) || 0;
+    const nextStatus = parseInt(wrap.querySelector('.swipe-action').getAttribute('data-next-status'));
+    // Snap ke kanan dulu untuk feedback visual
+    card.style.transform = `translateX(${cardW}px)`;
+    setTimeout(() => {
+      _confirmQuickUpdateStatus(tid, nextStatus, () => {
+        // Kalau cancel, snap back
+        card.style.transform = 'translateX(0)';
+      });
+    }, 80);
+  } else {
+    // Snap back
+    card.style.transform = 'translateX(0)';
+    // Kalau tidak ada gerakan & swipe-state tidak locked → biarkan onclick berjalan
+    if(!_swipeState.moved){
+      // do nothing, klik akan terjadi natural
+    }
+  }
+  // Cegah click setelah swipe
+  if(_swipeState.moved){
+    const blockClickFor = card;
+    blockClickFor._suppressClick = true;
+    setTimeout(() => { blockClickFor._suppressClick = false; }, 300);
+  }
+  _swipeState = null;
+}
+
+// Hadang click kalau habis swipe
+document.addEventListener('click', function(e){
+  let el = e.target;
+  while(el && el !== document){
+    if(el.classList && el.classList.contains('swipe-card') && el._suppressClick){
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+    el = el.parentNode;
+  }
+}, true);
+
+function _confirmQuickUpdateStatus(tid, nextStatus, onCancel){
+  const t = (tpTargets || []).find(x => parseInt(x.id) === parseInt(tid));
+  if(!t){ if(onCancel) onCancel(); return; }
+  const fromLbl = STATUS_LABELS[parseInt(t.status)||0] || '-';
+  const toLbl = STATUS_LABELS[nextStatus] || '-';
+  const toIc = STATUS_ICONS[nextStatus] || '';
+  // Konfirmasi via native confirm (simple & reliable di mobile)
+  const ok = confirm(`Update status:\n\n"${t.nama||'(tanpa nama)'}"\n\n${fromLbl} → ${toIc} ${toLbl}\n\nLanjutkan?`);
+  if(!ok){ if(onCancel) onCancel(); return; }
+  _executeQuickUpdate(tid, nextStatus, t);
+}
+
+async function _executeQuickUpdate(tid, nextStatus, t){
+  try {
+    toast('⏳ Mengupdate status...', 'info');
+    // Bangun newRows: ganti target ini dengan status baru, sisanya tetap
+    const today = new Date().toISOString().slice(0,10);
+    const newRows = (tpTargets || []).map(row => {
+      if(parseInt(row.id) === parseInt(tid)){
+        return Object.assign({}, row, {
+          status: parseInt(nextStatus),
+          lastcontact: today
+        });
+      }
+      return row;
+    });
+    await gasRequest('saveTargetPasar', { rows: newRows });
+    tpTargets = newRows;
+    try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+    toast(`✓ ${STATUS_ICONS[nextStatus]} ${STATUS_LABELS[nextStatus]}`, 'ok');
+    // Riwayat (akan di-handle di Fase 4)
+    if(typeof addAktivitas === 'function'){
+      addAktivitas(tid, 'status_update', `${STATUS_LABELS[parseInt(t.status)||0]} → ${STATUS_LABELS[nextStatus]}`);
+    }
+    renderContent();
+  } catch(e){
+    console.error('[quickUpdateStatus] error:', e);
+    toast('Gagal update: ' + (e.message || 'tidak diketahui'), 'err');
+    renderContent();
+  }
 }
 
 // ============================================================
@@ -2430,6 +3265,12 @@ function openDetailTarget(id){
   const tipContainer = $('d-tip-container');
   if(tipContainer){
     tipContainer.innerHTML = renderDetailTipCard(s);
+  }
+
+  // Render riwayat aktivitas
+  const aktContainer = $('d-aktivitas-container');
+  if(aktContainer){
+    aktContainer.innerHTML = renderAktivitasSection(parseInt(t.id));
   }
 
   // Info rows
@@ -3149,6 +3990,27 @@ async function saveTargetForm(){
 
     tpTargets = newRows;
     try { localStorage.setItem(LS.TP_TARGETS, JSON.stringify(tpTargets)); } catch(e){}
+
+    // Record aktivitas
+    try {
+      if(isNew){
+        // Cari ID baru (last new row)
+        const newId = newRows[newRows.length-1] && newRows[newRows.length-1].id;
+        if(newId) addAktivitas(newId, 'create', `Target dibuat: ${nama}`);
+      } else if(editingTargetId){
+        // Cari perubahan
+        const oldRow = (tpTargets.length > 0 ? tpTargets : []).find(x => parseInt(x.id) === editingTargetId);
+        // Build descriptive message
+        const newStatus = parseInt($('tf-status').value) || 0;
+        const oldStatus = oldRow ? (parseInt(oldRow.status) || 0) : 0;
+        if(oldStatus !== newStatus){
+          addAktivitas(editingTargetId, 'status_update',
+            `Status: ${STATUS_LABELS[oldStatus]} → ${STATUS_LABELS[newStatus]}`);
+        } else {
+          addAktivitas(editingTargetId, 'edit', `Target diedit: ${nama}`);
+        }
+      }
+    } catch(e){ console.warn('[aktivitas] error:', e); }
 
     lastSavedWasNew = isNew;
     tfDirty = false;
