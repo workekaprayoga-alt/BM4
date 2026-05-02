@@ -619,6 +619,63 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 }
 .laporan-day-header:first-child{margin-top:4px}
 
+/* Day group hibrida — tappable header dengan count + chevron */
+.day-group{
+  margin-top:14px;
+}
+.day-group:first-child{margin-top:6px}
+.day-group-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.6);
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:10px;
+  cursor:pointer;
+  user-select:none;
+  transition:background 0.15s;
+}
+.day-group-header:active{
+  background:rgba(0,0,0,0.04);
+}
+.day-group-header.is-today{
+  background:linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%);
+  border-color:#93C5FD;
+}
+.day-group-title{
+  display:flex;flex-direction:column;gap:2px;
+}
+.day-group-title-main{
+  font-size:14px;font-weight:600;color:#1E293B;
+}
+.day-group-title-sub{
+  font-size:11px;color:#64748B;
+}
+.day-group-meta{
+  display:flex;align-items:center;gap:8px;
+}
+.day-group-count{
+  background:#1E40AF;color:#fff;
+  font-size:11px;font-weight:600;
+  padding:3px 9px;border-radius:10px;
+  min-width:24px;text-align:center;
+}
+.day-group-header.is-today .day-group-count{
+  background:#10B981;
+}
+.day-group-chevron{
+  font-size:13px;color:#94A3B8;
+  transition:transform 0.2s;
+}
+.day-group-header.expanded .day-group-chevron{
+  transform:rotate(90deg);
+}
+.day-group-body{
+  padding-top:6px;
+}
+.day-group-body.collapsed{
+  display:none;
+}
+
 /* Estate filter pills (period) */
 .estate-period-pills{
   display:flex;gap:6px;
@@ -1330,6 +1387,12 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
         <textarea id="lf-pekerjaan" rows="3" placeholder="contoh: Pembersihan saluran air, perawatan taman..."></textarea>
       </div>
       <div class="field">
+        <label>Kategori</label>
+        <select id="lf-kategori">
+          <option value="">— Pilih kategori —</option>
+        </select>
+      </div>
+      <div class="field">
         <label>Tim Petugas</label>
         <input type="text" id="lf-tim" placeholder="contoh: Yana, Adi, Bambang" autocomplete="off">
       </div>
@@ -1389,6 +1452,13 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
           <div class="body">
             <div class="lbl">Tim Petugas</div>
             <div class="val" id="d-laporan-tim">&mdash;</div>
+          </div>
+        </div>
+        <div class="detail-info-row">
+          <div class="ico">🏷️</div>
+          <div class="body">
+            <div class="lbl">Kategori</div>
+            <div class="val" id="d-laporan-kategori">&mdash;</div>
           </div>
         </div>
         <div class="detail-info-row">
@@ -1490,6 +1560,13 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
           <span>Ganti Password</span>
         </div>
         <span class="profile-action-arrow">›</span>
+      </div>
+      <div class="profile-action-row" id="profile-sync-row" style="display:none" onclick="manualSyncEstate()">
+        <div class="profile-action-label">
+          <span class="profile-action-icon">🔄</span>
+          <span>Sinkron Data Sekarang</span>
+        </div>
+        <span class="profile-action-arrow" id="profile-sync-status">›</span>
       </div>
     </div>
 
@@ -1821,6 +1898,22 @@ const STATUS_COLORS = ['#94A3B8','#3B82F6','#F59E0B','#EC4899','#10B981'];
 // ===== STATUS LAPORAN HARIAN ESTATE =====
 const ESTATE_STATUS_LABELS = ['Selesai', 'Proses', 'Tertunda'];
 const ESTATE_STATUS_ICONS  = ['✅', '🔄', '⏸'];
+
+// Kategori pekerjaan estate management
+const ESTATE_KATEGORI = [
+  { id: 'pertamanan', label: 'Pertamanan', icon: '🌿' },
+  { id: 'kebersihan', label: 'Kebersihan', icon: '🧹' },
+  { id: 'drainase',   label: 'Drainase',   icon: '💧' },
+  { id: 'jalan',      label: 'Jalan & Fasum', icon: '🛣️' },
+  { id: 'utilitas',   label: 'Listrik & Air', icon: '💡' },
+  { id: 'keamanan',   label: 'Keamanan',   icon: '🛡️' },
+  { id: 'perbaikan',  label: 'Perbaikan',  icon: '🔧' },
+  { id: 'lainnya',    label: 'Lainnya',    icon: '📋' }
+];
+function getKategoriLabel(id){
+  const k = ESTATE_KATEGORI.find(x => x.id === id);
+  return k ? (k.icon + ' ' + k.label) : '';
+}
 const ESTATE_STATUS_COLORS = ['#10B981', '#F59E0B', '#94A3B8'];
 const ESTATE_STATUS_BG     = ['#DCFCE7', '#FEF3C7', '#F1F5F9'];
 const ESTATE_STATUS_FG     = ['#166534', '#92400E', '#475569'];
@@ -1927,6 +2020,8 @@ let estateLaporan = [];          // semua laporan harian
 let activeEstatePeriod = 'today'; // filter: 'today' / 'week' / 'month' / 'all'
 let activeEstateStatus = 'all';   // filter status: 'all' / 'selesai' / 'proses' / 'tertunda'
 let editingLaporanId = null;      // id laporan yang sedang diedit (null = mode tambah baru)
+let expandedDates = new Set();    // tanggal-tanggal yg sedang di-expand (auto: hari ini)
+let activeEstateKategori = 'all'; // filter kategori: 'all' atau key kategori (Phase 3)
 
 // ============================================================
 // Helpers
@@ -2209,6 +2304,34 @@ function openProfile(){
   // Update label reminder di profile
   const label = $('reminder-setting-value');
   if(label) label.textContent = getReminderThreshold() + ' hari ›';
+  // Show tombol sync untuk modul estate
+  const syncRow = $('profile-sync-row');
+  if(syncRow){
+    if(ACTIVE_MODULE === 'estate'){
+      syncRow.style.display = '';
+      const syncStatus = $('profile-sync-status');
+      if(syncStatus){
+        const pending = (estateLaporan || []).filter(l =>
+          l._syncStatus === 'pending' || l._syncStatus === 'error'
+        ).length;
+        if(pending > 0){
+          syncStatus.textContent = pending + ' pending ›';
+          syncStatus.style.color = '#F59E0B';
+        } else {
+          syncStatus.textContent = '✓ Sinkron ›';
+          syncStatus.style.color = '';
+        }
+      }
+    } else {
+      syncRow.style.display = 'none';
+    }
+  }
+  // Hide reminder threshold (target_pasar only) untuk modul lain
+  const reminderRow = $('reminder-setting-value');
+  if(reminderRow){
+    const parent = reminderRow.closest('.profile-action-row');
+    if(parent) parent.style.display = (ACTIVE_MODULE === 'target_pasar') ? '' : 'none';
+  }
   $('screen-profile').classList.add('show');
 }
 
@@ -2794,9 +2917,10 @@ async function enterApp(){
   _detailTipCurrentIdx = -1;
   _detailTipCurrentStatus = -1;
 
-  // Load estate laporan dari cache (untuk modul estate)
+  // Load estate laporan dari cache + sync server (untuk modul estate)
   if(ACTIVE_MODULE === 'estate'){
-    estateLaporan = loadEstateLaporanFromCache();
+    // Load cache dulu (instan), lalu fetch server di background
+    loadEstateLaporanInitial();
   }
 
   // Tampilkan splash motivasi (auto-hide 2.5 detik atau tap untuk skip)
@@ -3093,6 +3217,192 @@ function saveEstateLaporanToCache(){
   }
 }
 
+// ============================================================
+// SYNC ESTATE — ke Apps Script Sheet (PHASE 1)
+// ============================================================
+// Strategi: optimistic UI — save ke localStorage dulu (instan),
+// lalu sync ke server di background. Kalau server gagal, retry queue.
+// Ada flag _syncStatus per laporan untuk tahu mana yg sudah ter-sync.
+//
+// Status _syncStatus:
+//   - undefined / 'synced'  = aman, sudah di server
+//   - 'pending'             = belum di-sync (offline / retry queue)
+//   - 'error'               = gagal sync (bisa di-retry manual)
+
+// Push 1 laporan ke server (create/update)
+async function syncLaporanToServer(laporan){
+  if(!laporan) return false;
+  try {
+    const payload = {
+      id: laporan.id,
+      tanggal: laporan.tanggal,
+      proyekId: laporan.proyek,
+      lokasi: laporan.lokasi || '',
+      pekerjaan: laporan.pekerjaan || '',
+      tim: laporan.tim || '',
+      status: ['selesai','proses','tertunda'][parseInt(laporan.status) || 0],
+      catatan: laporan.catatan || ''
+    };
+    // Tambah kategori kalau ada (Phase 3)
+    if(laporan.kategori) payload.kategori = laporan.kategori;
+    const r = await gasRequest('saveEstateLaporan', payload);
+    if(r.success){
+      // Mark sebagai synced
+      const idx = estateLaporan.findIndex(x => x.id === laporan.id);
+      if(idx >= 0){
+        estateLaporan[idx]._syncStatus = 'synced';
+        delete estateLaporan[idx]._syncError;
+        saveEstateLaporanToCache();
+      }
+      return true;
+    }
+    throw new Error(r.message || r.error || 'Sync gagal');
+  } catch(e){
+    console.warn('[estate] sync error for', laporan.id, e.message);
+    const idx = estateLaporan.findIndex(x => x.id === laporan.id);
+    if(idx >= 0){
+      estateLaporan[idx]._syncStatus = 'error';
+      estateLaporan[idx]._syncError = e.message;
+      saveEstateLaporanToCache();
+    }
+    return false;
+  }
+}
+
+// Push delete ke server
+async function syncDeleteToServer(laporanId){
+  if(!laporanId) return false;
+  try {
+    const r = await gasRequest('deleteEstateLaporan', { id: laporanId });
+    if(r.success || r.error === 'not_found'){
+      // 'not_found' = sudah pernah dihapus / belum pernah ter-sync, anggap sukses
+      return true;
+    }
+    throw new Error(r.message || r.error || 'Delete gagal');
+  } catch(e){
+    console.warn('[estate] delete sync error for', laporanId, e.message);
+    return false;
+  }
+}
+
+// Pull semua laporan dari server (untuk initial load & manual refresh)
+async function fetchEstateLaporanFromServer(){
+  try {
+    const r = await gasGet('getEstateLaporan');
+    if(r.success && Array.isArray(r.data)){
+      // Map dari format server ke format local
+      const fromServer = r.data.map(s => ({
+        id: s.id,
+        tanggal: s.tanggal,
+        proyek: s.proyekId,
+        lokasi: s.lokasi || '',
+        pekerjaan: s.pekerjaan || '',
+        tim: s.tim || '',
+        status: String(['selesai','proses','tertunda'].indexOf(s.status) >= 0
+                    ? ['selesai','proses','tertunda'].indexOf(s.status) : 0),
+        catatan: s.catatan || '',
+        kategori: s.kategori || '',
+        created_at: s.createdAt,
+        created_by: s.createdBy,
+        updated_at: s.updatedAt,
+        updated_by: s.updatedBy,
+        _syncStatus: 'synced'
+      }));
+      console.log('[estate] fetched from server:', fromServer.length);
+      return fromServer;
+    }
+    throw new Error(r.message || r.error || 'Fetch gagal');
+  } catch(e){
+    console.warn('[estate] fetch error:', e.message);
+    return null; // null = error, beda dari [] = kosong
+  }
+}
+
+// Merge data server + local. Local pending menang, sisanya server menang.
+function mergeEstateData(serverList, localList){
+  const merged = [];
+  const seenIds = new Set();
+
+  // 1) Tambahkan local yang masih pending (priority paling tinggi)
+  localList.forEach(local => {
+    if(local._syncStatus === 'pending' || local._syncStatus === 'error'){
+      merged.push(local);
+      seenIds.add(local.id);
+    }
+  });
+
+  // 2) Tambahkan dari server yang belum di-merge
+  serverList.forEach(server => {
+    if(!seenIds.has(server.id)){
+      merged.push(server);
+      seenIds.add(server.id);
+    }
+  });
+
+  // 3) Tambahkan local yang sudah synced tapi tidak ada di server
+  // (defensive: kalau server return tidak lengkap, jangan kehilangan data)
+  localList.forEach(local => {
+    if(!seenIds.has(local.id) && local._syncStatus === 'synced'){
+      // Server tidak punya, mungkin sudah di-delete dari device lain
+      // Skip — biar konsisten dengan server
+    }
+  });
+
+  return merged;
+}
+
+// Initial load: ambil dari server, fallback ke localStorage kalau offline
+async function loadEstateLaporanInitial(){
+  // Step 1: load dari cache dulu (instan)
+  estateLaporan = loadEstateLaporanFromCache();
+  if(typeof renderContent === 'function') renderContent();
+
+  // Step 2: fetch dari server di background
+  const fromServer = await fetchEstateLaporanFromServer();
+  if(fromServer === null){
+    console.log('[estate] offline, pakai cache saja');
+    return;
+  }
+
+  // Step 3: merge & save
+  const localList = loadEstateLaporanFromCache();
+  estateLaporan = mergeEstateData(fromServer, localList);
+  saveEstateLaporanToCache();
+  if(typeof renderContent === 'function') renderContent();
+
+  // Step 4: retry semua yang masih pending/error
+  retryPendingSync();
+}
+
+// Retry semua laporan yg status pending/error
+async function retryPendingSync(){
+  const pending = estateLaporan.filter(l =>
+    l._syncStatus === 'pending' || l._syncStatus === 'error'
+  );
+  if(pending.length === 0) return;
+  console.log('[estate] retry pending:', pending.length);
+  for(const lap of pending){
+    await syncLaporanToServer(lap);
+  }
+  if(typeof renderContent === 'function') renderContent();
+}
+
+// Manual sync — dipanggil dari tombol "Sync sekarang"
+async function manualSyncEstate(){
+  toast('🔄 Sinkronisasi...', 'ok');
+  const fromServer = await fetchEstateLaporanFromServer();
+  if(fromServer === null){
+    toast('⚠ Gagal sync — cek koneksi', 'err');
+    return;
+  }
+  const localList = loadEstateLaporanFromCache();
+  estateLaporan = mergeEstateData(fromServer, localList);
+  saveEstateLaporanToCache();
+  await retryPendingSync();
+  if(typeof renderContent === 'function') renderContent();
+  toast('✓ Tersinkron', 'ok');
+}
+
 // Generate ID unik untuk laporan
 function generateLaporanId(){
   return 'lap_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
@@ -3137,6 +3447,11 @@ function filterEstateLaporan(){
   if(activeEstateStatus !== 'all'){
     const statusIdx = parseInt(activeEstateStatus);
     list = list.filter(l => parseInt(l.status) === statusIdx);
+  }
+
+  // Filter kategori (Phase 3)
+  if(activeEstateKategori !== 'all'){
+    list = list.filter(l => (l.kategori || '') === activeEstateKategori);
   }
 
   // Sort terbaru di atas (by tanggal desc, kemudian by created_at desc)
@@ -3209,6 +3524,16 @@ function renderEstateDashboard(){
     </div>
   `;
 
+  // Filter pills kategori (Phase 3)
+  html += `
+    <div class="filter-pills">
+      <button class="pill-filter ${activeEstateKategori==='all'?'active':''}" onclick="setEstateKategori('all')">Semua kategori</button>
+      ${ESTATE_KATEGORI.map(k =>
+        `<button class="pill-filter ${activeEstateKategori===k.id?'active':''}" onclick="setEstateKategori('${esc(k.id)}')">${k.icon} ${esc(k.label)}</button>`
+      ).join('')}
+    </div>
+  `;
+
   html += `
     <div class="list-header">
       <span class="title">Daftar laporan</span>
@@ -3241,7 +3566,9 @@ function renderEstateDashboard(){
       `;
     }
   } else {
-    // Group by date
+    // Group by date — Hibrida (Opsi C):
+    // - Hari ini auto-expanded
+    // - Hari lain collapsed (tap untuk expand)
     const byDate = {};
     filtered.forEach(l => {
       const d = l.tanggal || '';
@@ -3250,12 +3577,42 @@ function renderEstateDashboard(){
     });
     const sortedDates = Object.keys(byDate).sort((a,b) => new Date(b) - new Date(a));
 
+    const todayStr = todayDateStr();
+
     sortedDates.forEach(dateStr => {
       const labelDate = formatLaporanDate(dateStr);
-      html += `<div class="laporan-day-header">${esc(labelDate)}</div>`;
+      const isToday = (dateStr === todayStr);
+      const count = byDate[dateStr].length;
+      // Auto-expand: hari ini, atau yg di-track expandedDates manual
+      const isExpanded = isToday || expandedDates.has(dateStr);
+
+      // Hitung distribusi status untuk preview
+      const statusCounts = [0,0,0]; // [selesai, proses, tertunda]
       byDate[dateStr].forEach(l => {
-        html += renderLaporanCard(l, perm);
+        const s = parseInt(l.status) || 0;
+        if(s >= 0 && s <= 2) statusCounts[s]++;
       });
+      const statusBadges = statusCounts.map((c,i) =>
+        c > 0 ? `<span style="font-size:11px;color:#64748B;margin-right:6px">${ESTATE_STATUS_ICONS[i]} ${c}</span>` : ''
+      ).join('');
+
+      html += `
+        <div class="day-group">
+          <div class="day-group-header ${isToday?'is-today':''} ${isExpanded?'expanded':''}" onclick="toggleDayGroup('${esc(dateStr)}')">
+            <div class="day-group-title">
+              <span class="day-group-title-main">${esc(labelDate)}</span>
+              <span class="day-group-title-sub">${statusBadges || '&nbsp;'}</span>
+            </div>
+            <div class="day-group-meta">
+              <span class="day-group-count">${count}</span>
+              <span class="day-group-chevron">▶</span>
+            </div>
+          </div>
+          <div class="day-group-body ${isExpanded?'':'collapsed'}" id="day-body-${esc(dateStr)}">
+            ${byDate[dateStr].map(l => renderLaporanCard(l, perm)).join('')}
+          </div>
+        </div>
+      `;
     });
   }
 
@@ -3288,10 +3645,18 @@ function renderLaporanCard(l, perm){
   const meta = [];
   if(l.lokasi) meta.push('📍 ' + l.lokasi);
   if(l.tim) meta.push('👷 ' + l.tim);
+  if(l.kategori) meta.push(getKategoriLabel(l.kategori));
+  // Sync indicator
+  let syncBadge = '';
+  if(l._syncStatus === 'pending'){
+    syncBadge = '<span title="Belum tersinkron" style="font-size:11px;color:#F59E0B;margin-left:6px">⏳</span>';
+  } else if(l._syncStatus === 'error'){
+    syncBadge = '<span title="Gagal sync — akan retry" style="font-size:11px;color:#EF4444;margin-left:6px">⚠</span>';
+  }
   return `
     <div class="laporan-card ${sClass}" onclick="openLaporanDetail('${esc(lid)}')">
       <div class="laporan-card-head">
-        <div class="laporan-card-title">${esc(pekerjaan)}${truncated ? '...' : ''}</div>
+        <div class="laporan-card-title">${esc(pekerjaan)}${truncated ? '...' : ''}${syncBadge}</div>
         <div class="laporan-card-badge ${sClass}">${sIc} ${esc(sLbl)}</div>
       </div>
       ${meta.length ? `<div class="laporan-card-meta">${esc(meta.join(' · '))}</div>` : ''}
@@ -3309,6 +3674,26 @@ function setEstateStatus(s){
   renderContent();
 }
 
+function setEstateKategori(k){
+  activeEstateKategori = k;
+  renderContent();
+}
+
+// Toggle day group expand/collapse — hari ini selalu expanded, tidak bisa di-collapse
+function toggleDayGroup(dateStr){
+  const todayStr = todayDateStr();
+  if(dateStr === todayStr){
+    // Hari ini: tidak boleh di-collapse (selalu expanded)
+    return;
+  }
+  if(expandedDates.has(dateStr)){
+    expandedDates.delete(dateStr);
+  } else {
+    expandedDates.add(dateStr);
+  }
+  renderContent();
+}
+
 // ===== FORM: Buka modal tambah/edit laporan =====
 function openLaporanForm(laporanId){
   // Populate proyek dropdown
@@ -3316,6 +3701,15 @@ function openLaporanForm(laporanId){
   proyekSel.innerHTML = proyekList.map(p =>
     `<option value="${esc(p.id)}">${esc(p.nama || p.id)}</option>`
   ).join('');
+
+  // Populate kategori dropdown
+  const katSel = $('lf-kategori');
+  if(katSel){
+    katSel.innerHTML = '<option value="">— Pilih kategori —</option>' +
+      ESTATE_KATEGORI.map(k =>
+        `<option value="${esc(k.id)}">${k.icon} ${esc(k.label)}</option>`
+      ).join('');
+  }
 
   if(laporanId){
     // Edit mode
@@ -3332,6 +3726,7 @@ function openLaporanForm(laporanId){
     $('lf-pekerjaan').value = l.pekerjaan || '';
     $('lf-tim').value = l.tim || '';
     $('lf-catatan').value = l.catatan || '';
+    if(katSel) katSel.value = l.kategori || '';
     selectLfStatus(parseInt(l.status) || 0);
     $('lf-btn-delete').classList.remove('hidden');
   } else {
@@ -3344,6 +3739,7 @@ function openLaporanForm(laporanId){
     $('lf-pekerjaan').value = '';
     $('lf-tim').value = '';
     $('lf-catatan').value = '';
+    if(katSel) katSel.value = '';
     selectLfStatus(0); // default: Selesai
     $('lf-btn-delete').classList.add('hidden');
   }
@@ -3394,6 +3790,7 @@ function saveLaporanForm(){
   const tim = $('lf-tim').value.trim();
   const status = getLfStatus();
   const catatan = $('lf-catatan').value.trim();
+  const kategori = ($('lf-kategori') ? $('lf-kategori').value : '') || '';
 
   // Validasi
   if(!tanggal){
@@ -3421,27 +3818,39 @@ function saveLaporanForm(){
     estateLaporan[idx] = Object.assign({}, estateLaporan[idx], {
       tanggal, proyek, lokasi, pekerjaan, tim,
       status: String(status), catatan,
+      kategori,
       updated_at: now,
-      updated_by: currentUser.username || '-'
+      updated_by: currentUser.username || '-',
+      _syncStatus: 'pending'
     });
     saveEstateLaporanToCache();
     closeLaporanModal();
     toast('✓ Laporan diupdate', 'ok');
+    // Sync ke server di background
+    syncLaporanToServer(estateLaporan[idx]).then(ok => {
+      if(typeof renderContent === 'function') renderContent();
+    });
   } else {
     // Tambah baru
     const newLap = {
       id: generateLaporanId(),
       tanggal, proyek, lokasi, pekerjaan, tim,
       status: String(status), catatan,
+      kategori,
       created_at: now,
       created_by: currentUser.username || '-',
       updated_at: now,
-      updated_by: currentUser.username || '-'
+      updated_by: currentUser.username || '-',
+      _syncStatus: 'pending'
     };
     estateLaporan.unshift(newLap);
     saveEstateLaporanToCache();
     closeLaporanModal();
     toast('✓ Laporan disimpan', 'ok');
+    // Sync ke server di background
+    syncLaporanToServer(newLap).then(ok => {
+      if(typeof renderContent === 'function') renderContent();
+    });
   }
   renderContent();
 }
@@ -3462,11 +3871,18 @@ function deleteLaporanConfirm(){
   if(!l) return;
   const ok = confirm(`Hapus laporan ini?\n\n"${l.pekerjaan || ''}"\n${formatLaporanDate(l.tanggal)}\n\nTidak bisa di-undo.`);
   if(!ok) return;
-  estateLaporan = estateLaporan.filter(x => x.id !== editingLaporanId);
+  const deletedId = editingLaporanId;
+  estateLaporan = estateLaporan.filter(x => x.id !== deletedId);
   saveEstateLaporanToCache();
   closeLaporanModal();
   toast('Laporan dihapus', 'ok');
   renderContent();
+  // Sync delete ke server di background
+  syncDeleteToServer(deletedId).then(ok => {
+    if(!ok){
+      toast('⚠ Gagal hapus di server, akan retry', 'err');
+    }
+  });
 }
 
 // ===== Detail modal =====
@@ -3503,6 +3919,9 @@ function openLaporanDetail(laporanId){
   $('d-laporan-lokasi').textContent = l.lokasi || '-';
   $('d-laporan-tim').textContent = l.tim || '-';
   $('d-laporan-catatan').textContent = l.catatan || '-';
+  if($('d-laporan-kategori')){
+    $('d-laporan-kategori').textContent = l.kategori ? getKategoriLabel(l.kategori) : '-';
+  }
 
   // Format meta-time
   let metaTimeText = '';
