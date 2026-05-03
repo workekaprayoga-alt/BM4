@@ -897,6 +897,196 @@
   }
 
   // ============================================================
+  // IMPORT JSON (Auto-Plot dari PDF) — Sesi B-rev3
+  // ============================================================
+  function plotterImportClick(){
+    const proyekId = _getProyekId();
+    if(!proyekId){
+      _toast('Pilih proyek dulu sebelum import');
+      return;
+    }
+    const fileInput = document.getElementById('plotter-import-file');
+    if(fileInput){
+      fileInput.value = ''; // reset supaya bisa pilih file yang sama berulang
+      fileInput.click();
+    }
+  }
+
+  function plotterImportFile(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        const data = JSON.parse(e.target.result);
+        if(!Array.isArray(data)){
+          _toast('❌ File JSON harus berupa array');
+          return;
+        }
+        _showImportPreview(data, file.name);
+      } catch(err){
+        console.error('[estate-module] import parse error:', err);
+        _toast('❌ File bukan JSON yang valid: ' + err.message);
+      }
+    };
+    reader.onerror = function(){
+      _toast('❌ Gagal membaca file');
+    };
+    reader.readAsText(file);
+  }
+
+  function _showImportPreview(data, fileName){
+    const proyekId = _getProyekId();
+
+    // Validate & filter
+    const validated = [];
+    const errors = [];
+    const seenNames = new Set();
+
+    data.forEach((item, i) => {
+      if(!item || !item.nama){
+        errors.push('Row ' + i + ': nama kosong');
+        return;
+      }
+      const nama = String(item.nama).trim().toUpperCase();
+      if(seenNames.has(nama)){
+        errors.push('Row ' + i + ': duplikat ' + nama);
+        return;
+      }
+      if(typeof item.pixelX !== 'number' || typeof item.pixelY !== 'number'){
+        errors.push('Row ' + i + ' (' + nama + '): pixelX/pixelY harus angka');
+        return;
+      }
+      seenNames.add(nama);
+      validated.push({
+        id: 'blk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8),
+        nama: nama,
+        tipe: String(item.tipe || 'rumah').toLowerCase(),
+        proyekId: proyekId,
+        siteplanVersion: String(item.siteplanVersion || _currentVersion || 'v1'),
+        pixelX: Math.round(item.pixelX),
+        pixelY: Math.round(item.pixelY),
+        pixelW: Math.round(item.pixelW || 0),
+        pixelH: Math.round(item.pixelH || 0),
+        aktif: item.aktif === false ? false : true,
+        catatan: String(item.catatan || ''),
+        _new: true,
+        _dirty: true
+      });
+    });
+
+    // Cek konflik dengan blok yang sudah ada (existing _blokList)
+    const existingNames = new Set((_blokList || []).map(b => String(b.nama).toUpperCase()));
+    const conflicts = validated.filter(v => existingNames.has(v.nama));
+    const newOnly = validated.filter(v => !existingNames.has(v.nama));
+
+    // Cluster summary
+    const clusterCount = {};
+    validated.forEach(v => {
+      const cluster = v.nama.split('-')[0];
+      clusterCount[cluster] = (clusterCount[cluster] || 0) + 1;
+    });
+    const clusterSummary = Object.keys(clusterCount).sort()
+      .map(c => c + ': ' + clusterCount[c])
+      .join(', ');
+
+    // Build preview modal
+    const overlay = document.createElement('div');
+    overlay.className = 'plotter-modal-overlay';
+    overlay.id = 'plotter-import-preview';
+    overlay.style.display = 'flex';
+    overlay.onclick = function(e){ if(e.target === overlay) _closeImportPreview(); };
+
+    const errorHtml = errors.length > 0
+      ? '<div class="import-preview-errors"><strong>⚠️ ' + errors.length + ' error(s):</strong><br>' +
+        errors.slice(0, 5).map(e => '• ' + e).join('<br>') +
+        (errors.length > 5 ? '<br>...dan ' + (errors.length - 5) + ' lainnya' : '') +
+        '</div>'
+      : '';
+
+    const conflictHtml = conflicts.length > 0
+      ? '<div class="import-preview-warning"><strong>⚠️ ' + conflicts.length + ' blok sudah ada (akan di-skip):</strong><br>' +
+        conflicts.slice(0, 5).map(c => '• ' + c.nama).join(', ') +
+        (conflicts.length > 5 ? ', ...' : '') +
+        '</div>'
+      : '';
+
+    overlay.innerHTML = '' +
+      '<div class="plotter-modal" style="max-width: 560px;">' +
+      '  <div class="plotter-modal-head">' +
+      '    <h3>📥 Preview Import JSON</h3>' +
+      '    <button class="plotter-modal-close" onclick="plotterImportCancel()">×</button>' +
+      '  </div>' +
+      '  <div class="plotter-modal-body">' +
+      '    <div class="import-preview-info">' +
+      '      <div><strong>File:</strong> ' + _escapeHtml(fileName) + '</div>' +
+      '      <div><strong>Total dalam file:</strong> ' + data.length + ' blok</div>' +
+      '      <div><strong>Valid:</strong> ' + validated.length + ' blok</div>' +
+      '      <div><strong>Akan di-import:</strong> <span style="color: var(--ok, #1ba94c); font-weight: 600;">' + newOnly.length + ' blok baru</span></div>' +
+      '      <div style="margin-top: 8px;"><strong>Per cluster:</strong> ' + _escapeHtml(clusterSummary) + '</div>' +
+      '    </div>' +
+      errorHtml +
+      conflictHtml +
+      '    <div class="import-preview-note">' +
+      '      💡 <strong>Catatan:</strong> Posisi blok akan langsung muncul di siteplan dengan dot orange (●) = belum disimpan.<br>' +
+      '      Setelah import, kamu masih bisa <strong>review & edit posisi</strong> sebelum klik "Save Semua".' +
+      '    </div>' +
+      '  </div>' +
+      '  <div class="plotter-modal-foot">' +
+      '    <button class="plotter-btn-secondary" onclick="plotterImportCancel()">Batal</button>' +
+      '    <button class="plotter-btn" onclick="plotterImportConfirm()" ' +
+      (newOnly.length === 0 ? 'disabled' : '') +
+      '>✓ Import ' + newOnly.length + ' Blok</button>' +
+      '  </div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    // Stash data buat dipakai saat confirm
+    overlay._importData = newOnly;
+  }
+
+  function plotterImportCancel(){
+    _closeImportPreview();
+  }
+
+  function _closeImportPreview(){
+    const overlay = document.getElementById('plotter-import-preview');
+    if(overlay) overlay.remove();
+  }
+
+  function plotterImportConfirm(){
+    const overlay = document.getElementById('plotter-import-preview');
+    if(!overlay || !overlay._importData) return;
+    const newBlok = overlay._importData;
+    if(newBlok.length === 0){
+      _toast('Tidak ada blok baru untuk di-import');
+      _closeImportPreview();
+      return;
+    }
+
+    // Append ke _blokList
+    _blokList = (_blokList || []).concat(newBlok);
+
+    // Sync ke canvas & list
+    if(_siteplanCanvas) _siteplanCanvas.setBlok(_blokList);
+    _renderBlokList();
+    _updateStatBar();
+    _updateSaveButtonState();
+
+    _closeImportPreview();
+    _toast('✅ ' + newBlok.length + ' blok di-import. Klik "Save Semua" untuk simpan ke server.');
+    console.log('[estate-module] imported ' + newBlok.length + ' blok via JSON');
+  }
+
+  function _escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ============================================================
   // EXPOSE
   // ============================================================
   global.initEstateModule = initEstateModule;
@@ -912,6 +1102,10 @@
   global.plotterZoomIn = plotterZoomIn;
   global.plotterZoomOut = plotterZoomOut;
   global.plotterZoomReset = plotterZoomReset;
+  global.plotterImportClick = plotterImportClick;
+  global.plotterImportFile = plotterImportFile;
+  global.plotterImportCancel = plotterImportCancel;
+  global.plotterImportConfirm = plotterImportConfirm;
 
   // Internal namespace untuk inline onclick di list
   global.EstateModule = {
@@ -920,5 +1114,5 @@
     _listDelete: _listDelete
   };
 
-  console.log('[estate-module] script loaded (Sesi B-rev2: zoom + pan + minimap)');
+  console.log('[estate-module] script loaded (Sesi B-rev3: zoom + pan + minimap + import JSON)');
 })(typeof window !== 'undefined' ? window : this);

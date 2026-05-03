@@ -736,3 +736,59 @@
     height: 80px !important;
   }
 }
+
+/* ========================================================== */
+/* Sesi B-rev3: IMPORT JSON PREVIEW MODAL                     */
+/* ========================================================== */
+.import-preview-info{
+  background: var(--bg, #f7f8fa);
+  border: 1px solid var(--border, #e3e6ec);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.import-preview-info > div{
+  margin-bottom: 2px;
+}
+.import-preview-info strong{
+  display: inline-block;
+  min-width: 130px;
+  color: var(--muted, #6b7280);
+  font-weight: 500;
+}
+
+.import-preview-errors{
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.import-preview-errors strong{ display: block; margin-bottom: 4px; }
+
+.import-preview-warning{
+  background: #fefbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.import-preview-warning strong{ display: block; margin-bottom: 4px; }
+
+.import-preview-note{
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+}
