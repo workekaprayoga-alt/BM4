@@ -424,6 +424,26 @@ function applyUserAccess(){
       tab.style.display = (currentUser.role === 'bm') ? '' : 'none';
       return;
     }
+    if(div === 'estate'){
+      // [v4 ESTATE] Tab Estate Management: BM selalu, atau role yang punya akses estate di mobile permissions
+      const isBM = currentUser.role === 'bm';
+      let hasEstateAccess = isBM;
+      if(!isBM){
+        try {
+          // Cek di mobile permissions (kalau sudah ter-load oleh estate module)
+          const mp = window.__mobilePermissionsCache;
+          if(Array.isArray(mp)){
+            hasEstateAccess = mp.some(p =>
+              String(p.role||'').toLowerCase() === String(currentUser.role||'').toLowerCase() &&
+              String(p.module||'').toLowerCase() === 'estate' &&
+              p.view === true
+            );
+          }
+        } catch(e){ console.warn('estate access check err:', e); }
+      }
+      tab.style.display = hasEstateAccess ? '' : 'none';
+      return;
+    }
     tab.style.display = akses.includes(div) ? '' : 'none';
   });
 }

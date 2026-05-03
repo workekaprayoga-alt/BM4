@@ -76,6 +76,7 @@
     <button class="divisi-tab" data-div="strategi" onclick="switchDiv('strategi',this)">🎯 Strategi & Promo</button>
     <button class="divisi-tab" data-div="sales" onclick="switchDiv('sales',this)">📊 Sales</button>
     <button class="divisi-tab" data-div="konstruksi" onclick="switchDiv('konstruksi',this)">🏗️ Konstruksi</button>
+    <button class="divisi-tab" data-div="estate" onclick="switchDiv('estate',this)" id="tab-estate" style="display:none;">🌿 Estate Management</button>
     <button class="divisi-tab" data-div="legal" onclick="switchDiv('legal',this)">⚖️ Legal & Landbank</button>
     <button class="divisi-tab" data-div="finance" onclick="switchDiv('finance',this)">💰 Finance</button>
     <button class="divisi-tab" data-div="galeri" onclick="switchDiv('galeri',this)">✨ Galeri Tim</button>
@@ -1226,6 +1227,122 @@
       </div>
     </div>
 
+    <!-- ESTATE MANAGEMENT (BM + role yang punya akses estate di mobile) -->
+    <div class="divisi-pane" id="pane-estate">
+      <!-- Sub-nav Estate -->
+      <div class="estate-subnav">
+        <button class="estate-subtab active" data-section="siteplan" onclick="switchEstateSection('siteplan',this)">🗺️ Siteplan</button>
+        <button class="estate-subtab" data-section="laporan" onclick="switchEstateSection('laporan',this)">📋 Daftar Laporan</button>
+        <button class="estate-subtab" data-section="statistik" onclick="switchEstateSection('statistik',this)">📊 Statistik</button>
+        <div class="estate-subnav-spacer"></div>
+        <div class="estate-subnav-info" id="estate-subnav-info">
+          <span class="estate-info-pill">Proyek: <strong id="estate-info-proyek">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Section: Siteplan (default active) -->
+      <div class="estate-section active" id="estate-section-siteplan">
+        <div class="plotter-wrap">
+          <!-- Toolbar atas -->
+          <div class="plotter-toolbar">
+            <div class="plotter-toolbar-left">
+              <label class="plotter-tool-label">Versi Siteplan:</label>
+              <select id="plotter-version" class="plotter-select">
+                <option value="v1">v1 (default)</option>
+              </select>
+              <button class="plotter-btn-mini" onclick="plotterNewVersion()" title="Buat versi baru saat siteplan diganti" disabled>+ Versi Baru</button>
+            </div>
+            <div class="plotter-toolbar-mid">
+              <span class="plotter-stat" id="plotter-stat-saved">0 blok tersimpan</span>
+              <span class="plotter-stat warn" id="plotter-stat-unsaved" style="display:none;">0 belum disimpan</span>
+            </div>
+            <div class="plotter-toolbar-right">
+              <button class="plotter-btn" id="plotter-btn-save" onclick="plotterSaveAll()" disabled>💾 Save Semua</button>
+              <button class="plotter-btn-secondary" onclick="plotterReload()" disabled>🔄 Reload</button>
+            </div>
+          </div>
+
+          <!-- Mode selector -->
+          <div class="plotter-modes">
+            <button class="plotter-mode active" data-mode="plot" onclick="plotterSetMode('plot',this)" disabled>📍 Plot Baru</button>
+            <button class="plotter-mode" data-mode="edit" onclick="plotterSetMode('edit',this)" disabled>✏️ Edit Posisi</button>
+            <button class="plotter-mode" data-mode="inspect" onclick="plotterSetMode('inspect',this)" disabled>🔍 Inspect</button>
+            <span class="plotter-mode-hint" id="plotter-mode-hint">Plotter logic akan diaktifkan di Sesi B</span>
+          </div>
+
+          <!-- Main canvas + sidebar -->
+          <div class="plotter-main">
+            <!-- Canvas (left) -->
+            <div class="plotter-canvas-wrap" id="plotter-canvas-wrap">
+              <div class="plotter-canvas-empty" id="plotter-canvas-empty">
+                <div class="plotter-empty-icon">🗺️</div>
+                <div class="plotter-empty-title">Siteplan belum dimuat</div>
+                <div class="plotter-empty-sub">
+                  Upload file <code>gwc_siteplan.png</code> ke <code>/assets/siteplan/</code><br>
+                  lalu set URL di Sheet <code>Proyek</code> kolom <code>siteplanUrl</code>.
+                </div>
+                <div class="plotter-empty-hint">
+                  ℹ️ Sesi A: foundation siap. Plotter akan aktif di Sesi B.
+                </div>
+              </div>
+              <!-- Canvas akan di-inject oleh SiteplanCanvas component di sini -->
+              <div class="plotter-canvas-container" id="plotter-canvas-container" style="display:none;"></div>
+            </div>
+
+            <!-- Sidebar List (right) -->
+            <div class="plotter-sidebar">
+              <div class="plotter-sidebar-head">
+                <div class="plotter-sidebar-title">Blok Tersimpan</div>
+                <div class="plotter-sidebar-count" id="plotter-sidebar-count">0</div>
+              </div>
+              <div class="plotter-sidebar-search">
+                <input type="text" id="plotter-search" placeholder="🔍 Cari nama blok..." disabled>
+              </div>
+              <div class="plotter-sidebar-list" id="plotter-list">
+                <div class="plotter-list-empty">Belum ada blok tersimpan</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Daftar Laporan (placeholder, akan diisi sesi nanti) -->
+      <div class="estate-section" id="estate-section-laporan">
+        <div class="estate-placeholder">
+          <div class="estate-placeholder-icon">📋</div>
+          <div class="estate-placeholder-title">Daftar Laporan</div>
+          <div class="estate-placeholder-sub">
+            Lihat semua laporan harian estate dari supervisor lapangan.<br>
+            <small>Sub-fitur ini akan dikerjakan setelah Plotter siap (Sesi C+).</small>
+          </div>
+          <div class="estate-placeholder-features">
+            <div class="estate-placeholder-feat">📅 Filter per tanggal</div>
+            <div class="estate-placeholder-feat">🏷️ Filter per kategori</div>
+            <div class="estate-placeholder-feat">👤 Filter per supervisor</div>
+            <div class="estate-placeholder-feat">📊 Export ke Excel</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Statistik (placeholder) -->
+      <div class="estate-section" id="estate-section-statistik">
+        <div class="estate-placeholder">
+          <div class="estate-placeholder-icon">📊</div>
+          <div class="estate-placeholder-title">Statistik Estate</div>
+          <div class="estate-placeholder-sub">
+            Dashboard analitik aktivitas estate management.<br>
+            <small>Sub-fitur ini akan dikerjakan setelah Daftar Laporan siap.</small>
+          </div>
+          <div class="estate-placeholder-features">
+            <div class="estate-placeholder-feat">📈 Tren laporan harian</div>
+            <div class="estate-placeholder-feat">🏷️ Distribusi kategori</div>
+            <div class="estate-placeholder-feat">🗺️ Peta panas blok</div>
+            <div class="estate-placeholder-feat">⏱️ Rata-rata waktu pengerjaan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- LEGAL (dummy) -->
     <div class="divisi-pane" id="pane-legal">
       <div class="dummy-wrap">
@@ -2191,6 +2308,9 @@
 <script src="js/130-backup-mobile-session.js?v=rc11"></script>
 <script src="js/140-tapera-sikumbang-performance.js?v=rc11"></script>
 <script src="js/150-kategori-editor.js?v=rc11"></script>
+<!-- [v4 ESTATE] Estate Management Module -->
+<script src="js/180-siteplan-canvas.js?v=rc12"></script>
+<script src="js/181-estate-module.js?v=rc12"></script>
 <script src="js/patches/patch-registry.js?v=rc11"></script>
 <script src="js/patches/patch-loader.js?v=rc11"></script>
 

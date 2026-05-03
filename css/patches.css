@@ -3,3 +3,437 @@
    CSS patch bisa dipanggil oleh patch-loader atau di-import di sini.
    ============================================================ */
 /* Future static patch imports can be placed here. */
+
+
+/* ============================================================
+   [v4 ESTATE] Estate Management Module Styling
+   ============================================================ */
+
+/* Sub-navigation (sub-menu di dalam tab Estate) */
+.estate-subnav{
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 40px;
+  flex-shrink: 0;
+}
+.estate-subtab{
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--muted);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.estate-subtab:hover{ background: var(--bg); }
+.estate-subtab.active{
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 700;
+}
+.estate-subnav-spacer{ flex: 1; }
+.estate-subnav-info{ display: flex; gap: 8px; }
+.estate-info-pill{
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+.estate-info-pill strong{ color: var(--text); font-weight: 600; }
+
+/* Sections (Siteplan, Laporan, Statistik) */
+.estate-section{
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+}
+.estate-section.active{ display: flex; flex-direction: column; }
+
+/* Placeholder untuk section yang belum diisi */
+.estate-placeholder{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.estate-placeholder-icon{ font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+.estate-placeholder-title{ font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.estate-placeholder-sub{ font-size: 13px; max-width: 540px; line-height: 1.6; margin-bottom: 28px; }
+.estate-placeholder-sub small{ font-size: 11px; color: var(--faint); display: block; margin-top: 4px; }
+.estate-placeholder-features{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  max-width: 520px;
+  width: 100%;
+}
+.estate-placeholder-feat{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+
+/* ============================================================
+   PLOTTER LAYOUT (Siteplan section)
+   ============================================================ */
+.plotter-wrap{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Toolbar atas */
+.plotter-toolbar{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.plotter-toolbar-left,
+.plotter-toolbar-mid,
+.plotter-toolbar-right{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.plotter-toolbar-mid{ flex: 1; justify-content: center; }
+.plotter-tool-label{ font-size: 11px; color: var(--muted); font-weight: 600; }
+.plotter-select{
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.plotter-select:focus{ border-color: var(--accent); }
+.plotter-stat{
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+.plotter-stat.warn{ background: #FEF3C7; color: #92400E; font-weight: 600; }
+.plotter-btn{
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.plotter-btn:hover:not(:disabled){ background: #1D4ED8; }
+.plotter-btn:disabled{ opacity: 0.4; cursor: not-allowed; }
+.plotter-btn-secondary{
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.plotter-btn-secondary:hover:not(:disabled){ background: var(--bg); }
+.plotter-btn-secondary:disabled{ opacity: 0.4; cursor: not-allowed; }
+.plotter-btn-mini{
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px dashed var(--accent);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.plotter-btn-mini:disabled{ opacity: 0.4; cursor: not-allowed; }
+
+/* Mode selector */
+.plotter-modes{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.plotter-mode{
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.plotter-mode:hover:not(:disabled){ background: white; color: var(--text); }
+.plotter-mode.active{
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.plotter-mode:disabled{ opacity: 0.4; cursor: not-allowed; }
+.plotter-mode-hint{
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--faint);
+  font-style: italic;
+}
+
+/* Main area: canvas (left) + sidebar (right) */
+.plotter-main{
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Canvas wrapper */
+.plotter-canvas-wrap{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #FAFAFA;
+  overflow: hidden;
+  min-width: 0;
+}
+.plotter-canvas-empty{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  color: var(--muted);
+}
+.plotter-empty-icon{ font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.plotter-empty-title{ font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.plotter-empty-sub{
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 380px;
+  margin-bottom: 20px;
+}
+.plotter-empty-sub code{
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+.plotter-empty-hint{
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* Container untuk SiteplanCanvas component */
+.plotter-canvas-container{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spc-host{
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.spc-canvas{
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.spc-error{
+  padding: 20px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+.spc-error small{
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #7F1D1D;
+  word-break: break-all;
+}
+
+/* Sidebar (right) */
+.plotter-sidebar{
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+.plotter-sidebar-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.plotter-sidebar-title{ font-size: 12px; font-weight: 700; color: var(--text); }
+.plotter-sidebar-count{
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.plotter-sidebar-search{
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.plotter-sidebar-search input{
+  width: 100%;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  outline: none;
+}
+.plotter-sidebar-search input:focus{ border-color: var(--accent); }
+.plotter-sidebar-list{
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+.plotter-list-empty{
+  padding: 30px 14px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--faint);
+  font-style: italic;
+}
+.plotter-list-item{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.plotter-list-item:hover{ background: var(--bg); }
+.plotter-list-item.highlighted{ background: var(--accent-light); }
+.plotter-list-item-dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.plotter-list-item-name{
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plotter-list-item-tipe{
+  font-size: 10px;
+  color: var(--faint);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.plotter-list-item-actions{
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.plotter-list-item:hover .plotter-list-item-actions{ opacity: 1; }
+.plotter-list-item-btn{
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--muted);
+  border-radius: 3px;
+}
+.plotter-list-item-btn:hover{ background: white; color: var(--text); }
+
+
+/* ============================================================
+   RESPONSIVE: Tablet & smaller
+   ============================================================ */
+@media (max-width: 900px){
+  .plotter-toolbar{ gap: 8px; padding: 8px 10px; }
+  .plotter-toolbar-mid{ display: none; }
+  .plotter-modes{ overflow-x: auto; }
+  .plotter-mode-hint{ display: none; }
+  .plotter-sidebar{ width: 220px; }
+}
+@media (max-width: 700px){
+  .plotter-main{ flex-direction: column; }
+  .plotter-sidebar{
+    width: 100%;
+    height: 200px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .estate-subnav{ overflow-x: auto; }
+  .estate-subnav-info{ display: none; }
+}

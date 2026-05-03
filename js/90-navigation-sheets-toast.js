@@ -33,6 +33,7 @@ function switchDiv(div,el){
   if(div==='analisa'){setTimeout(()=>{initAnalisaMap();},100);}
   if(div==='strategi'){setTimeout(()=>{initStratMap();loadTpFromSheets().then(ok=>{if(ok){renderTPList(tpFilter);renderTPMarkers();updateTpDashCount();}});},100);}
   if(div==='proyek'){setTimeout(()=>{renderProyek();},50);} // [v14 PROYEK]
+  if(div==='estate'){setTimeout(()=>{ if(typeof initEstateModule === 'function') initEstateModule(); },50);} // [v4 ESTATE]
   if(typeof switchDivHook === 'function') switchDivHook(div, el);
 }
 function selectProyek(id){
