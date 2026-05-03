@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/main.css?v=rc12">
-<link rel="stylesheet" href="css/patches.css?v=rc15">
+<link rel="stylesheet" href="css/patches.css?v=rc17">
 </head>
 <body>
 
@@ -1257,8 +1257,10 @@
               <span class="plotter-stat warn" id="plotter-stat-unsaved" style="display:none;">0 belum disimpan</span>
             </div>
             <div class="plotter-toolbar-right">
+              <button class="plotter-btn-secondary" onclick="plotterImportClick()" title="Import blok dari file JSON (auto-plot dari PDF)">📥 Import JSON</button>
               <button class="plotter-btn" id="plotter-btn-save" onclick="plotterSaveAll()" disabled>💾 Save Semua</button>
               <button class="plotter-btn-secondary" onclick="plotterReload()" disabled>🔄 Reload</button>
+              <input type="file" id="plotter-import-file" accept=".json,application/json" onchange="plotterImportFile(this)" style="display:none;">
             </div>
           </div>
 
@@ -2358,8 +2360,8 @@
 <script src="js/140-tapera-sikumbang-performance.js?v=rc11"></script>
 <script src="js/150-kategori-editor.js?v=rc11"></script>
 <!-- [v4 ESTATE] Estate Management Module -->
-<script src="js/180-siteplan-canvas.js?v=rc17"></script>
-<script src="js/181-estate-module.js?v=rc15"></script>
+<script src="js/180-siteplan-canvas.js?v=rc18"></script>
+<script src="js/181-estate-module.js?v=rc17"></script>
 <script src="js/patches/patch-registry.js?v=rc11"></script>
 <script src="js/patches/patch-loader.js?v=rc11"></script>
 
