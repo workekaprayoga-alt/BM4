@@ -218,11 +218,18 @@
     if(reloadBtn) reloadBtn.disabled = !enabled;
     const newVerBtn = document.querySelector('.plotter-toolbar-left .plotter-btn-mini');
     if(newVerBtn) newVerBtn.disabled = !enabled;
+    // Zoom buttons
+    const zoomIn = document.getElementById('plotter-zoom-in');
+    const zoomOut = document.getElementById('plotter-zoom-out');
+    const zoomReset = document.getElementById('plotter-zoom-reset');
+    if(zoomIn) zoomIn.disabled = !enabled;
+    if(zoomOut) zoomOut.disabled = !enabled;
+    if(zoomReset) zoomReset.disabled = !enabled;
 
     const hint = document.getElementById('plotter-mode-hint');
     if(hint){
       if(enabled){
-        hint.textContent = _modeHint(_currentMode);
+        hint.innerHTML = _modeHint(_currentMode);
       } else {
         hint.textContent = 'Plotter belum aktif';
       }
@@ -233,10 +240,11 @@
   }
 
   function _modeHint(mode){
+    const zoomTip = ' · Scroll = zoom · <kbd>Space</kbd>+drag atau <kbd>klik kanan</kbd>+drag = pan';
     switch(mode){
-      case 'plot': return 'Klik area di siteplan untuk plot blok baru';
-      case 'edit': return 'Drag pin untuk reposisi · Klik pin untuk edit';
-      case 'inspect': return 'Hover pin untuk lihat detail · Klik untuk fokus di list';
+      case 'plot': return 'Klik area di siteplan untuk plot blok baru' + zoomTip;
+      case 'edit': return 'Drag pin untuk reposisi · Klik pin untuk edit' + zoomTip;
+      case 'inspect': return 'Drag siteplan untuk pan · Klik pin untuk fokus' + ' · Scroll = zoom';
       default: return '';
     }
   }
@@ -425,7 +433,7 @@
     if(btnEl) btnEl.classList.add('active');
 
     const hint = document.getElementById('plotter-mode-hint');
-    if(hint) hint.textContent = _modeHint(mode);
+    if(hint) hint.innerHTML = _modeHint(mode);
 
     console.log('[plotter] mode:', mode);
   }
@@ -842,6 +850,21 @@
   }
 
   // ============================================================
+  // ZOOM HANDLERS (Sesi B-rev2)
+  // ============================================================
+  function plotterZoomIn(){
+    if(_siteplanCanvas) _siteplanCanvas.zoomIn();
+  }
+
+  function plotterZoomOut(){
+    if(_siteplanCanvas) _siteplanCanvas.zoomOut();
+  }
+
+  function plotterZoomReset(){
+    if(_siteplanCanvas) _siteplanCanvas.zoomReset();
+  }
+
+  // ============================================================
   // EXPOSE
   // ============================================================
   global.initEstateModule = initEstateModule;
@@ -854,6 +877,9 @@
   global.plotterModalSave = plotterModalSave;
   global.plotterModalDelete = plotterModalDelete;
   global.plotterSearch = plotterSearch;
+  global.plotterZoomIn = plotterZoomIn;
+  global.plotterZoomOut = plotterZoomOut;
+  global.plotterZoomReset = plotterZoomReset;
 
   // Internal namespace untuk inline onclick di list
   global.EstateModule = {
@@ -862,5 +888,5 @@
     _listDelete: _listDelete
   };
 
-  console.log('[estate-module] script loaded (Sesi B)');
+  console.log('[estate-module] script loaded (Sesi B-rev2: zoom + pan + minimap)');
 })(typeof window !== 'undefined' ? window : this);

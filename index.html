@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/main.css?v=rc12">
-<link rel="stylesheet" href="css/patches.css?v=rc14">
+<link rel="stylesheet" href="css/patches.css?v=rc15">
 </head>
 <body>
 
@@ -1267,6 +1267,11 @@
             <button class="plotter-mode active" data-mode="plot" onclick="plotterSetMode('plot',this)" disabled>📍 Plot Baru</button>
             <button class="plotter-mode" data-mode="edit" onclick="plotterSetMode('edit',this)" disabled>✏️ Edit Posisi</button>
             <button class="plotter-mode" data-mode="inspect" onclick="plotterSetMode('inspect',this)" disabled>🔍 Inspect</button>
+            <div class="plotter-zoom-group">
+              <button class="plotter-zoom-btn" onclick="plotterZoomOut()" title="Zoom Out (Ctrl + -)" id="plotter-zoom-out" disabled>−</button>
+              <button class="plotter-zoom-btn" onclick="plotterZoomReset()" title="Reset Zoom (Ctrl + 0)" id="plotter-zoom-reset" disabled>⊡</button>
+              <button class="plotter-zoom-btn" onclick="plotterZoomIn()" title="Zoom In (Ctrl + +)" id="plotter-zoom-in" disabled>+</button>
+            </div>
             <span class="plotter-mode-hint" id="plotter-mode-hint">Plotter belum aktif</span>
           </div>
 
@@ -2347,14 +2352,14 @@
 <script src="js/80-formula-hub.js?v=rc11"></script>
 <script src="js/90-navigation-sheets-toast.js?v=rc11"></script>
 <script src="js/100-accounts-auth.js?v=rc11"></script>
-<script src="js/110-proyek-management.js?v=rc14"></script>
+<script src="js/110-proyek-management.js?v=rc15"></script>
 <script src="js/120-team-gallery-settings.js?v=rc11"></script>
 <script src="js/130-backup-mobile-session.js?v=rc11"></script>
 <script src="js/140-tapera-sikumbang-performance.js?v=rc11"></script>
 <script src="js/150-kategori-editor.js?v=rc11"></script>
 <!-- [v4 ESTATE] Estate Management Module -->
-<script src="js/180-siteplan-canvas.js?v=rc14"></script>
-<script src="js/181-estate-module.js?v=rc14"></script>
+<script src="js/180-siteplan-canvas.js?v=rc15"></script>
+<script src="js/181-estate-module.js?v=rc15"></script>
 <script src="js/patches/patch-registry.js?v=rc11"></script>
 <script src="js/patches/patch-loader.js?v=rc11"></script>
 
