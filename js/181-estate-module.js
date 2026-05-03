@@ -40,10 +40,46 @@
   let _pendingNewPosition = null; // {x, y} saat user klik untuk plot baru
 
   // ============================================================
+  // PROYEK ID HELPER — baca dari multiple sumber
+  // FIX Sesi B-rev1: di kode existing `let currentProyek = null` di top-level
+  // tidak ter-attach ke window object (karena let, bukan var). Jadi
+  // `global.currentProyek` (= window.currentProyek) selalu undefined.
+  // Fix: baca dari sumber yang reliable.
+  // ============================================================
+  function _getProyekId(){
+    // 1. Coba scope chain (currentProyek tanpa window.) — works karena IIFE
+    //    di-load setelah file 10-core-security-config-state.js
+    try {
+      if(typeof currentProyek !== 'undefined' && currentProyek){
+        return String(currentProyek);
+      }
+    } catch(_){}
+
+    // 2. Fallback: window.currentProyek (kalau ada yang explicit set)
+    try {
+      if(global.currentProyek){
+        return String(global.currentProyek);
+      }
+    } catch(_){}
+
+    // 3. Fallback terakhir: baca dari localStorage app state
+    try {
+      const raw = localStorage.getItem('bm4_app_state');
+      if(raw){
+        const state = JSON.parse(raw);
+        if(state && state.proyek) return String(state.proyek);
+      }
+    } catch(_){}
+
+    return null;
+  }
+
+  // ============================================================
   // INIT & LIFECYCLE
   // ============================================================
   function initEstateModule(){
-    console.log('[estate-module] init called, currentProyek:', global.currentProyek);
+    const proyekId = _getProyekId();
+    console.log('[estate-module] init called, proyekId:', proyekId);
 
     _updateProyekInfo();
 
@@ -91,7 +127,7 @@
   // SITEPLAN SECTION
   // ============================================================
   function _initSiteplanSection(){
-    const proyekId = global.currentProyek;
+    const proyekId = _getProyekId();
 
     const emptyEl = document.getElementById('plotter-canvas-empty');
     const containerEl = document.getElementById('plotter-canvas-container');
@@ -209,7 +245,7 @@
   // LOAD & SAVE
   // ============================================================
   async function _loadBlokFromServer(){
-    const proyekId = global.currentProyek;
+    const proyekId = _getProyekId();
     if(!proyekId){ return; }
     if(!global.BM4Api || typeof global.BM4Api.get !== 'function'){
       console.warn('[estate-module] BM4Api tidak tersedia, skip load');
@@ -286,7 +322,7 @@
       return;
     }
 
-    const proyekId = global.currentProyek;
+    const proyekId = _getProyekId();
     if(!proyekId){
       _toast('Proyek belum dipilih');
       return;
@@ -510,7 +546,7 @@
     } else {
       // PLOT BARU
       if(!_pendingNewPosition){ _toast('Posisi tidak ditemukan'); return; }
-      const proyekId = global.currentProyek;
+      const proyekId = _getProyekId();
       const newBlok = {
         id: 'blk_' + _genId(),
         nama: nama,
@@ -731,16 +767,22 @@
   // ============================================================
   function _getSiteplanUrlForProyek(proyekId){
     // 1. Cek di PROYEK_LIST kalau ada field siteplanUrl (dari Sheet)
+    //    Note: PROYEK_LIST adalah `let` di top-level, perlu scope chain access
     try {
-      const list = global.PROYEK_LIST || [];
+      let list = [];
+      try {
+        if(typeof PROYEK_LIST !== 'undefined' && Array.isArray(PROYEK_LIST)){
+          list = PROYEK_LIST;
+        } else if(Array.isArray(global.PROYEK_LIST)){
+          list = global.PROYEK_LIST;
+        }
+      } catch(_){}
       const p = list.find(x => String(x.id || '').toLowerCase() === String(proyekId).toLowerCase());
       if(p && p.siteplanUrl) return p.siteplanUrl;
     } catch(_){}
 
-    // 2. Convention 1: assets/siteplan/{id}_siteplan.png
-    // 3. Convention 2 (fallback): assets/{id}_siteplan.png — sesuai struktur saat ini
-    // Kita pakai convention 2 sebagai default karena file yang sudah ada di repo
-    // berada di /assets/gwc_siteplan.png langsung.
+    // 2. Convention fallback: assets/{id}_siteplan.png — sesuai struktur saat ini
+    //    File yang sudah ada di repo berada di /assets/gwc_siteplan.png langsung.
     return 'assets/' + String(proyekId).toLowerCase() + '_siteplan.png';
   }
 
@@ -748,12 +790,20 @@
     const el = document.getElementById('estate-info-proyek');
     if(!el) return;
     try {
-      const proyekId = global.currentProyek;
-      const list = global.PROYEK_LIST || [];
+      const proyekId = _getProyekId();
+      // PROYEK_LIST juga `let` di top-level — pakai scope chain access
+      let list = [];
+      try {
+        if(typeof PROYEK_LIST !== 'undefined' && Array.isArray(PROYEK_LIST)){
+          list = PROYEK_LIST;
+        } else if(Array.isArray(global.PROYEK_LIST)){
+          list = global.PROYEK_LIST;
+        }
+      } catch(_){}
       const p = list.find(x => String(x.id || '').toLowerCase() === String(proyekId || '').toLowerCase());
       el.textContent = p ? (p.nama || proyekId) : (proyekId || '—');
     } catch(e){
-      el.textContent = global.currentProyek || '—';
+      el.textContent = _getProyekId() || '—';
     }
   }
 
