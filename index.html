@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/main.css?v=rc12">
-<link rel="stylesheet" href="css/patches.css?v=rc12">
+<link rel="stylesheet" href="css/patches.css?v=rc13">
 </head>
 <body>
 
@@ -1267,7 +1267,7 @@
             <button class="plotter-mode active" data-mode="plot" onclick="plotterSetMode('plot',this)" disabled>📍 Plot Baru</button>
             <button class="plotter-mode" data-mode="edit" onclick="plotterSetMode('edit',this)" disabled>✏️ Edit Posisi</button>
             <button class="plotter-mode" data-mode="inspect" onclick="plotterSetMode('inspect',this)" disabled>🔍 Inspect</button>
-            <span class="plotter-mode-hint" id="plotter-mode-hint">Plotter logic akan diaktifkan di Sesi B</span>
+            <span class="plotter-mode-hint" id="plotter-mode-hint">Plotter belum aktif</span>
           </div>
 
           <!-- Main canvas + sidebar -->
@@ -1278,11 +1278,11 @@
                 <div class="plotter-empty-icon">🗺️</div>
                 <div class="plotter-empty-title">Siteplan belum dimuat</div>
                 <div class="plotter-empty-sub">
-                  Upload file <code>gwc_siteplan.png</code> ke <code>/assets/siteplan/</code><br>
-                  lalu set URL di Sheet <code>Proyek</code> kolom <code>siteplanUrl</code>.
+                  Pastikan file <code>{proyekId}_siteplan.png</code> ada di <code>/assets/siteplan/</code> atau <code>/assets/</code>,<br>
+                  atau set URL di Sheet <code>Proyek</code> kolom <code>siteplanUrl</code>.
                 </div>
                 <div class="plotter-empty-hint">
-                  ℹ️ Sesi A: foundation siap. Plotter akan aktif di Sesi B.
+                  ℹ️ Plotter aktif begitu siteplan tersedia.
                 </div>
               </div>
               <!-- Canvas akan di-inject oleh SiteplanCanvas component di sini -->
@@ -1296,7 +1296,7 @@
                 <div class="plotter-sidebar-count" id="plotter-sidebar-count">0</div>
               </div>
               <div class="plotter-sidebar-search">
-                <input type="text" id="plotter-search" placeholder="🔍 Cari nama blok..." disabled>
+                <input type="text" id="plotter-search" placeholder="🔍 Cari nama blok..." oninput="plotterSearch(this.value)" disabled>
               </div>
               <div class="plotter-sidebar-list" id="plotter-list">
                 <div class="plotter-list-empty">Belum ada blok tersimpan</div>
@@ -1339,6 +1339,50 @@
             <div class="estate-placeholder-feat">🗺️ Peta panas blok</div>
             <div class="estate-placeholder-feat">⏱️ Rata-rata waktu pengerjaan</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- [v4 ESTATE Sesi B] Modal: Plot Blok Baru / Edit Blok -->
+    <div class="plotter-modal-overlay" id="plotter-modal" onclick="if(event.target===this)plotterModalCancel()">
+      <div class="plotter-modal" role="dialog" aria-labelledby="plotter-modal-title">
+        <div class="plotter-modal-head">
+          <div class="plotter-modal-title" id="plotter-modal-title">Plot Blok Baru</div>
+          <div class="plotter-modal-pos" id="plotter-modal-pos">Posisi: (0, 0)</div>
+        </div>
+        <div class="plotter-modal-body">
+          <div class="plotter-modal-field">
+            <label class="plotter-modal-label" for="plotter-modal-nama">Nama Blok *</label>
+            <input type="text" class="plotter-modal-input" id="plotter-modal-nama"
+              placeholder="contoh: C-12, F-1, Taman Pusat" maxlength="60"
+              onkeydown="if(event.key==='Enter')plotterModalSave(false)">
+          </div>
+          <div class="plotter-modal-field">
+            <label class="plotter-modal-label" for="plotter-modal-tipe">Tipe</label>
+            <select class="plotter-modal-select" id="plotter-modal-tipe">
+              <option value="rumah">🏠 Rumah</option>
+              <option value="fasum">🏢 Fasum</option>
+              <option value="taman">🌿 Taman</option>
+              <option value="jalan">🛣️ Jalan</option>
+              <option value="kosong">⬜ Kosong / Lain</option>
+            </select>
+          </div>
+          <div class="plotter-modal-field">
+            <label class="plotter-modal-label" for="plotter-modal-catatan">Catatan (opsional)</label>
+            <textarea class="plotter-modal-textarea" id="plotter-modal-catatan"
+              placeholder="Misal: blok pojok, dekat klinik, dll" maxlength="200"></textarea>
+          </div>
+        </div>
+        <div class="plotter-modal-foot">
+          <button class="plotter-modal-btn-danger" id="plotter-modal-delete"
+            onclick="plotterModalDelete()" style="display:none;">🗑️ Hapus</button>
+          <div class="plotter-modal-spacer"></div>
+          <button class="plotter-btn-secondary" onclick="plotterModalCancel()">Batal</button>
+          <button class="plotter-btn-secondary" id="plotter-modal-save-continue"
+            onclick="plotterModalSave(true)" title="Simpan & lanjut plot blok berikutnya">
+            Save & Lanjut
+          </button>
+          <button class="plotter-btn" onclick="plotterModalSave(false)">💾 Save</button>
         </div>
       </div>
     </div>
@@ -2303,14 +2347,14 @@
 <script src="js/80-formula-hub.js?v=rc11"></script>
 <script src="js/90-navigation-sheets-toast.js?v=rc11"></script>
 <script src="js/100-accounts-auth.js?v=rc11"></script>
-<script src="js/110-proyek-management.js?v=rc11"></script>
+<script src="js/110-proyek-management.js?v=rc13"></script>
 <script src="js/120-team-gallery-settings.js?v=rc11"></script>
 <script src="js/130-backup-mobile-session.js?v=rc11"></script>
 <script src="js/140-tapera-sikumbang-performance.js?v=rc11"></script>
 <script src="js/150-kategori-editor.js?v=rc11"></script>
 <!-- [v4 ESTATE] Estate Management Module -->
-<script src="js/180-siteplan-canvas.js?v=rc12"></script>
-<script src="js/181-estate-module.js?v=rc12"></script>
+<script src="js/180-siteplan-canvas.js?v=rc13"></script>
+<script src="js/181-estate-module.js?v=rc13"></script>
 <script src="js/patches/patch-registry.js?v=rc11"></script>
 <script src="js/patches/patch-loader.js?v=rc11"></script>
 

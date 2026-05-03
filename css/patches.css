@@ -437,3 +437,191 @@
   .estate-subnav{ overflow-x: auto; }
   .estate-subnav-info{ display: none; }
 }
+
+
+/* ============================================================
+   [v4 ESTATE Sesi B] PLOTTER MODAL & TOOLTIP & DIRTY INDICATOR
+   ============================================================ */
+
+/* Modal overlay (Plot Blok Baru / Edit Blok) */
+.plotter-modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.plotter-modal-overlay.active{ display: flex; }
+.plotter-modal{
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.plotter-modal-head{
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.plotter-modal-title{
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.plotter-modal-pos{
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  margin-top: 4px;
+}
+.plotter-modal-body{
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.plotter-modal-field{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.plotter-modal-label{
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.plotter-modal-input,
+.plotter-modal-select,
+.plotter-modal-textarea{
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.plotter-modal-input:focus,
+.plotter-modal-select:focus,
+.plotter-modal-textarea:focus{ border-color: var(--accent); }
+.plotter-modal-textarea{ resize: vertical; min-height: 60px; }
+.plotter-modal-foot{
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.plotter-modal-foot .plotter-btn{ flex: 1; }
+.plotter-modal-spacer{ flex: 1; }
+.plotter-modal-btn-danger{
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: transparent;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.plotter-modal-btn-danger:hover{
+  background: #FEF2F2;
+  border-color: #DC2626;
+}
+
+/* SiteplanCanvas tooltip (mode=inspect) */
+.plotter-canvas-wrap{ position: relative; }
+.spc-tooltip{
+  position: absolute;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.92);
+  color: #FAFAFA;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  max-width: 220px;
+  z-index: 50;
+  line-height: 1.4;
+}
+.spc-tooltip-name{
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 2px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.spc-tooltip-meta{
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.75;
+}
+.spc-tooltip-note{
+  margin-top: 4px;
+  font-size: 11px;
+  font-style: italic;
+  opacity: 0.9;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 4px;
+}
+.spc-tooltip-badge{
+  background: #F59E0B;
+  color: #1C1C1A;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Dirty indicator di sidebar list */
+.plotter-list-item-dirty{
+  color: #F59E0B;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Search input enabled state */
+.plotter-sidebar-search input:not(:disabled){
+  background: white;
+}
+.plotter-sidebar-search input:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbar polish untuk sidebar list */
+.plotter-sidebar-list::-webkit-scrollbar{ width: 8px; }
+.plotter-sidebar-list::-webkit-scrollbar-track{ background: var(--bg); }
+.plotter-sidebar-list::-webkit-scrollbar-thumb{
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+.plotter-sidebar-list::-webkit-scrollbar-thumb:hover{ background: #9CA3AF; }
+
+/* Modal responsive */
+@media (max-width: 500px){
+  .plotter-modal{ max-width: calc(100vw - 32px); }
+  .plotter-modal-foot{ flex-wrap: wrap; }
+  .plotter-modal-foot .plotter-btn,
+  .plotter-modal-foot .plotter-btn-secondary{ flex: 1; min-width: 100px; }
+}

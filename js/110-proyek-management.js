@@ -490,7 +490,10 @@ async function loadProyekFromSheets(){
         warna: p.warna || '#3B82F6',
         status: p.status || 'Aktif',
         deskripsi: p.deskripsi || '',
-        foto: p.foto || ''
+        foto: p.foto || '',
+        // [v4 ESTATE Sesi B] Field siteplan untuk modul Estate Management
+        siteplanUrl: p.siteplanUrl || '',
+        siteplanVersion: p.siteplanVersion || 'v1'
       })).filter(p => p.id && p.nama);
       if(PROYEK_LIST.length > 0){
         saveProyekLocal();
