@@ -359,44 +359,76 @@
     const saveBtn = document.getElementById('plotter-btn-save');
     if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '⏳ Menyimpan...'; }
 
-    let savedCount = 0, deletedCount = 0, errorMsg = '';
+    let savedCount = 0, deletedCount = 0, failCount = 0;
+    let errorDetails = [];
 
     try {
-      // Bulk save
-      if(toSave.length > 0){
-        const res = await global.BM4Api.post('bulkSaveEstateBlok', { data: toSave });
-        if(res && res.success){
-          savedCount = (res.savedCount != null ? res.savedCount : toSave.length);
-        } else {
-          errorMsg = (res && (res.error || res.message)) || 'Bulk save gagal';
-          throw new Error(errorMsg);
-        }
+      // Skip kalau tidak ada apa-apa
+      if(toSave.length === 0 && toDelete.length === 0){
+        _toast('Tidak ada perubahan untuk disimpan');
+        return;
       }
 
-      // Delete satu-satu (deleteEstateBlok endpoint single)
-      for(const id of toDelete){
-        try {
-          const res = await global.BM4Api.post('deleteEstateBlok', { id: id });
-          if(res && res.success){ deletedCount++; }
-          else { console.warn('[estate-module] delete gagal id=' + id, res); }
-        } catch(e){
-          console.warn('[estate-module] delete error id=' + id, e);
-        }
+      // Build payload sesuai schema Code.gs v4 bulkSaveEstateBlok_:
+      //   { blok: [...], deleteIds?: [...] }
+      // Server return: { success, totalSave, okSave, failSave, okDelete, errors }
+      const payload = {};
+      if(toSave.length > 0) payload.blok = toSave;
+      else payload.blok = []; // tetap kirim array kosong supaya validator pass
+      if(toDelete.length > 0) payload.deleteIds = toDelete;
+
+      console.log('[estate-module] bulkSave payload:', {
+        blokCount: payload.blok.length,
+        deleteCount: (payload.deleteIds || []).length
+      });
+
+      const res = await global.BM4Api.post('bulkSaveEstateBlok', payload);
+
+      if(!res || !res.success){
+        const msg = (res && (res.error || res.message)) || 'Bulk save gagal';
+        throw new Error(msg);
       }
 
-      // Reset flags & remove deleted
-      _blokList = _blokList
-        .filter(b => !(b._deleted))
-        .map(b => Object.assign({}, b, { _dirty: false, _new: false }));
+      savedCount = Number(res.okSave || 0);
+      failCount = Number(res.failSave || 0);
+      deletedCount = Number(res.okDelete || 0);
+      errorDetails = Array.isArray(res.errors) ? res.errors : [];
+
+      // Reset flags & remove deleted (hanya yang sukses save)
+      // Catatan: kalau ada partial fail, blok yang gagal tetap dirty supaya user bisa coba lagi.
+      // Server tidak return per-blok success, jadi pakai pendekatan: kalau failCount=0, semua aman.
+      if(failCount === 0){
+        _blokList = _blokList
+          .filter(b => !(b._deleted))
+          .map(b => Object.assign({}, b, { _dirty: false, _new: false }));
+      } else {
+        // Partial fail: identify failed nama dari errorDetails, biarkan yang itu tetap dirty
+        const failedNamas = new Set(errorDetails.map(e => String(e.nama || '').toLowerCase()));
+        _blokList = _blokList
+          .filter(b => !(b._deleted && !failedNamas.has(String(b.nama).toLowerCase())))
+          .map(b => {
+            if(failedNamas.has(String(b.nama).toLowerCase())) return b; // keep dirty
+            if(b._deleted) return b; // shouldn't reach
+            return Object.assign({}, b, { _dirty: false, _new: false });
+          });
+      }
 
       if(_siteplanCanvas) _siteplanCanvas.setBlok(_blokList);
       _renderBlokList();
       _updateStatBar();
 
-      const msgParts = [];
-      if(savedCount > 0) msgParts.push(savedCount + ' blok tersimpan');
-      if(deletedCount > 0) msgParts.push(deletedCount + ' dihapus');
-      _toast('✅ ' + msgParts.join(' · '));
+      // Toast hasil
+      if(failCount > 0){
+        const firstErr = errorDetails[0];
+        const errPreview = firstErr ? (firstErr.nama + ': ' + firstErr.message) : 'Lihat console untuk detail';
+        _toast('⚠️ ' + savedCount + ' tersimpan, ' + failCount + ' gagal — ' + errPreview);
+        console.warn('[estate-module] partial save errors:', errorDetails);
+      } else {
+        const msgParts = [];
+        if(savedCount > 0) msgParts.push(savedCount + ' blok tersimpan');
+        if(deletedCount > 0) msgParts.push(deletedCount + ' dihapus');
+        _toast('✅ ' + msgParts.join(' · '));
+      }
     } catch(e){
       console.error('[estate-module] save error:', e);
       _toast('❌ Gagal save: ' + (e.message || e));
