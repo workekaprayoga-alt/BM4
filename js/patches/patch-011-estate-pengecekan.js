@@ -725,19 +725,66 @@
     } catch(_){ return '—'; }
   }
 
+  // ============================================================
+  // PROYEK ID HELPER — multi-source fallback
+  // FIX rc18.1: di kode existing `let currentProyek = null` adalah top-level
+  // closure variable, BUKAN di window. `window.currentProyek` SELALU undefined.
+  // Solusi: pakai sumber yang reliable cross-IIFE = localStorage app state.
+  // Pattern ini disalin dari _getProyekId() di 181-estate-module.js.
+  // ============================================================
   function _getProyekId(){
-    if(global.currentProyek && global.currentProyek.id) return global.currentProyek.id;
-    if(global._estateCurrentProyek && global._estateCurrentProyek.id) return global._estateCurrentProyek.id;
-    const sel = document.getElementById('estate-info-proyek');
-    if(sel && sel.dataset && sel.dataset.proyekId) return sel.dataset.proyekId;
+    // 1. Coba scope chain (currentProyek tanpa window.)
+    try {
+      if(typeof currentProyek !== 'undefined' && currentProyek){
+        return String(currentProyek);
+      }
+    } catch(_){}
+
+    // 2. Fallback paling reliable: localStorage app state.
+    try {
+      const raw = localStorage.getItem('bm4_app_state');
+      if(raw){
+        const state = JSON.parse(raw);
+        if(state && state.proyek) return String(state.proyek);
+      }
+    } catch(_){}
+
+    // 3. Fallback: window.currentProyek (kalau ada yang explicit set)
+    try {
+      if(global.currentProyek){
+        if(typeof global.currentProyek === 'string') return global.currentProyek;
+        if(global.currentProyek.id) return String(global.currentProyek.id);
+      }
+    } catch(_){}
+
     return null;
   }
 
+  // ============================================================
+  // SITEPLAN URL — convention based
+  // FIX rc18.1: tidak lagi pakai global._estateGetSiteplanUrl.
+  // ============================================================
   function _getSiteplanUrl(proyekId){
-    if(global._estateGetSiteplanUrl){
-      try { return global._estateGetSiteplanUrl(proyekId); } catch(_){}
-    }
-    return 'assets/gwc_siteplan.png';
+    if(!proyekId) return 'assets/gwc_siteplan.png';
+
+    // 1. Cek PROYEK_LIST kalau ada
+    try {
+      let list = null;
+      try {
+        if(typeof PROYEK_LIST !== 'undefined' && Array.isArray(PROYEK_LIST)){
+          list = PROYEK_LIST;
+        } else if(Array.isArray(global.PROYEK_LIST)){
+          list = global.PROYEK_LIST;
+        }
+      } catch(_){}
+      if(list){
+        const p = list.find(x => String(x.id || '').toLowerCase() === String(proyekId).toLowerCase());
+        if(p && p.siteplanUrl) return p.siteplanUrl;
+      }
+    } catch(_){}
+
+    // 2. Convention fallback
+    return 'assets/' + String(proyekId).toLowerCase() + '_siteplan.png';
   }
 
   function _showEmpty(icon, title, sub){
