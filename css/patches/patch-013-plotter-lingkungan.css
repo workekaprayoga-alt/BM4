@@ -1,0 +1,160 @@
+/* =========================================================
+   BM4 PATCH 013 — PLOTTER LINGKUNGAN
+   Quick presets + auto-prioritas checkbox di modal Plotter
+   ========================================================= */
+
+/* ============== PRESET CHIPS ============== */
+.p13-preset-wrap {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid #F59E0B;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.p13-preset-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400E;
+  letter-spacing: 0.4px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p13-preset-hint {
+  font-weight: 400;
+  color: #B45309;
+  font-style: italic;
+  letter-spacing: 0;
+  font-size: 10px;
+  text-transform: none;
+}
+
+.p13-preset-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+}
+
+.p13-preset-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: #fff;
+  border: 1px solid #FCD34D;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400E;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  text-align: left;
+}
+.p13-preset-chip:hover {
+  background: #FFFBEB;
+  border-color: #F59E0B;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+}
+.p13-preset-chip:active {
+  transform: translateY(0);
+}
+
+.p13-preset-chip-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.p13-preset-chip-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Active animation saat di-klik */
+.p13-preset-chip.p13-preset-active {
+  animation: p13-chip-pulse 0.6s ease-out;
+  background: #F59E0B;
+  color: #fff;
+  border-color: #D97706;
+}
+@keyframes p13-chip-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ============== CHECKBOX PRIORITAS ============== */
+.p13-prio-field {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 10px 12px !important;
+  margin-top: 4px;
+}
+
+.p13-prio-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.p13-prio-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  margin-top: 1px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #2563EB;
+}
+
+.p13-prio-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.p13-prio-text strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1E40AF;
+}
+
+.p13-prio-text small {
+  font-size: 10px;
+  color: #3B82F6;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ============== AUTO-DETECT FEEDBACK ============== */
+@keyframes p13-flash {
+  0%   { background: #fff; }
+  30%  { background: #DBEAFE; }
+  70%  { background: #DBEAFE; }
+  100% { background: #fff; }
+}
+
+.plotter-modal-select.p13-auto-detected {
+  animation: p13-flash 0.8s ease-out;
+  border-color: #2563EB !important;
+}
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 540px) {
+  .p13-preset-chips {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .p13-preset-chip-label {
+    font-size: 10px;
+  }
+}
