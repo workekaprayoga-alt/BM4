@@ -303,6 +303,21 @@
       const ctx = this.ctx;
       const eff = this._getEffectiveScale();
 
+      // Adaptive radius berdasarkan zoom level — pin kecil saat zoom rendah
+      // supaya tidak menutupi siteplan, pin lebih besar saat zoom in
+      // Ini bekerja baik untuk dataset besar (1000+ blok)
+      const z = this.userZoom || 1;
+      let baseRadius;
+      if(z < 1.5)      baseRadius = 3.5;   // overview: titik kecil saja
+      else if(z < 3)   baseRadius = 5;     // medium zoom
+      else if(z < 5)   baseRadius = 7;     // close zoom
+      else             baseRadius = 9;     // very close zoom
+
+      // Determine label visibility threshold berdasarkan zoom
+      // Di zoom rendah dengan banyak blok, jangan tampilkan semua label (visual noise)
+      const showAllLabels = z >= 2.5;
+      const showSomeLabels = z >= 1.5;
+
       this.blokList.forEach(blok => {
         if(blok.pixelX === '' || blok.pixelX === null || blok.pixelX === undefined) return;
 
@@ -326,53 +341,63 @@
 
         const isHighlighted = this.highlightId === blok.id;
         const isDirty = !!blok._dirty;
-        const radius = isHighlighted ? HIGHLIGHT_DOT_RADIUS : DEFAULT_DOT_RADIUS;
+        const radius = isHighlighted ? Math.max(baseRadius + 3, 10) : baseRadius;
         const color = this._colorForBlok(blok);
 
-        // Outer ring
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, radius + 2, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fill();
+        // Style baru: HOLLOW RING dengan core dot kecil
+        // Siteplan tetap terlihat di tengah ring, dot kecil sebagai indikator presisi posisi
+        // Opacity adaptive: lebih transparan di zoom rendah, lebih solid saat zoom in
 
-        // Main dot
+        const fillAlpha = z < 1.5 ? 0.55 : (z < 3 ? 0.75 : 0.92);
+        const ringAlpha = z < 1.5 ? 0.85 : 0.95;
+
+        // Draw outer ring (hollow circle, reveals siteplan inside)
         ctx.beginPath();
         ctx.arc(drawX, drawY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
+        ctx.strokeStyle = this._withAlpha(color, ringAlpha);
+        ctx.lineWidth = isHighlighted ? 2.5 : 1.8;
+        ctx.stroke();
+
+        // Draw small filled center dot (presisi indicator)
+        const coreRadius = Math.max(radius * 0.35, 1.5);
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, coreRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = this._withAlpha(color, fillAlpha);
         ctx.fill();
 
-        // Dirty indicator
+        // Dirty indicator — small dot di kanan atas
         if(isDirty){
           ctx.beginPath();
-          ctx.arc(drawX + radius - 1, drawY - radius + 1, 3.5, 0, 2 * Math.PI);
+          ctx.arc(drawX + radius * 0.7, drawY - radius * 0.7, Math.max(radius * 0.4, 2), 0, 2 * Math.PI);
           ctx.fillStyle = '#F59E0B';
           ctx.fill();
           ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Highlight: extra outer glow
+        if(isHighlighted){
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, radius + 5, 0, 2 * Math.PI);
+          ctx.strokeStyle = this._withAlpha(color, 0.5);
           ctx.lineWidth = 1.5;
           ctx.stroke();
         }
 
-        // Highlight ring
-        if(isHighlighted){
-          ctx.beginPath();
-          ctx.arc(drawX, drawY, radius + 6, 0, 2 * Math.PI);
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-
-        // Label nama dengan pill background
-        // Tampilkan label kalau zoom cukup atau highlighted
-        if(this.userZoom >= 1.2 || isHighlighted || this.baseScale > 0.5){
+        // Label nama — hanya tampilkan saat zoom cukup atau highlighted
+        const shouldShowLabel = isHighlighted || showAllLabels || (showSomeLabels && this.userZoom >= 1.8);
+        if(shouldShowLabel){
           const txt = blok.nama || '';
           if(txt){
             ctx.font = (isHighlighted ? '600 11px' : '500 10px') + ' DM Sans, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             const m = ctx.measureText(txt);
-            const padX = 4, padY = 2;
-            const lblY = drawY + radius + 4;
-            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            const padX = 3, padY = 1.5;
+            const lblY = drawY + radius + 3;
+            // Background pill yang lebih transparan supaya siteplan kelihatan
+            ctx.fillStyle = isHighlighted ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.78)';
             this._roundRect(ctx, drawX - m.width/2 - padX, lblY - padY, m.width + 2*padX, 12 + 2*padY, 3);
             ctx.fill();
             ctx.fillStyle = '#1C1C1A';
@@ -380,6 +405,24 @@
           }
         }
       });
+    }
+
+    _withAlpha(color, alpha){
+      // Convert hex color to rgba with given alpha
+      // Support #RGB, #RRGGBB, dan rgba() input
+      if(!color) return 'rgba(0,0,0,' + alpha + ')';
+      if(color.indexOf('rgba') === 0) return color; // already rgba, return as-is
+      if(color.indexOf('rgb') === 0){
+        return color.replace('rgb(', 'rgba(').replace(')', ',' + alpha + ')');
+      }
+      let hex = color.replace('#', '');
+      if(hex.length === 3){
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      const r = parseInt(hex.substring(0,2), 16);
+      const g = parseInt(hex.substring(2,4), 16);
+      const b = parseInt(hex.substring(4,6), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
     }
 
     _roundRect(ctx, x, y, w, h, r){
