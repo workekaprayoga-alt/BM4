@@ -713,11 +713,11 @@
     injectPaneIfNeeded();
     refreshTabVisibility();
     hookSwitchDiv();
+    monkeyPatchVisibilityToggler(); // [v3] FIX UTAMA
 
     // [v2] Retry mechanism — ulang refreshTabVisibility selama 30 detik
-    // sampai currentUser ready dan tab keliatan
     let retryCount = 0;
-    const maxRetries = 30; // 30 x 1 detik = 30 detik
+    const maxRetries = 30;
     const retryInterval = setInterval(() => {
       retryCount++;
       const visible = refreshTabVisibility();
@@ -733,8 +733,7 @@
     document.addEventListener('bm4:login', refreshTabVisibility);
     document.addEventListener('bm4:auth-ready', refreshTabVisibility);
 
-    // [v2] MutationObserver — kalau .divisi-nav berubah (misal patch lain re-render),
-    // pastikan tab unit tetap ada
+    // [v2] MutationObserver
     try {
       const navContainer = document.querySelector('.divisi-nav');
       if(navContainer && global.MutationObserver){
@@ -747,6 +746,66 @@
         observer.observe(navContainer, { childList: true });
       }
     } catch(e){ console.warn('[patch-015] MutationObserver setup err:', e); }
+  }
+
+  // ============================================================
+  // [v3 FIX] MONKEY-PATCH applyTabsByAkses — override visibility logic
+  // ============================================================
+  function monkeyPatchVisibilityToggler(){
+    // Fungsi `applyTabsByAkses` di js/100-accounts-auth.js dipanggil setelah login
+    // untuk show/hide tab berdasarkan currentUser.akses.
+    // Tab "unit" tidak ada di akses default user, jadi dia akan di-set display:none.
+    // Solusi: kita intercept fungsi itu dan force tab unit visible jika user punya permission.
+    if(global._patch015_visibilityHooked) return;
+    global._patch015_visibilityHooked = true;
+
+    // Cara 1: hook fungsi global applyTabsByAkses kalau ada
+    if(typeof global.applyTabsByAkses === 'function'){
+      const orig = global.applyTabsByAkses;
+      global.applyTabsByAkses = function(){
+        const result = orig.apply(this, arguments);
+        // Setelah fungsi original jalan, force show tab Unit
+        forceShowUnitTabIfPermitted();
+        return result;
+      };
+      console.log('[patch-015] Hooked applyTabsByAkses');
+    }
+
+    // Cara 2 (defensive): pasang interval pendek 0.5s yang patroli visibility
+    // selama 60 detik pertama. Kalau ada kode lain set display:none ke tab unit,
+    // langsung kita kembalikan.
+    let patrolCount = 0;
+    const patrolMax = 120; // 120 x 0.5s = 60 detik
+    const patrolInterval = setInterval(() => {
+      patrolCount++;
+      forceShowUnitTabIfPermitted();
+      if(patrolCount >= patrolMax){
+        clearInterval(patrolInterval);
+      }
+    }, 500);
+  }
+
+  function forceShowUnitTabIfPermitted(){
+    const tab = document.getElementById('tab-unit');
+    if(!tab) return;
+    const u = _getCurrentUser();
+    if(!u || !u.role) return; // user belum login, biarkan tersembunyi
+
+    const canView = _hasPermission('view');
+    if(canView){
+      // Force show with !important supaya tidak ditimpa
+      tab.style.cssText = 'display: inline-flex !important;';
+    } else {
+      tab.style.cssText = 'display: none !important;';
+    }
+
+    const btnAdd = document.getElementById('unit-btn-add');
+    if(btnAdd){
+      const canCreate = _hasPermission('create');
+      btnAdd.style.cssText = canCreate
+        ? 'display: inline-flex !important;'
+        : 'display: none !important;';
+    }
   }
 
   if(document.readyState === 'loading'){
