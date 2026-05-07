@@ -123,10 +123,72 @@
 
   function _toast(msg, type){
     type = type || 'info';
-    if(global.toast){ global.toast(msg, type); return; }
-    if(global.showToast){ global.showToast(msg, type); return; }
-    console.log('[' + type.toUpperCase() + ']', msg);
-    if(type === 'error') alert('❌ ' + msg);
+    try {
+      // [v3 FIX] Coba semua kemungkinan fungsi toast di app
+      if(typeof global.toast === 'function'){ global.toast(msg, type); return; }
+      if(typeof global.showToast === 'function'){ global.showToast(msg, type); return; }
+      if(typeof global.bm4Toast === 'function'){ global.bm4Toast(msg, type); return; }
+      if(typeof global.notif === 'function'){ global.notif(msg, type); return; }
+      if(typeof global.notify === 'function'){ global.notify(msg, type); return; }
+
+      // Fallback: bikin toast sendiri (DOM-based, no dependency)
+      _showCustomToast(msg, type);
+    } catch(e){
+      console.log('[' + type.toUpperCase() + ']', msg);
+    }
+  }
+
+  // [v3 FIX] Custom toast in-house — supaya patch ini self-sufficient
+  function _showCustomToast(msg, type){
+    try {
+      let container = document.getElementById('patch-015-toast-container');
+      if(!container){
+        container = document.createElement('div');
+        container.id = 'patch-015-toast-container';
+        container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
+        document.body.appendChild(container);
+      }
+      const toast = document.createElement('div');
+      const colors = {
+        success: { bg:'#10B981', border:'#059669' },
+        error:   { bg:'#EF4444', border:'#DC2626' },
+        warning: { bg:'#F59E0B', border:'#D97706' },
+        info:    { bg:'#3B82F6', border:'#2563EB' }
+      };
+      const c = colors[type] || colors.info;
+      toast.style.cssText = `
+        background: ${c.bg};
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid ${c.border};
+        max-width: 360px;
+        pointer-events: auto;
+        animation: patch015ToastIn 0.25s ease-out;
+      `;
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      // Inject animation style sekali
+      if(!document.getElementById('patch-015-toast-anim')){
+        const style = document.createElement('style');
+        style.id = 'patch-015-toast-anim';
+        style.textContent = '@keyframes patch015ToastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }';
+        document.head.appendChild(style);
+      }
+
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s, transform 0.3s';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, type === 'error' ? 5000 : 3000);
+    } catch(e){
+      console.log('[' + type.toUpperCase() + ']', msg);
+    }
   }
 
   function _formatNum(n){
