@@ -922,10 +922,12 @@
     init();
   }
 
-  // Expose untuk debugging
+  // Expose untuk debugging dan untuk patch lain (patch-016 etc)
   global.BM4Patch015 = {
     reload: () => loadData(true),
-    state: () => ({ proyekId: _proyekId, unitCount: _unitList.length, blokCount: _blokList.length, stats: _stats })
+    state: () => ({ proyekId: _proyekId, unitCount: _unitList.length, blokCount: _blokList.length, stats: _stats }),
+    get _unitList(){ return _unitList; },
+    get _proyekId(){ return _proyekId; }
   };
 
 })(window);
