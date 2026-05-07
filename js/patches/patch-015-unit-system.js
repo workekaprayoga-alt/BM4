@@ -663,12 +663,23 @@
   // ============================================================
   function refreshTabVisibility(){
     const tab = document.getElementById('tab-unit');
-    if(!tab) return;
+    if(!tab) return false;
+
+    // Tunggu currentUser siap dulu
+    const u = _getCurrentUser();
+    if(!u || !u.role){
+      // currentUser belum ready, sembunyikan dulu tab-nya
+      tab.style.display = 'none';
+      return false;
+    }
+
     const canView = _hasPermission('view');
     tab.style.display = canView ? '' : 'none';
 
     const btnAdd = document.getElementById('unit-btn-add');
     if(btnAdd) btnAdd.style.display = _hasPermission('create') ? '' : 'none';
+
+    return canView;
   }
 
   // ============================================================
@@ -703,9 +714,39 @@
     refreshTabVisibility();
     hookSwitchDiv();
 
-    // Re-check tab visibility kalau permission cache update belakangan
-    setTimeout(refreshTabVisibility, 1500);
-    setTimeout(refreshTabVisibility, 4000);
+    // [v2] Retry mechanism — ulang refreshTabVisibility selama 30 detik
+    // sampai currentUser ready dan tab keliatan
+    let retryCount = 0;
+    const maxRetries = 30; // 30 x 1 detik = 30 detik
+    const retryInterval = setInterval(() => {
+      retryCount++;
+      const visible = refreshTabVisibility();
+      if(visible || retryCount >= maxRetries){
+        clearInterval(retryInterval);
+        if(visible){
+          console.log('[patch-015] Tab Unit System aktif setelah retry ke-' + retryCount);
+        }
+      }
+    }, 1000);
+
+    // [v2] Hook ke event login (kalau ada)
+    document.addEventListener('bm4:login', refreshTabVisibility);
+    document.addEventListener('bm4:auth-ready', refreshTabVisibility);
+
+    // [v2] MutationObserver — kalau .divisi-nav berubah (misal patch lain re-render),
+    // pastikan tab unit tetap ada
+    try {
+      const navContainer = document.querySelector('.divisi-nav');
+      if(navContainer && global.MutationObserver){
+        const observer = new MutationObserver(() => {
+          if(!document.getElementById('tab-unit')){
+            injectTabIfNeeded();
+            refreshTabVisibility();
+          }
+        });
+        observer.observe(navContainer, { childList: true });
+      }
+    } catch(e){ console.warn('[patch-015] MutationObserver setup err:', e); }
   }
 
   if(document.readyState === 'loading'){
