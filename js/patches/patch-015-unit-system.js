@@ -69,10 +69,37 @@
   // HELPERS
   // ============================================================
   function _getProyekId(){
+    // [v3 FIX] Baca dari key yang benar di localStorage
+    // Key actual di app BM4: bm4_app_state.proyek (bukan currentProyekId)
     try {
       const state = JSON.parse(localStorage.getItem('bm4_app_state') || '{}');
-      return state.currentProyekId || state.proyekId || null;
-    } catch(e){ return null; }
+      // Coba beberapa key kemungkinan, urutkan dari yang paling spesifik
+      const id = state.proyek
+              || state.currentProyekId
+              || state.proyekId
+              || state.currentProyek
+              || null;
+      if(id) return String(id).toLowerCase();
+    } catch(e){
+      console.warn('[patch-015] _getProyekId err:', e);
+    }
+
+    // Fallback: cek window global
+    if(global.currentProyek){
+      const cp = global.currentProyek;
+      return String(cp.id || cp.kode || cp).toLowerCase();
+    }
+    if(global.currentProyekId){
+      return String(global.currentProyekId).toLowerCase();
+    }
+
+    // Fallback terakhir: baca bm4_last_proyek
+    try {
+      const last = localStorage.getItem('bm4_last_proyek');
+      if(last) return String(last).toLowerCase();
+    } catch(e){}
+
+    return null;
   }
 
   function _getCurrentUser(){
@@ -733,7 +760,7 @@
     document.addEventListener('bm4:login', refreshTabVisibility);
     document.addEventListener('bm4:auth-ready', refreshTabVisibility);
 
-    // [v2] MutationObserver
+    // [v3] MutationObserver
     try {
       const navContainer = document.querySelector('.divisi-nav');
       if(navContainer && global.MutationObserver){
@@ -746,6 +773,25 @@
         observer.observe(navContainer, { childList: true });
       }
     } catch(e){ console.warn('[patch-015] MutationObserver setup err:', e); }
+
+    // [v3 FIX] Listen perubahan proyek (user ganti proyek di Dashboard)
+    // Cara: poll localStorage tiap 1.5 detik, kalau proyekId berubah dan tab unit aktif, reload
+    let lastProyekId = _getProyekId();
+    setInterval(() => {
+      const currentId = _getProyekId();
+      if(currentId !== lastProyekId){
+        console.log('[patch-015] Proyek berubah:', lastProyekId, '→', currentId);
+        lastProyekId = currentId;
+        // Reset state
+        _proyekId = null;
+        _unitList = [];
+        // Kalau tab unit lagi aktif, langsung reload data
+        const activePane = document.querySelector('.divisi-pane.active');
+        if(activePane && activePane.id === 'pane-unit'){
+          loadData(true);
+        }
+      }
+    }, 1500);
   }
 
   // ============================================================
